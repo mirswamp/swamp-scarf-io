@@ -174,14 +174,14 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 { 
     char * name = (char *) xmlTextReaderName(reader);
     int type = xmlTextReaderNodeType(reader);
-    
+    printf("%d:%s\n",type,name);
     if (type == 1) { 	
 	if (strcmp(name, "Metric") == 0) {
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 	    metric->id = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "Value") == 0) {
-	    metric->value = (char *) xmlTextReaderReadInnerXml(reader);
+	    metric->value = (char *) xmlTextReaderReadInnerXml(reader); 
 	} else if (strcmp(name, "Type") == 0) {
 	    metric->type = (char *) xmlTextReaderReadInnerXml(reader);	
 	} else if (strcmp(name, "Class") == 0) {
@@ -192,7 +192,8 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 	    metric->sourceFile = (char *) xmlTextReaderReadInnerXml(reader);
 	}
 
-    } else if (type == 15 && strcmp(name, "Metric")) {
+    } else if (type == 15 && strcmp(name, "Metric") == 0) {
+	xmlFree((xmlChar *) name);
 	return 1;
     }
 
@@ -471,6 +472,7 @@ Metric * nextMetric(Reader reader)
 	    }
 	}
 	if (foundMetric == 1) {
+	    printf("%s", metric->value);
 	    return metric;
 	}
 	if (ret != 0) {

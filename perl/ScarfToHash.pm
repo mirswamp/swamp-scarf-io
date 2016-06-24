@@ -112,6 +112,15 @@ sub endHandler
     	$bugsumcallback->( $$hash ); 
         $$hash = {};
     } elsif ( $elt eq "MetricSummaries" && defined $metricsumcallback ) {
+	if( exists $$hash->{SourceFile} && ! (defined $$hash->{SourceFile} ) {
+	    delete $$hash->{SourceFile};
+	}
+	if( exists $$hash->{Type} && ! (defined $$hash->{Type} ) {
+	    delete $$hash->{Type};
+	}
+	if( exists $$hash->{Method} && ! (defined $$hash->{Method} ) {
+	    delete $$hash->{Method};
+	}
 	$metricsumcallback->( $$hash );
         $$hash = {};
     }

@@ -549,6 +549,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
     }
     rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Type", (xmlChar *) metric->type);
     if (rc < 0) {
+	printf("type: %s\nid: %d\n %s\n%s\n", metric->type, metric->id, metric->sourceFile, metric->value);
 	printf("Error writing Type Element of metric\n");
 	return 1;
     }
@@ -722,7 +723,7 @@ int addSummary(Writer * writerInfo)
 	}
 	curBugSummary = curBugSummary->next;
     }
-    if (rc < 0){
+    if (rc > 0){
 	rc = xmlTextWriterEndElement(writer);
 	if (rc < 0) {
 	    printf("Error closing BugSummary\n");
@@ -814,7 +815,7 @@ int addSummary(Writer * writerInfo)
 	    return 1;
 	}
     }
-    if (rc < 0){
+    if (rc > 0){
 	rc = xmlTextWriterEndElement(writer);
 	if (rc < 0) {
 	    printf("Error closing MetricSummaries\n");
