@@ -174,7 +174,7 @@ sub addBugInstance
     $initial_byte_count = $final_byte_count;
     
     #add bug
-    print $bugID;
+    #print $bugID;
     $writer->startTag('BugInstance', id => "$bugID");
     
     if (defined $bugInstance->{ClassName}) {

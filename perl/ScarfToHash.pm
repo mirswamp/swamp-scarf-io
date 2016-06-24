@@ -29,10 +29,10 @@ sub parse
     my $hash = {};
     my $lastElt = "";
     $self->{parser}->setHandlers(
-				    "Start", sub { $hash = startHandler( \$hash, \$lastElt, @_ ) },
+				    "Start", sub { $hash = startHandler( \$hash, \$lastElt, 
+					    $self->{callbacks}->{InitialCallback},  @_ ) },
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
-					    $self->{callbacks}->{InitialCallback}, 
 					    $self->{callbacks}->{BugSummaryCallback}, 
 					    $self->{callbacks}->{MetricSummaryCallback},@_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
@@ -44,15 +44,19 @@ sub parse
 
 sub startHandler
 {
-    my ( $hash, $lastElt, $parser, $elt, %atts ) = @_;
+    my ( $hash, $lastElt, $initialcallback, $parser, $elt, %atts ) = @_;
     if ( $elt eq "BugInstance" ) {
 	$$hash->{BugId} = $atts{id};
     } elsif ( $elt eq "Metric" ) {
-	$$hash = {#Value => undef, Method => undef, Class => undef, 
-			    SourceFile => undef, MetricId => $atts{id}, Type => undef
+	$$hash = {#Value => undef, Class => undef, 
+			    SourceFile => undef, MetricId => $atts{id}, Method => undef, Type => undef
 			    };  
     } elsif ( $elt eq "AnalyzerReport" ) {
-	$$hash = { tool_name => $atts{tool_name}, tool_version => $atts{tool_version}, uuid => $atts{uuid} };
+	if (defined $initialcallback){
+	    $$hash = { tool_name => $atts{tool_name}, tool_version => $atts{tool_version}, uuid => $atts{uuid} };
+	    $initialcallback->( $$hash );
+	    $$hash = {};
+	}
     } elsif ( $elt eq "BugCategory" ) {
 	$$hash->{$atts{code}}->{$atts{group}} = { bytes => $atts{bytes}, count => $atts{count} };
     } elsif ( $elt eq "MetricSummaries" ) {
@@ -69,7 +73,7 @@ sub startHandler
 	if ( $atts{primary} eq "true" ) {
 	    $primary = 1;
 	} else {
-	 $primary = 0;
+	    $primary = 0;
 	}
 	my $method = {MethodId => $atts{id}, primary => $primary};
 	push @{$$hash->{Methods}}, $method;
@@ -81,7 +85,7 @@ sub startHandler
 	if ( $atts{primary} eq "true" ) {
 	    $primary = 1;
 	} else {
-	 $primary = 0;
+	    $primary = 0;
 	}
 	my $loc = {LocationId => $atts{id}, primary => $primary};
 	push @{$$hash->{BugLocations}}, $loc;
@@ -96,16 +100,13 @@ sub startHandler
 
 sub endHandler
 {
-    my ( $hash, $lastElt, $bugcallback, $metriccallback, $initialcallback, $bugsumcallback, $metricsumcallback, 
+    my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, 
 	    $parser, $elt ) = @_;
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
 	$bugcallback->( $$hash );
 	$$hash = {};
     } elsif ( $elt eq "Metric" && defined $metriccallback ) {
 	$metriccallback->( $$hash );
-        $$hash = {};
-    } elsif ( $elt eq "AnalyzerReport" && defined $initialcallback ) {
-	$initialcallback->( $$hash );
         $$hash = {};
     } elsif ( $elt eq "BugSummary" && defined $bugsumcallback ) {
     	$bugsumcallback->( $$hash ); 
@@ -123,7 +124,7 @@ sub charHandler
     my ( $hash, $lastElt, $parser, $chars ) = @_;
     my $elt = $$lastElt;
     for my $simpleElt ( qw/AssessmentReportFile BuildId BugCode BugId BugRank ClassName BugSeverity BugGroup
-    BugMessage ResolutionSuggestion Class Method Value/ ) {
+    BugMessage ResolutionSuggestion Class Value/ ) {
 	if ( $elt eq $simpleElt ) {
 	    $$hash->{$elt} = $chars;
 	    return $$hash;
@@ -140,7 +141,11 @@ sub charHandler
         $$hash->{$elt} = $chars;
         return $$hash;
     }
-    if ( $elt eq "Type" && exists $$hash->{SourceFile} ) {
+    if ( $elt eq "Type" && exists $$hash->{Type} ) {
+        $$hash->{$elt} = $chars;
+        return $$hash;
+    }
+    if ( $elt eq "Method" && exists $$hash->{Method} ) {
         $$hash->{$elt} = $chars;
         return $$hash;
     }
