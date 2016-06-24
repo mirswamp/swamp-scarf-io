@@ -217,7 +217,7 @@ int processBug(Reader reader, BugInstance * bug)
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 //	    printf("%s\n", temp);
 	    bug->bugId = strtol(temp, NULL, 10);
-	    printf("%d\n", bug->bugId);
+//	    printf("%d\n", bug->bugId);
 	    xmlFree((xmlChar *) temp);
 
 	} else if (strcmp(name, "InstanceLocation") == 0) {

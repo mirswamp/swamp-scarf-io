@@ -5,85 +5,6 @@
 #include <libxml/xmlwriter.h>
 #include "filestructure.h"
 
-/**
-/////////////////////////Initial Data Struct///////////////////////////////////////
-typedef struct Initial{
-    char *tool_name;
-    char *tool_version;
-    char *uuid;
-} Initial;
-
-
-/////////////////////////Metric Structs////////////////////////////////////////////
-typedef struct Metric{
-    int id;
-    char *value;
-    char *class;
-    char *method;
-    char *sourceFile;
-    char *type;
-} Metric;
-
-
-///////////////////////////Bug Structs////////////////////////////////////////////
-typedef struct Method{
-    int methodId;
-    int primary;
-    char *name;
-    struct Method *next;
-} Method;
-
-
-typedef struct Location{
-    int primary;
-    int startLine;
-    int endLine;
-    int startColumn;
-    int endColumn;
-    int locationId;
-    char *explanation;
-    char *sourceFile;
-    struct Location *next;
-} Location;
-
-
-typedef struct LineNum{
-    int start;
-    int end;
-} LineNum;
-
-
-typedef struct {
-    LineNum lineNum;
-    char *xPath;
-} InstanceLocation;
-
-
-typedef struct CweIds{
-    int cweid;
-    struct CweIds *next;
-} CweIds;
-
-
-typedef struct {
-    int bugId;
-    CweIds *cweIds;
-    char *className;
-    char *bugSeverity;
-    char *bugRank;
-    char *resolutionSuggestion;
-    char *bugMessage;
-    char *bugCode;
-    char *bugGroup;
-    char *assessmentReportFile;
-    char *buildId;
-    InstanceLocation *instanceLocation;
-    Method *methods;
-    Location *bugLocations;
-} BugInstance;
-
-
-**/
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -506,7 +427,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     bytes += rc;
 
     ///////////////////////////////Group bugs/////////////////////
-    /* Bug Summary not functional for blast
+    //Bug Summary not functional for blast
     char * code = bug->bugCode;
     if (code == NULL) {
 	code = "undefined";
@@ -522,25 +443,26 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	prev = cur;
 	cur = cur->next;
     }
-    printf("%s\n", group);
+    
     if (cur == NULL) {
+	printf("%d, %s,  %s\n", writerInfo->bugId, code, group);
 	BugSummaries * summaries = malloc(sizeof(BugSummaries));
-	summaries->code = malloc(sizeof(code));
+	summaries->code = malloc(strlen(code));
 	strcpy(summaries->code, code);
-
+    
 	BugSummary * summary = malloc(sizeof(BugSummary));
 	summary->count = 1;
 	summary->byteCount = bytes;
 	summary->next = NULL;
-	summary->code = malloc(sizeof(code));
+	summary->code = malloc(strlen(code));
 	strcpy(summary->code, code);
-	summary->group = malloc(sizeof(group));
+	summary->group = malloc(strlen(group));
 	strcpy(summary->group, group);
-	printf("%s\n", summary->group);
-
 	summaries->codeSummary = summary;
 	summaries->next = NULL;
-
+	printf("%s\n", summaries->code);
+	printf("%s\n", summary->group);
+	
 	if (prev == NULL) {
 	    writerInfo->bugSums = summaries;
 	} else {
@@ -559,7 +481,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	    summary->byteCount = bytes;
 	    summary->next = NULL;
 	    summary->code = cur->code;
-	    summary->group = malloc(sizeof(group));
+	    summary->group = malloc(strlen(group));
 	    strcpy(summary->group, group);
 
 	    if (prevGroup == NULL) {
@@ -572,7 +494,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	    curGroup->count++;
 	    curGroup->byteCount += bytes;
 	}
-    }**/
+    }
 
     
     writerInfo->bugId++;
@@ -646,7 +568,6 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	type = "undefined";
     } 
 
-   /** summary might not work
     double value;
     char * buffer = NULL;
     MetricSummary * prev = NULL;
@@ -657,7 +578,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
     }
     if (cur == NULL) {
 	MetricSummary * summary = malloc(sizeof(MetricSummary));
-	summary->type = malloc(sizeof(type));
+	summary->type = malloc(strlen(type));
 	strcpy(summary->type, type);
 	summary->count = 1;
 	value = strtod(metric->value, &buffer);
@@ -693,7 +614,6 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	    }
 	}
     }
-**/
 
     writerInfo->metricId++;
     return 0;
@@ -748,8 +668,7 @@ int addEndTag(Writer * writerInfo)
 
 int addSummary(Writer * writerInfo)
 {
-    printf("Summary currently not functional");   
-/**    xmlTextWriterPtr writer = writerInfo->writer;
+    xmlTextWriterPtr writer = writerInfo->writer;
     int rc = -1;
     char temp[24];
 
@@ -902,7 +821,7 @@ int addSummary(Writer * writerInfo)
 	    return 1;
 	}
     }
-**/
+
     return 0;
 }
 
