@@ -1,10 +1,27 @@
 #!/usr/bin/python
 
+#  Copyright 2016 Brandon G. Klein
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import sys
 from xml.dom import minidom
 from lxml.etree import ElementTree as ET
 from lxml import etree
 
+
+###################Handle errors#############################################################
 def error(error_level, message):
     if error_level == 0:
 	return
@@ -14,7 +31,12 @@ def error(error_level, message):
 	print message
 	sys.exit(1)
 
+
+##########################################################################################
 class HashToScarf:
+
+
+##################Initialize Writer##################################################
     def __init__(self, output, error_level):
 	try:
 	    self.output = open(output, "w")
@@ -33,14 +55,17 @@ class HashToScarf:
 	self.bugSummaries = {}
 
 
+#########################Returns file#######################################################
     def getFile(self):
 	return self.output
 
 
+######################Returns current set error level######################################################
     def getErrorLevel(self):
 	return self.error_level
 
 
+####################Allows change of error level############################################################
     def setErrorLevel(self, error_level):
 	if error_level == 1:
 	    self.error_level = 1
@@ -50,6 +75,7 @@ class HashToScarf:
 	    self.error_level = 2
 
 
+#######################Write a start tag######################################
     def addStartTag(self, initial_details):
 	for reqAttr in ["tool_name", "tool_version", "uuid"]:
 	    if reqAttr not in initial_details:
@@ -61,6 +87,7 @@ class HashToScarf:
 	return self
 
 
+####################Write a bug instance#########################################################
     def addBugInstance(self, bugHash):
 	
 	#check for req elmts
@@ -174,7 +201,6 @@ class HashToScarf:
 		end.text = "%s" % linenum["End"]
 
 	self.output.write(etree.tostring(bug, pretty_print = True))
-#	self.output.write(minidom.parseString(etree.tostring(bug)).toprettyxml(indent = "  ", newl = "\n  ")[(len("<?xml version=\"1.0\" ?>") + 1):])
 	bug.clear()
 	self.bugID = self.bugID + 1
 
@@ -204,6 +230,7 @@ class HashToScarf:
 	return self
 
 
+###########Writer a metric##################################################
     def addMetric(self, metricHash):
 
 	metric = etree.Element("Metric")
@@ -225,9 +252,7 @@ class HashToScarf:
 	    req = etree.SubElement(metric, reqMetr)
 	    req.text = "%s" % metricHash[reqMetr]
 
-	#metric.write(self.output)#, pretty_print=True)
 	self.output.write(etree.tostring(metric, pretty_print = True))
-	#self.output.write(minidom.parseString(etree.tostring(metric)).toprettyxml(indent = "  ", newl = "\n  ")[(len("<?xml version=\"1.0\" ?>") + 1):])
 	self.metricID = self.metricID + 1
 
 	metricType = metricHash["Type"]
@@ -277,7 +302,7 @@ class HashToScarf:
 	metric.clear()
 	return self
 
-
+############Add summary from written elements##############################################################
     def addSummary(self):
 	import math
 
@@ -328,6 +353,8 @@ class HashToScarf:
 	    summaries.clear()
 	    return self
 
+
+    #######################Add end tag for analyzer report###########################################
     def addEndTag(self):
 	self.output.write("</AnalyzerReport>")
 	return self

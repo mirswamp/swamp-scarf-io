@@ -1,3 +1,19 @@
+//  Copyright 2016 Brandon G. Klein
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+  
+
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -5,7 +21,7 @@
 #include <libxml/xmlwriter.h>
 #include "filestructure.h"
 
-////////////////////////////////////////////////////////////////////////////////
+////////////////////Writer operation structs/////////////////////////////////////
 
 
 typedef struct BugSummary {
@@ -46,7 +62,7 @@ typedef struct Writer {
 } Writer;
 
 
-////////////////////////////Initializer////////////////////////////////////////
+////////////////////////////Initializer/Closer////////////////////////////////////////
 
 
 Writer * newWriter(char * filename)
@@ -102,10 +118,9 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     }
     bytes += rc;
 
- //   printf("debug %d\n", writerInfo->bugId);
     sprintf(temp, "%d", writerInfo->bugId);
     
-    rc = xmlTextWriterWriteAttribute(writer, (xmlChar *) "id", (xmlChar *) temp);//("%d", writerInfo->bugId));
+    rc = xmlTextWriterWriteAttribute(writer, (xmlChar *) "id", (xmlChar *) temp);
     
     if (rc < 0) {
 	printf("Error adding BugInstance attribute id\n");
@@ -181,9 +196,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	    return 1;
 	}
 	
-    }
-    
-    
+    } 
 
     bytes += rc;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "BugLocations");
@@ -436,7 +449,6 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     rc = xmlTextWriterFlush(writer);
     bytes += rc;
     ///////////////////////////////Group bugs/////////////////////
-    //Bug Summary not functional for blast
     char * code = bug->bugCode;
     if (code == NULL) {
 	code = "undefined";
@@ -454,7 +466,6 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     }
     
     if (cur == NULL) {
-//	printf("%d, %s,  %s\n", writerInfo->bugId, code, group);
 	BugSummaries * summaries = malloc(sizeof(BugSummaries));
 	summaries->code = malloc(strlen(code));
 	strcpy(summaries->code, code);
@@ -511,7 +522,6 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 
 int addMetric(Writer *  writerInfo, Metric * metric)
 {
-//    printf("type: %s  id: %d source: %s Value : %s\n", metric->type, metric->id, metric->sourceFile, metric->value);
     int rc;
     char temp[24];
     xmlTextWriterPtr writer = writerInfo->writer;
@@ -628,11 +638,12 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 }
 
 
+///////////////Writer initial analyzer tag//////////////////////////////////////////
 int addStartTag(Writer * writerInfo, Initial * initial)
 {
     int rc;
     xmlTextWriterPtr writer = writerInfo->writer;
-    rc = xmlTextWriterStartElement(writer, (xmlChar *) "ORDER");
+    rc = xmlTextWriterStartElement(writer, (xmlChar *) "AnalyzerReport");
     if (rc < 0) {
 	printf("Error at addStartTag\n");
 	return 1;
@@ -660,6 +671,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 }
 
 
+//////////////////////End initialtag/////////////////////////////////////////////
 int addEndTag(Writer * writerInfo)
 {
     int rc;
@@ -674,6 +686,7 @@ int addEndTag(Writer * writerInfo)
 }
 
 
+//////////////Add summary generated from instances//////////////////////////////////
 int addSummary(Writer * writerInfo)
 {
     xmlTextWriterPtr writer = writerInfo->writer;

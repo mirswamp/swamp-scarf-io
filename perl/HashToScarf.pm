@@ -71,7 +71,7 @@ sub getFile
     return $self->{output};
 }
 
-
+# error level accessor/mutator
 sub getErrorLevel
 {
     my ($self) = @_;
@@ -91,7 +91,7 @@ sub setErrorLevel
     }
 }
 
-
+#handle errors
 sub error
 {
     my ($error_level, $error_message) = @_;
@@ -161,9 +161,6 @@ sub addBugInstance
 	}
 	$locID++;
     }
-#    if ($locID == 1) {
-#	error($self->{error_level}, "No BugLocations found for BugInstance:$bugID");	    
-#    }
 
     my $writer = $self->{writer};   
 
@@ -174,7 +171,6 @@ sub addBugInstance
     $initial_byte_count = $final_byte_count;
     
     #add bug
-    #print $bugID;
     $writer->startTag('BugInstance', id => "$bugID");
     
     if (defined $bugInstance->{ClassName}) {
@@ -329,6 +325,7 @@ sub addBugInstance
     
 }
 
+#write a single metric
 sub addMetric
 {
     my($self, $metric) = @_;

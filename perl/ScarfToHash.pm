@@ -1,10 +1,26 @@
 #!/usr/bin/perl -w
 
+#  Copyright 2016 Brandon G. Klein
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#  
+
 package ScarfToHash;
 use strict;
 use XML::Parser;
 use Data::Dumper;
 
+##########Initialize Reader##########
 sub new
 {
     my ($class, $source, $callbacks) = @_;
@@ -23,6 +39,8 @@ sub new
 
 }
 
+
+##########Initiate parsing of file##########
 sub parse
 {
     my ( $self ) = @_;
@@ -42,6 +60,8 @@ sub parse
     $self->{parser}->parsefile($self->{source});
 }
 
+
+##########Handler for start tags##########
 sub startHandler
 {
     my ( $hash, $lastElt, $initialcallback, $parser, $elt, %atts ) = @_;
@@ -98,6 +118,8 @@ sub startHandler
     return $$hash;
 }
 
+
+#########Handler for end Tags###########
 sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, 
@@ -128,6 +150,8 @@ sub endHandler
     return $$hash;
 }
 
+
+##########Handler for content of elements##########
 sub charHandler
 {
     my ( $hash, $lastElt, $parser, $chars ) = @_;
@@ -197,6 +221,8 @@ sub charHandler
     return $$hash;
 }
 
+
+##########Default handler needed for optimal runtime of parser##########
 sub defaultHandler
 {
     #throw everything away

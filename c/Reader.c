@@ -1,90 +1,28 @@
+//  Copyright 2016 Brandon G. Klein
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
+
 #include <stdio.h>
 #include <string.h>
-//#include <libxml/parser.h>
 #include <libxml/xmlreader.h>
 #include "filestructure.h"
 
 /////////////////////////TypeDef for Clarity///////////////////////////////////////
 
 typedef xmlTextReaderPtr Reader;
-/*/////////////////////////Initial Data Struct///////////////////////////////////////
-typedef struct Initial{
-    char *tool_name;
-    char *tool_version;
-    char *uuid;
-} Initial;
-
-
-/////////////////////////Metric Structs////////////////////////////////////////////
-typedef struct Metric{
-    int id;
-    char *value;
-    char *class;
-    char *method;
-    char *sourceFile;
-    char *type;
-} Metric;
-
-
-///////////////////////////Bug Structs////////////////////////////////////////////
-typedef struct Method{
-    int methodId;
-    int primary;
-    char *name;
-    struct Method *next;
-} Method;
-
-
-typedef struct Location{
-    int primary;
-    int startLine;
-    int endLine;
-    int startColumn;
-    int endColumn;
-    int locationId;
-    char *explanation;
-    char *sourceFile;
-    struct Location *next;
-} Location;
-
-
-typedef struct {
-    int start;
-    int end;
-} LineNum;
-
-
-typedef struct {
-    LineNum lineNum;
-    char *xPath;
-} InstanceLocation;
-
-
-typedef struct CweIds{
-    int cweid;
-    struct CweIds *next;
-} CweIds;
-
-
-typedef struct {
-    int bugId;
-    CweIds *cweIds;
-    char *className;
-    char *bugSeverity;
-    char *bugRank;
-    char *resolutionSuggestion;
-    char *bugMessage;
-    char *bugCode;
-    char *bugGroup;
-    char *assessmentReportFile;
-    char *buildId;
-    InstanceLocation *instanceLocation;
-    Method *methods;
-    Location *bugLocations;
-} BugInstance;
-
-*/
-///////////////Initiailize a BugInstance//////////////////////////////////////////////
+///////////////Initiailize a Metric//////////////////////////////////////////////
 Metric * initializeMetric()
 {
     Metric * metric = calloc(1,sizeof(Metric));
@@ -100,7 +38,7 @@ BugInstance * initializeBug()
 }
 
 
-///////////////////////////////Free a BugInstance//////////////////////////////////
+///////////////////////////////Free initial struct//////////////////////////////////
 int freeInitial(Initial * initial){
     xmlFree((xmlChar *) initial->tool_name);   
     xmlFree((xmlChar *) initial->tool_version);   
@@ -110,7 +48,7 @@ int freeInitial(Initial * initial){
 }
 
 
-///////////////////////////////Free a BugInstance///////////////////////////////////
+///////////////////////////////Free a Metric///////////////////////////////////
 int freeMetric(Metric * metric) 
 {
     xmlFree((xmlChar *) metric->type);
@@ -174,7 +112,8 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 { 
     char * name = (char *) xmlTextReaderName(reader);
     int type = xmlTextReaderNodeType(reader);
-//    printf("%d:%s\n",type,name);
+    
+    //type 1 == start tag
     if (type == 1) { 	
 	if (strcmp(name, "Metric") == 0) {
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
@@ -192,6 +131,7 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 	    metric->sourceFile = (char *) xmlTextReaderReadInnerXml(reader);
 	}
 
+    //type 15 == end tag
     } else if (type == 15 && strcmp(name, "Metric") == 0) {
 	xmlFree((xmlChar *) name);
 	return 1;
@@ -208,17 +148,12 @@ int processBug(Reader reader, BugInstance * bug)
     char * name = (char *) xmlTextReaderName(reader);
     int type = xmlTextReaderNodeType(reader);
     
-//    printf("%s type %d\n", name, type);
-    
+    //start tags    
     if (type == 1) { 
-
-//	printf("%s type %d\n", name, type);
 
 	if (strcmp(name, "BugInstance") == 0) {
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
-//	    printf("%s\n", temp);
 	    bug->bugId = strtol(temp, NULL, 10);
-//	    printf("%d\n", bug->bugId);
 	    xmlFree((xmlChar *) temp);
 
 	} else if (strcmp(name, "InstanceLocation") == 0) {
@@ -229,7 +164,6 @@ int processBug(Reader reader, BugInstance * bug)
 	    bug->instanceLocation->xPath = (char *) xmlTextReaderReadInnerXml(reader);
 
 	} else if (strcmp(name, "LineNum") == 0) {
-//	    LineNum * lineNum = calloc(1, sizeof(LineNum));
 	    LineNum lineNum = {0};
 	    bug->instanceLocation->lineNum = lineNum;
 
@@ -367,7 +301,8 @@ int processBug(Reader reader, BugInstance * bug)
 	} else if (strcmp(name, "ResolutionSuggestion") == 0) {
 	    bug->resolutionSuggestion = (char *) xmlTextReaderReadInnerXml(reader);
 	}
-
+    
+    //end tags
     } else if (type == 15) {	
 	if (strcmp(name, "BugInstance") == 0) {
 	    xmlFree((xmlChar *) name);
@@ -375,10 +310,6 @@ int processBug(Reader reader, BugInstance * bug)
 	} 
     }
 
-//    int count;
-//    for (count = 0; count < 14; count++) {
-//    	printf("Name: %s --- Content: %s\n", bug[count].key, bug[count].value);
-//    }
     xmlFree((xmlChar *) name); 
     return 0;
 }
@@ -391,6 +322,8 @@ Reader newReader(char * filename)
     return reader;
 }
 
+
+///////////////////////////get initial tag//////////////////////////////////////
 Initial * nextInitial(Reader reader)
 {
     Initial * initial = calloc(1, sizeof(Initial));
@@ -457,7 +390,7 @@ BugInstance * nextBug(Reader reader)
 }
 
 
-////////////////////Process next bug/////////////////////////////////////////
+////////////////////Process next metric/////////////////////////////////////////
 Metric * nextMetric(Reader reader)
 {
     Metric * metric = initializeMetric();
