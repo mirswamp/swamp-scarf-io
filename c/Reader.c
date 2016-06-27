@@ -174,7 +174,7 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 { 
     char * name = (char *) xmlTextReaderName(reader);
     int type = xmlTextReaderNodeType(reader);
-    printf("%d:%s\n",type,name);
+//    printf("%d:%s\n",type,name);
     if (type == 1) { 	
 	if (strcmp(name, "Metric") == 0) {
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
@@ -472,7 +472,6 @@ Metric * nextMetric(Reader reader)
 	    }
 	}
 	if (foundMetric == 1) {
-	    printf("%s", metric->value);
 	    return metric;
 	}
 	if (ret != 0) {

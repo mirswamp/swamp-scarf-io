@@ -39,6 +39,7 @@ typedef struct MetricSummary {
 typedef struct Writer {
     int bugId;
     int metricId;
+    FILE * filename;
     struct BugSummaries * bugSums;
     struct MetricSummary * metricSum;
     xmlTextWriterPtr writer;
@@ -63,7 +64,6 @@ Writer * newWriter(char * filename)
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
     }
-
     writerInfo->bugId = 1;
     writerInfo->metricId = 1;
     writerInfo->metricSum = NULL;
@@ -71,6 +71,14 @@ Writer * newWriter(char * filename)
     return writerInfo;
     
 }
+
+
+void closeWriter (Writer * writerInfo) 
+{
+    xmlTextWriterEndDocument(writerInfo->writer);
+    free(writerInfo);
+}
+
 
 
 //////////Change Writer tab space, will not change already written elements/////
@@ -82,7 +90,7 @@ void setIndent(Writer * writerInfo, int tabSpace) {
 ////////////////////Write a bug/////////////////////////////////////////////
 int addBug(Writer * writerInfo, BugInstance * bug)
 {
-    
+
     char temp[24];
     int rc;
     long bytes = 0;
@@ -93,7 +101,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	return 1;
     }
     bytes += rc;
-    
+
  //   printf("debug %d\n", writerInfo->bugId);
     sprintf(temp, "%d", writerInfo->bugId);
     
@@ -425,7 +433,8 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	return 1;
     }
     bytes += rc;
-
+    rc = xmlTextWriterFlush(writer);
+    bytes += rc;
     ///////////////////////////////Group bugs/////////////////////
     //Bug Summary not functional for blast
     char * code = bug->bugCode;
@@ -445,7 +454,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     }
     
     if (cur == NULL) {
-	printf("%d, %s,  %s\n", writerInfo->bugId, code, group);
+//	printf("%d, %s,  %s\n", writerInfo->bugId, code, group);
 	BugSummaries * summaries = malloc(sizeof(BugSummaries));
 	summaries->code = malloc(strlen(code));
 	strcpy(summaries->code, code);
@@ -460,8 +469,6 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	strcpy(summary->group, group);
 	summaries->codeSummary = summary;
 	summaries->next = NULL;
-	printf("%s\n", summaries->code);
-	printf("%s\n", summary->group);
 	
 	if (prev == NULL) {
 	    writerInfo->bugSums = summaries;
@@ -504,6 +511,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 
 int addMetric(Writer *  writerInfo, Metric * metric)
 {
+//    printf("type: %s  id: %d source: %s Value : %s\n", metric->type, metric->id, metric->sourceFile, metric->value);
     int rc;
     char temp[24];
     xmlTextWriterPtr writer = writerInfo->writer;
@@ -549,7 +557,6 @@ int addMetric(Writer *  writerInfo, Metric * metric)
     }
     rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Type", (xmlChar *) metric->type);
     if (rc < 0) {
-	printf("type: %s\nid: %d\n %s\n%s\n", metric->type, metric->id, metric->sourceFile, metric->value);
 	printf("Error writing Type Element of metric\n");
 	return 1;
     }
@@ -563,6 +570,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	printf("Error closing Metric\n");
 	return 1;
     }
+    xmlTextWriterFlush(writer);
 
     char * type = metric->type;
     if (type == NULL) {
@@ -583,12 +591,12 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	strcpy(summary->type, type);
 	summary->count = 1;
 	value = strtod(metric->value, &buffer);
-	if (buffer == NULL) {
-	    cur->sum = value;
-	    cur->sumOfSquares = value * value;
-	    cur->max = value;
-	    cur->min = value;
-	    cur->valid = 1;
+	if (buffer != metric->value) {
+	    summary->sum = value;
+	    summary->sumOfSquares = value * value;
+	    summary->max = value;
+	    summary->min = value;
+	    summary->valid = 1;
 	}
 	summary->next = NULL;
 
@@ -601,7 +609,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	cur->count++;
 	if (cur->valid != 0) {
 	    value = strtod(metric->value, &buffer);	    	    
-	    if (buffer == NULL) {
+	    if (buffer != metric->value) {
 		cur->sum += value;
 		cur->sumOfSquares += value * value;
 		if (value > cur->max){
@@ -615,7 +623,6 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 	    }
 	}
     }
-
     writerInfo->metricId++;
     return 0;
 }
@@ -648,7 +655,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 	printf("Error adding start tag attribute uuid\n");
 	return 1;
     }
-
+    xmlTextWriterFlush(writer);
     return 0;
 }
 
@@ -662,7 +669,7 @@ int addEndTag(Writer * writerInfo)
 	printf("Error closing document\n");
 	return 1;
     }
-
+    xmlTextWriterFlush(writer);
     return 0;
 }
 
@@ -786,7 +793,7 @@ int addSummary(Writer * writerInfo)
 		return 1;
 	    }
 
-	    double average = ((double) sum) / average;
+	    double average = ((double) sum) / count;
 	    sprintf(temp, "%.2f", average);
 	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Average", (xmlChar *) temp);
 	    if (rc < 0) {
@@ -797,7 +804,7 @@ int addSummary(Writer * writerInfo)
 	    int denominator = count * (count - 1);
 	    double standard_dev = 0;
 	    if (denominator != 0) {
-		standard_dev = sqrt((sumOfSquares * count - sum * sum ) / denominator);
+		standard_dev = sqrt(((sumOfSquares * count) - (sum * sum) ) / denominator);
 	    }
 
 	    sprintf(temp, "%.2f", standard_dev);
@@ -822,7 +829,7 @@ int addSummary(Writer * writerInfo)
 	    return 1;
 	}
     }
-
+    xmlTextWriterFlush(writer);
     return 0;
 }
 
