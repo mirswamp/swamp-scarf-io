@@ -46,9 +46,9 @@ $hash = {
     'BugGroup' => 'group',		     ### OPTIONAL: Tool specific grouping information
     'BugLocations' => [			     ### REQUIRED: At least 1 location of the bug
 	{				     ###
-	    'EndLine' => '2',		     ### REQUIRED: End Line number in source file
+	    'EndLine' => '2',		     ### OPTIONAL: End Line number in source file
 	    'LocationId' => '1',	     ### PROVIDED: Reader provided details on which location is referenced
-	    'StartLine' => '1',		     ### REQUIRED: Start Line number in source file
+	    'StartLine' => '1',		     ### OPTIONAL: Start Line number in source file
 	    'primary' => 1,		     ### REQUIRED: One location must be primary
 	    'SourceFile' => 'source'	     ### REQUIRED: Source file containing the bug 
 	},				     ###
