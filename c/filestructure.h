@@ -13,7 +13,7 @@ typedef struct Initial{
 typedef struct Metric{
     int id;
     char *value;
-    char *class;
+    char *clas;
     char *method;
     char *sourceFile;
     char *type;

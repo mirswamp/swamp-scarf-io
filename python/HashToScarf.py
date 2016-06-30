@@ -31,6 +31,85 @@ def error(error_level, message):
 	print message
 	sys.exit(1)
 
+def checkStart(initial_details):
+    errors = []
+    for reqAttr in ["tool_name", "tool_version", "uuid"]:
+        if reqAttr not in initial_details:
+	   errors.append(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
+    return errors
+
+def checkMetric(metricHash, metricID):
+    errors = []
+    for reqElt in ["Value", "Type", "SourceFile"]:
+	if reqElt not in metricHash:
+	    error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, metricID))
+    return errors
+
+def checkBug(bugHash, bugID):
+    errors = []
+    for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
+        if reqElt not in bugHash:
+	   errors.append("Required element: %s could not be found in BugInstance: %s" % (reqElt, bugID))
+    if "Methods" in bugHash:
+        methodID = 1
+        methodPrimary = 0
+        for method in bugHash["Methods"]:
+	    if "primary" not in method:
+		errors.append("Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+	    elif (method["primary"]) :
+		if (methodPrimary) :
+		    errors.append("Misformed Element: More than one primary Method found in BugInstance: %s" % (bugID));
+		else :
+		    methodPrimary = 1;
+	    if "name" not in method:
+		error.append("Required text: name not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+	    methodID = methodID + 1
+#	if not methodPrimary :
+#       	errors.append("Misformed Element: No primary Method found in  BugInstance: %s." % (bugID));
+
+    if "BugLocations" in bugHash:	
+	locPrimary = 0
+	locID = 1
+	for location in bugHash["BugLocations"]:
+	    if "primary" not in location:
+	        errors.append("Required attribute: primary not found for Location: %s in BugInstance: %s" % (locID, bugID))
+	    elif (location["primary"]) :
+	        if (locPrimary) :
+		   errors.append("Misformed Element: More than one primary Location found in BugInstance: %s" % (bugID));
+	        else :
+		    methodPrimary = 1;
+	    for reqLocElt in ["SourceFile"]:
+	        if reqLocElt not in location:
+		    errors.append("Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
+	    for optNum in ["StartLine", "EndLine", "StartColumn", "EndColumn"]:
+	        if optNum in location:
+		    if not location[optNum].isdigit():
+			errors.append("Wrong value type: $optLocElt child of BugLocation in BugInstance %s requires a positive integer." % (bugID))
+#	if not locPrimary :
+#           errors.append("Misformed Element: No primary Location found in  BugInstance: %s." % (bugID));
+	locID = locID + 1
+
+    if "CweIds" in bugHash:
+	for cweid in bugHash["CweIds"]:
+	    if not cweid.isdigit():
+		errors.append("Wrong value type: CweID expected to be a positive integer in BugInstance %s." % (bugID))
+
+    if "InstanceLocation" in bugHash:
+	if "LineNum" in bugHash["InstanceLocation"]:
+	    line_num = bugHash["InstanceLocation"]["LineNum"]
+	    if "Start" not in line_num :
+                errors.append("Required element missing: Could not find Start child of a LineNum in BugInstance: %s." % (bugID))
+            elif not line_num["Start"].isdigit() :
+ 	        errors.append("Wrong value type: Start child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+	    if "End" not in line_num:
+		errors.append("Required element missing: Could not find End child of a LineNum BugInstance: %s." % (bugID))
+	    elif not line_num["End"].isdigit() :
+		errors.append("Wrong value type: End child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+	elif "Xpath" not in bugHash["InstanceLocation"]:
+	    errors.append("Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: %s" % (bugID));
+	return errors;
+
+
 
 ##########################################################################################
 class HashToScarf:
@@ -76,10 +155,19 @@ class HashToScarf:
 
 
 #######################Write a start tag######################################
+
+
     def addStartTag(self, initial_details):
-	for reqAttr in ["tool_name", "tool_version", "uuid"]:
-	    if reqAttr not in initial_details:
-		error(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
+#	for reqAttr in ["tool_name", "tool_version", "uuid"]:
+#	    if reqAttr not in initial_details:
+#		error(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
+
+	if self.error_level != 0 :
+	    errors =  checkStart(initial_details)
+	    for error in errors:
+		print error
+	    if errors and self.error_level == 2:
+		sys.exit(1)
 
 	writer = self.output
 	writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" )
@@ -88,28 +176,37 @@ class HashToScarf:
 
 
 ####################Write a bug instance#########################################################
-    def addBugInstance(self, bugHash):
-	
-	#check for req elmts
-	for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
-	    if reqElt not in bugHash:
-		error(self.error_level, "Required element: %s could not be found in BugInstance: %s" % (reqElt, self.bugID))
-	if "Methods" in bugHash:
-	    for method in bugHash["Methods"]:
-		methodID = 1
-		if "primary" not in method:
-		    error(self.error_level, "Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
-		if "name" not in method:
-		    error(self.error_level, "Required text: name not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
-		methodID = methodID + 1
-	if "BugLocations" in bugHash:	
-	    for location in bugHash["BugLocations"]:
-		if "primary" not in location:
-		    error(self.error_level, "Required attribute: primary could not be found for Location: %s in BugInstance: %s" % (locID, bugID))
-		for reqLocElt in ["SourceFile"]:
-		    if reqLocElt not in location:
-			error(self.error_level, "Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
 
+
+    def addBugInstance(self, bugHash):
+		#check for req elmts
+#	for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
+#	    if reqElt not in bugHash:
+#		error(self.error_level, "Required element: %s could not be found in BugInstance: %s" % (reqElt, self.bugID))
+#	if "Methods" in bugHash:
+#	    for method in bugHash["Methods"]:
+#		methodID = 1
+#		if "primary" not in method:
+#		    error(self.error_level, "Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
+#		if "name" not in method:
+#		    error(self.error_level, "Required text: name not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
+#		methodID = methodID + 1
+#	if "BugLocations" in bugHash:	
+#	    for location in bugHash["BugLocations"]:
+#		if "primary" not in location:
+#		    error(self.error_level, "Required attribute: primary could not be found for Location: %s in BugInstance: %s" % (locID, bugID))
+#		for reqLocElt in ["SourceFile"]:
+#		    if reqLocElt not in location:
+#			error(self.error_level, "Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
+
+	
+	if self.error_level != 0 :
+	    errors =  checkBug(bugHash, self.bugID)
+	    for error in errors:
+		print error
+	    if errors and self.error_level == 2:
+		sys.exit(1)
+		
 	# byte count info
 	byte_count = 0
 	initial_byte_count = 0;
@@ -190,10 +287,6 @@ class HashToScarf:
 		xpath.text = instanceLoc["Xpath"]
 	    if "LineNum" in instanceLoc:
 		linenum = instanceLoc["LineNum"]
-		if "Start" not in linenum:
-		    error(self.error_level, "Required element: Start could not be found for LineNum in InstanceLocation for BugInstance: %s" % bugID)
-		if "End" not in linenum:
-		    error(self.error_level, "Required element: End could not be found for LineNum in InstanceLocation for BugInstance: %s" % bugID)
 		line = etree.SubElement(instance, "LineNum")
 		start = etree.SubElement(line, "Start")
 		start.text = "%s" % linenum["Start"]
@@ -231,13 +324,21 @@ class HashToScarf:
 
 
 ###########Writer a metric##################################################
+
     def addMetric(self, metricHash):
+
+	if self.error_level != 0 :
+	    errors =  checkMetric(metricHash, self.metricID)
+	    for error in errors:
+		print error
+	    if errors and self.error_level == 2:
+		sys.exit(1)
 
 	metric = etree.Element("Metric")
 	metric.set("id", "%s" % self.metricID)
-	for reqElt in ["Value", "Type", "SourceFile"]:
-	    if reqElt not in metricHash:
-		error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, metricID))
+#	for reqElt in ["Value", "Type", "SourceFile"]:
+#	    if reqElt not in metricHash:
+#		error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, self.metricID))
 	    
 	loc = etree.SubElement(metric,"Location")
 	source = etree.SubElement(loc, "SourceFile")	

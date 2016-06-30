@@ -92,27 +92,54 @@ sub setErrorLevel
 }
 
 #handle errors
-sub error
+#sub error
+#{
+#    my ($error_level, $error_message) = @_;
+#    if ($error_level == 0) {
+#	return;
+#    } elsif ($error_level == 1) {
+#	print "$error_message\n";
+#    } else {
+#	die $error_message;
+#    }
+#}
+
+
+#check required start elements
+sub checkStart
 {
-    my ($error_level, $error_message) = @_;
-    if ($error_level == 0) {
-	return;
-    } elsif ($error_level == 1) {
-	print "$error_message\n";
-    } else {
-	die $error_message;
+    my ($initial) = @_;
+    my @errors = ();
+
+    for my $reqAttr (qw/tool_name tool_version uuid/) {
+	if (!(defined $initial->{$reqAttr})) {
+	    push @errors, "Required attribute: $reqAttr not found when creating startTag";	    
+	}
     }
+
+    return \@errors;
+
 }
+
 
 #start analyzer report
 sub addStartTag
 {   
     my ($self, $initial_details) = @_;
-    for my $reqAttr (qw/tool_name tool_version uuid/) {
-	if (!(defined $initial_details->{$reqAttr})) {
-	    error($self->{error_level}, "Required attribute: $reqAttr not found when creating startTag");	    
+
+    if ($self->{error_level} != 0) {
+	my $errors = checkStart($initial_details);
+	print "$_\n" for @{$errors};
+	if (@{$errors} and $self->{error_level} == 2) {
+	    die "Exiting";
 	}
     }
+
+#    for my $reqAttr (qw/tool_name tool_version uuid/) {
+#	if (!(defined $initial_details->{$reqAttr})) {
+#	    error($self->{error_level}, "Required attribute: $reqAttr not found when creating startTag");	    
+#	}
+#    }
 
     $self->{writer}->startTag('AnalyzerReport', tool_name => $initial_details->{tool_name}, 
 	    tool_version => $initial_details->{tool_version}, uuid => $initial_details->{uuid});
@@ -128,38 +155,143 @@ sub addEndTag
     return $self;
 }
 
+
+#check bug for required elements
+sub checkBug
+{
+    my ($bugInstance) = @_;
+    my @errors = ();
+    for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
+	if (!(defined $bugInstance->{$bugReqElt})) {
+	    push @errors, "Required element: $bugReqElt could not be found in BugInstance:$bugID";
+	}
+    }
+    my $locID = 1;
+    my $methodID = 1;
+#    print Dumper($bugInstance);
+    if (defined $bugInstance->{Methods}) {
+        my $methodprimary = 0;
+	foreach my $method (@{$bugInstance->{Methods}}) {
+	    if (!(defined $method->{primary})) {
+		push @errors, "Required attribute: primary not found for Method:$methodID in BugInstance:$bugID";
+	    } elsif ($method->{primary}) {
+	        if ($methodprimary) {
+		    push @errors, "Misformed Element: More than one primary Method found";
+		} else {
+		    $methodprimary = 1;
+		}
+	    }
+	    if (!(defined $method->{name})) {
+		push @errors, "Required text: name not found for Method:$methodID in BugInstance:$bugID";
+	    }
+	}
+	if (!($methodprimary)) {
+#	    push @errors, "Misformed Element: No primary Method found in  BugInstance: $bugID.";
+	}
+	$methodID++;
+    }
+
+    my $locprimary = 0;
+    foreach my $location (@{$bugInstance->{BugLocations}}) {
+	if (!(defined $location->{primary})) {
+	    push @errors, "Required attribute: primary could not be found for Location:$locID in BugInstance:$bugID";	    
+	} elsif ($location->{primary}) {
+	    if ($locprimary) {
+#		push @errors, "Misformed Element: More than one primary BugLocation found in  BugInstance: $bugID";
+	    } else {
+		$locprimary = 1;
+	    }
+	}
+	for my $locElt (qw/SourceFile/) {
+	    if (!(defined $location->{$locElt})) {
+		push @errors, "Required element: $locElt could not be found for Location:$locID in BugInstance:$bugID";	    
+	    }
+	}
+	for my $optLocElt (qw/StartColumn EndColumn StartLine EndLine/) {
+	    if (defined $location->{$optLocElt}  ) {
+		if ($location->{$optLocElt} !~ /[0-9]+/) {
+		    push @errors, "Wrong value type: $optLocElt child of BugLocation in BugInstance: $bugID requires a positive integer.";
+		}
+	    }
+	}
+	$locID++;
+    }
+    if (!($locprimary)) {
+        push @errors, "Misformed Element: No primary BugLocation found in BugInstance: $bugID.";
+    }
+
+    if (defined $bugInstance->{CweIds}) {
+	for my $cweid (@{$bugInstance->{CweIds}}) {
+            if ($cweid !~ /[0-9]+/) {
+		push @errors, "Wrong value type: CweID expected to be a positive integer in BugInstance: $bugID";
+	    }
+	}
+    }
+
+    if (defined $bugInstance->{InstanceLocation}) {
+        if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
+            my $line_num = $bugInstance->{InstanceLocation}->{LineNum};
+            if (!(defined $line_num->{Start})) {
+                push @errors, "Required element missing: Could not find Start child of a LineNum in BugInstance: $bugID.";
+            } elsif ($line_num->{Start} !~ /[0-9]+/ ) {
+               push @errors, "Wrong value type: Start child of LineNum requires a positive integer BugInstance: $bugID.";
+            }
+            if (!(defined $line_num->{End})) {
+                push @errors, "Required element missing: Could not find End child of a LineNum BugInstance: $bugID.";
+	    } elsif ($line_num->{End} !~ /[0-9]+/) {
+                push @errors, "Wrong value type: End child of LineNum requires a positive integer BugInstance: $bugID.";
+	    }
+	}
+	elsif (!(defined $bugInstance->{InstanceLocation}->{Xpath})) {
+	    push @errors, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: $bugID.";
+	}
+    }
+
+    return \@errors;
+}
+
+
+
 #add a single bug instance to file
 sub addBugInstance
 {
     my($self, $bugInstance) = @_;
 
     #check for req elements existence
-    for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
-	if (!(defined $bugInstance->{$bugReqElt})) {
-	    error($self->{error_level}, "Required element: $bugReqElt could not be found in BugInstance:$bugID");     
+#    for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
+#	if (!(defined $bugInstance->{$bugReqElt})) {
+#	    error($self->{error_level}, "Required element: $bugReqElt could not be found in BugInstance:$bugID");     
+#	}
+#    }
+#    my $locID = 1;
+#    my $methodID = 1;
+#    foreach my $method (@{$bugInstance->{Methods}}) {
+#	if (!(defined $method->{primary})) {
+#	    error($self->{error_level}, "Required attribute: primary not found for Method:$methodID in BugInstance:$bugID");
+#	}
+#	if (!(defined $method->{name})) {
+#	    error($self->{error_level}, "Required text: name not found for Method:$methodID in BugInstance:$bugID");
+#	}
+#	$methodID++;
+#    }
+#    foreach my $location (@{$bugInstance->{BugLocations}}) {
+#	if (!(defined $location->{primary})) {
+#	    error($self->{error_level}, "Required attribute: primary could not be found for Location:$locID in BugInstance:$bugID");	    
+#	}
+#	for my $locElt (qw/SourceFile/) {
+#	    if (!(defined $location->{$locElt})) {
+#		error($self->{error_level}, "Required element: $locElt could not be found for Location:$locID in BugInstance:$bugID");	    
+#	    }
+#	}
+#	$locID++;
+#    }
+
+    if ($self->{error_level} != 0) {
+	my $errors = checkBug($bugInstance);
+	print "$_\n" for @$errors;
+	if (@$errors and $self->{error_level} == 2) {
+	    die "Exiting";
 	}
-    }
-    my $locID = 1;
-    my $methodID = 1;
-    foreach my $method (@{$bugInstance->{Methods}}) {
-	if (!(defined $method->{primary})) {
-	    error($self->{error_level}, "Required attribute: primary not found for Method:$methodID in BugInstance:$bugID");
-	}
-	if (!(defined $method->{name})) {
-	    error($self->{error_level}, "Required text: name not found for Method:$methodID in BugInstance:$bugID");
-	}
-	$methodID++;
-    }
-    foreach my $location (@{$bugInstance->{BugLocations}}) {
-	if (!(defined $location->{primary})) {
-	    error($self->{error_level}, "Required attribute: primary could not be found for Location:$locID in BugInstance:$bugID");	    
-	}
-	for my $locElt (qw/SourceFile/) {
-	    if (!(defined $location->{$locElt})) {
-		error($self->{error_level}, "Required element: $locElt could not be found for Location:$locID in BugInstance:$bugID");	    
-	    }
-	}
-	$locID++;
     }
 
     my $writer = $self->{writer};   
@@ -180,7 +312,7 @@ sub addBugInstance
     }
 
     if (defined $bugInstance->{Methods}) {
-	$methodID=1;
+	my $methodID=1;
 	$writer->startTag('Methods');
 	foreach my $method (@{$bugInstance->{Methods}}) {
 	    my $primary;
@@ -200,7 +332,7 @@ sub addBugInstance
     }
     
     $writer->startTag('BugLocations');	
-    $locID = 1;
+    my $locID = 1;
 
     foreach my $location (@{$bugInstance->{BugLocations}}) {	
 	my $primary;
@@ -276,12 +408,6 @@ sub addBugInstance
 		$writer->endTag();
 	    } 
 	    if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
-		if (!(defined $bugInstance->{InstanceLocation}->{LineNum}->{Start})) {
-		    error($self->{error_level}, "Required element: Start could not be found for LineNum in InstanceLocation for BugInstance:$bugID");	    
-		}
-		if (!(defined $bugInstance->{InstanceLocation}->{LineNum}->{End})) {
-		    error($self->{error_level}, "Required element: End could not be found for LineNum in InstanceLocation for BugInstance:$bugID");	
-		}
 		$writer->startTag('LineNum');
 		$writer->startTag('Start');
 		$writer->characters($bugInstance->{InstanceLocation}->{LineNum}->{Start});
@@ -325,16 +451,39 @@ sub addBugInstance
     
 }
 
+
+#check for metrics required elements
+sub checkMetric
+{
+    my ($metric) = @_;
+    my @errors = ();
+    for my $reqMetrElt (qw/SourceFile Type Value/) {
+	if (!(defined $metric->{$reqMetrElt})) {
+	   push @errors, "Required element: $reqMetrElt could not be found for Metric:$metricID";	    
+	}
+    }
+    return \@errors;
+}
+
+
 #write a single metric
 sub addMetric
 {
     my($self, $metric) = @_;
  
-    for my $reqMetrElt (qw/SourceFile Type Value/) {
-	if (!(defined $metric->{$reqMetrElt})) {
-	   error($self->{error_level}, "Required element: $reqMetrElt could not be found for Metric:$metricID");	    
+    if ($self->{error_level} != 0) {
+	my $errors = checkMetric($metric);
+	print "$_\n" for @$errors;
+	if (@$errors and $self->{error_level} == 2) {
+	    die "Exiting";
 	}
     }
+
+#    for my $reqMetrElt (qw/SourceFile Type Value/) {
+#	if (!(defined $metric->{$reqMetrElt})) {
+#	   error($self->{error_level}, "Required element: $reqMetrElt could not be found for Metric:$metricID");	    
+#	}
+#    }
 
     my $writer = $self->{writer};
     $writer->startTag('Metric', id => $metricID);   

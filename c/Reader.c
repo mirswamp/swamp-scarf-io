@@ -52,7 +52,7 @@ int freeInitial(Initial * initial){
 int freeMetric(Metric * metric) 
 {
     xmlFree((xmlChar *) metric->type);
-    xmlFree((xmlChar *) metric->class);
+    xmlFree((xmlChar *) metric->clas);
     xmlFree((xmlChar *) metric->method);
     xmlFree((xmlChar *) metric->sourceFile);
     xmlFree((xmlChar *) metric->value);
@@ -124,7 +124,7 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 	} else if (strcmp(name, "Type") == 0) {
 	    metric->type = (char *) xmlTextReaderReadInnerXml(reader);	
 	} else if (strcmp(name, "Class") == 0) {
-	    metric->class = (char *) xmlTextReaderReadInnerXml(reader);
+	    metric->clas = (char *) xmlTextReaderReadInnerXml(reader);
 	} else if (strcmp(name, "Method") == 0) {
 	    metric->method = (char *) xmlTextReaderReadInnerXml(reader);
 	} else if (strcmp(name, "SourceFile") == 0) {
