@@ -32,8 +32,8 @@ sub new
     $self->{callbacks} = $callbacks; 
     $self->{parser} = new XML::Parser ();
 
-    $self->{MetricSummary} = {};
-    $self->{BugSummary} = {};
+#    $self->{MetricSummary} = {};
+#    $self->{BugSummary} = {};
 
     bless $self, $class;
 
