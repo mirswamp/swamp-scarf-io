@@ -20,6 +20,8 @@ class ScarfToHash:
     def __init__(self, inputFile, callback):
 	self.inputFile = inputFile
 	self.callback = callback
+	self.validStart = 0;
+	self.validBody = 0;
 
     # parse file
     def parse(self):
@@ -30,8 +32,23 @@ class ScarfToHash:
 	callback = self.callback
 	for event, elem in etree.iterparse(self.inputFile, events = ("start", "end")):
 
+	    #parse initial information
+	    if elem.tag == "AnalyzerReport" and event == "start":
+		initialDetails = {"tool_name":elem.get("tool_name"), "tool_version":elem.get("tool_version"), "uuid":elem.get("uuid")}
+
+		parent = elem
+
+		if "InitialCallback" in callback:
+		    callback["InitialCallback"](initialDetails)
+		parent.clear()
+		self.startValid = 1;
+		
 	    # parse bug instance
-	    if elem.tag == "BugInstance" and "BugCallback" in callback and event == "end":
+	    elif elem.tag == "BugInstance" and "BugCallback" in callback and event == "end":
+		if  not self.startValid :
+		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
+		
+		self.validBody = 1;
 		bug = {"BugId":elem.get("id")}
 		cweids = []
 		methods = []
@@ -96,6 +113,9 @@ class ScarfToHash:
 
 	    #parse metric
 	    elif elem.tag == "Metric" and "MetricCallback" in callback and event == "end":
+		if  not self.startValid :
+		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
+		self.validBody = 1;
 		metric = {"MetricId":elem.get("id")}
 
 		for subelement in elem:
@@ -107,18 +127,11 @@ class ScarfToHash:
 		callback["MetricCallback"](metric)
 		parent.clear()
 	
-	    #parse initial information
-	    elif elem.tag == "AnalyzerReport" and event == "start":
-		initialDetails = {"tool_name":elem.get("tool_name"), "tool_version":elem.get("tool_version"), "uuid":elem.get("uuid")}
-
-		parent = elem
-
-		if "InitialCallback" in callback:
-		    callback["InitialCallback"](initialDetails)
-		parent.clear()
 
 	    #parse summaries
 	    elif elem.tag == "MetricSummaries" and "SummaryCallback" in callback and event == "end":
+		if  not self.startValid :
+		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
 		summary = {}
 		for metricSum in elem:
 		    sum_hash = {}
@@ -134,6 +147,8 @@ class ScarfToHash:
 
 
 	    elif elem.tag == "BugSummary" and "SummaryCallback" in callback and event == "end":
+		if  not self.startValid :
+		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
 		summary = {}
 		for category in elem:
 		    sum_hash = {"bytes":category.get("bytes"), "count":category.get("count")}
@@ -142,4 +157,7 @@ class ScarfToHash:
 		callback["SummaryCallback"](summary)
 		parent.clear()
 
-
+	    
+	    elif elem.tag == "AnalyzerReport" and event == "end":
+		if not self.validBody:
+		    print("No BugInstances or Metrics present")

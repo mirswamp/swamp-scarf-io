@@ -31,7 +31,8 @@ sub new
     die "no callbacks detected" if !(defined $callbacks);
     $self->{callbacks} = $callbacks; 
     $self->{parser} = new XML::Parser ();
-
+    $self->{validStart} = 0;
+    $self->{validBody} = 0;
 #    $self->{MetricSummary} = {};
 #    $self->{BugSummary} = {};
 
@@ -48,11 +49,11 @@ sub parse
     my $lastElt = "";
     $self->{parser}->setHandlers(
 				    "Start", sub { $hash = startHandler( \$hash, \$lastElt, 
-					    $self->{callbacks}->{InitialCallback},  @_ ) },
+					    $self->{callbacks}->{InitialCallback}, \$self->{validStart}, \$self->{validBody},  @_ ) },
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
 					    $self->{callbacks}->{BugSummaryCallback}, 
-					    $self->{callbacks}->{MetricSummaryCallback},@_ ) },
+					    $self->{callbacks}->{MetricSummaryCallback}, \$self->{validBody}, @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
@@ -64,55 +65,67 @@ sub parse
 ##########Handler for start tags##########
 sub startHandler
 {
-    my ( $hash, $lastElt, $initialcallback, $parser, $elt, %atts ) = @_;
-    if ( $elt eq "BugInstance" ) {
-	$$hash->{BugId} = $atts{id};
-    } elsif ( $elt eq "Metric" ) {
-	$$hash = {#Value => undef, Class => undef, 
-			    SourceFile => undef, MetricId => $atts{id}, Method => undef, Type => undef
-			    };  
-    } elsif ( $elt eq "AnalyzerReport" ) {
+    my ( $hash, $lastElt, $initialcallback, $validStart, $validBody, $parser, $elt, %atts ) = @_;
+    if ( $elt eq "AnalyzerReport" ) {
 	if (defined $initialcallback){
+	    if ( $$validStart ) {
+		printf ("Invalid SCARF File: Multiple Start Tags");
+	    } else {
+		$$validStart = 1;
+	    }
 	    $$hash = { tool_name => $atts{tool_name}, tool_version => $atts{tool_version}, uuid => $atts{uuid} };
 	    $initialcallback->( $$hash );
 	    $$hash = {};
 	}
-    } elsif ( $elt eq "BugCategory" ) {
-	$$hash->{$atts{code}}->{$atts{group}} = { bytes => $atts{bytes}, count => $atts{count} };
-    } elsif ( $elt eq "MetricSummaries" ) {
-	my @metricSum = ();
-	$$hash->{MetricSummaries} = [@metricSum];
-    } elsif ( $elt eq "MetricSummary" ) {
-	my $sum = {};
-	push @{$$hash->{MetricSummaries}}, $sum;
-    } elsif ( $elt eq "Methods" ) {
-	my @methods = ();
-	$$hash->{Methods} = [@methods];
-    } elsif ( $elt eq "Method" && defined $$hash->{Methods} ) {
-	my $primary;
-	if ( $atts{primary} eq "true" ) {
-	    $primary = 1;
-	} else {
-	    $primary = 0;
+    } else {
+	if ( $$validStart == 0 ) {
+	    printf ("Invalid SCARF File: No Analyzer Report Start Tag");
 	}
-	my $method = {MethodId => $atts{id}, primary => $primary};
-	push @{$$hash->{Methods}}, $method;
-    } elsif ( $elt eq "BugLocations" ) {
-	my @locs = ();
-	$$hash->{BugLocations} = [@locs];
-    } elsif ( $elt eq "Location" && defined $$hash->{BugLocations} ) {
-	my $primary;
-	if ( $atts{primary} eq "true" ) {
-	    $primary = 1;
-	} else {
-	    $primary = 0;
-	}
-	my $loc = {LocationId => $atts{id}, primary => $primary};
-	push @{$$hash->{BugLocations}}, $loc;
-    } elsif ( $elt eq "InstanceLocation" ) {
-	$$hash->{InstanceLocation} = {};
-    } elsif ( $elt eq "LineNum" && defined $$hash->{InstanceLocation} ) {
-	$$hash->{InstanceLocation}->{LineNum} = {};
+        if ( $elt eq "BugInstance" ) {
+            $$hash->{BugId} = $atts{id};
+	    $$validBody = 1;
+        } elsif ( $elt eq "Metric" ) {
+            $$hash = {#Value => undef, Class => undef, 
+            		    SourceFile => undef, MetricId => $atts{id}, Method => undef, Type => undef
+            		    };  
+	    $$validBody = 1;
+        } elsif ( $elt eq "BugCategory" ) {
+            $$hash->{$atts{code}}->{$atts{group}} = { bytes => $atts{bytes}, count => $atts{count} };
+        } elsif ( $elt eq "MetricSummaries" ) {
+            my @metricSum = ();
+            $$hash->{MetricSummaries} = [@metricSum];
+        } elsif ( $elt eq "MetricSummary" ) {
+            my $sum = {};
+            push @{$$hash->{MetricSummaries}}, $sum;
+        } elsif ( $elt eq "Methods" ) {
+            my @methods = ();
+            $$hash->{Methods} = [@methods];
+        } elsif ( $elt eq "Method" && defined $$hash->{Methods} ) {
+            my $primary;
+            if ( $atts{primary} eq "true" ) {
+                $primary = 1;
+            } else {
+                $primary = 0;
+            }
+            my $method = {MethodId => $atts{id}, primary => $primary};
+            push @{$$hash->{Methods}}, $method;
+        } elsif ( $elt eq "BugLocations" ) {
+            my @locs = ();
+            $$hash->{BugLocations} = [@locs];
+        } elsif ( $elt eq "Location" && defined $$hash->{BugLocations} ) {
+            my $primary;
+            if ( $atts{primary} eq "true" ) {
+                $primary = 1;
+            } else {
+                $primary = 0;
+            }
+            my $loc = {LocationId => $atts{id}, primary => $primary};
+            push @{$$hash->{BugLocations}}, $loc;
+        } elsif ( $elt eq "InstanceLocation" ) {
+            $$hash->{InstanceLocation} = {};
+        } elsif ( $elt eq "LineNum" && defined $$hash->{InstanceLocation} ) {
+            $$hash->{InstanceLocation}->{LineNum} = {};
+        }
     }
     $$lastElt = $elt;
     return $$hash;
@@ -122,7 +135,7 @@ sub startHandler
 #########Handler for end Tags###########
 sub endHandler
 {
-    my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, 
+    my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
 	    $parser, $elt ) = @_;
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
 	$bugcallback->( $$hash );
@@ -145,6 +158,8 @@ sub endHandler
 	}
 	$metricsumcallback->( $$hash );
         $$hash = {};
+    } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {
+	printf "No BugInstances or Metrics found in file.";
     }
     $$lastElt = "";
     return $$hash;
