@@ -25,7 +25,7 @@ sub new
 
     $bugID = 1;
     $metricID = 1;
-   
+  
     $self->{bodyType} = undef;
     $self->{openBody} = 0;
     $self->{openStart} = 0;
@@ -35,6 +35,20 @@ sub new
     bless $self, $class;
     return $self;
 }
+
+#pretty printing options
+sub getPretty
+{
+    my ($self) = @_;
+    return $self->{_writer}->get_space_before;
+}
+
+sub setPretty
+{
+    my ($self, $pretty_enable) = @_;
+    $self->{_writer}->pretty([$pretty_enable]);
+}
+
 
 #return writer
 sub getWriter

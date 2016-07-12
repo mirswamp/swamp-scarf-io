@@ -126,6 +126,7 @@ class HashToScarf:
 	    self.error_level = error_level
 	else:
 	    self.error_level = 2
+	self.pretty = 0;
 
 	self.bugID = 1
 	self.metricID = 1
@@ -143,6 +144,13 @@ class HashToScarf:
     def getErrorLevel(self):
 	return self.error_level
 
+
+#######################Pretty Print Options##########################################################
+    def getPrettyPrint(self):
+	return self.pretty;
+
+    def setPrettyPrint(self, pretty_enable):
+	self.pretty = pretty_enable;
 
 ####################Allows change of error level############################################################
     def setErrorLevel(self, error_level):
@@ -292,8 +300,10 @@ class HashToScarf:
 		start.text = "%s" % linenum["Start"]
 		end = etree.SubElement(line, "End")
 		end.text = "%s" % linenum["End"]
-
-	self.output.write(etree.tostring(bug, pretty_print = True))
+	if self.pretty:
+	    self.output.write(etree.tostring(bug, pretty_print = True))
+	else:
+	    self.output.write(etree.tostring(bug))
 	bug.clear()
 	self.bugID = self.bugID + 1
 
@@ -352,8 +362,10 @@ class HashToScarf:
 	for reqMetr in ["Type", "Value"]:	
 	    req = etree.SubElement(metric, reqMetr)
 	    req.text = "%s" % metricHash[reqMetr]
-
-	self.output.write(etree.tostring(metric, pretty_print = True))
+	if self.pretty:
+	    self.output.write(etree.tostring(metric, pretty_print = True))
+	else:
+	    self.output.write(etree.tostring(metric))
 	self.metricID = self.metricID + 1
 
 	metricType = metricHash["Type"]
@@ -449,8 +461,10 @@ class HashToScarf:
 
 		    metricStdDeviation = etree.SubElement(metricSummary, "StandardDeviation")
 		    metricStdDeviation.text = "%s" % stdDeviation
-
-	    self.output.write(etree.tostring(summaries, pretty_print = True))
+	    if self.pretty:
+		self.output.write(etree.tostring(summaries, pretty_print = True))
+	    else:
+		self.output.write(etree.tostring(summaries))
 	    summaries.clear()
 	    return self
 

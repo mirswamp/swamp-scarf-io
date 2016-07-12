@@ -98,6 +98,14 @@ void closeWriter (Writer * writerInfo)
 
 
 ///////////////////Accessors/Mutators///////////////////////////////////////////
+int setPretty ( Writer * writerInfo, int pretty_level ) {
+    if (writerInfo != NULL && pretty_level >= 0) {
+	xmlTextWriterSetIndent(writerInfo->writer, pretty_level);
+	return 0;
+    } else {
+	return 1;
+    }
+}
 
 xmlTextWriterPtr getWriter (Writer * writerInfo) 
 {

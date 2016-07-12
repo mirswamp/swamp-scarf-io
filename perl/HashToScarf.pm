@@ -33,10 +33,14 @@ my $bugID;
 #constructer
 sub new
 {
-    my ($class, $output_file, $error_level) = @_;
+    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
     open $self->{output}, ">", $output_file or die "invalid output file";
-    $self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
+    if  ( $pretty_enable ) {
+	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
+    } else {
+	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => 'utf-8' );
+    }	
     $self->{writer}->xmlDecl('UTF-8' );
     
     if (defined $error_level && $error_level == 0 || $error_level == 1) {
@@ -71,13 +75,13 @@ sub getFile
     return $self->{output};
 }
 
+
 # error level accessor/mutator
 sub getErrorLevel
 {
     my ($self) = @_;
     return $self->{error_level};
 }
-
 
 sub setErrorLevel
 {
@@ -90,6 +94,26 @@ sub setErrorLevel
 	}
     }
 }
+
+
+sub getPretty
+{
+    my ($self) = @_;
+    return $self->{_writer}->getDataMode();
+}
+
+sub setPretty
+{
+    my ($self, $pretty_enable) = @_;
+    if ( $pretty_enable ) {
+	$self->{_writer}->setDataMode('true');
+	$self->{_writer}->setDataIndent(2);
+    } else {
+	$self->{_writer}->setDataMode(0);
+	$self->{_writer}->setDataIndent(0);
+    }
+}
+
 
 #handle errors
 #sub error

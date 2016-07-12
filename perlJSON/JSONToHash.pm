@@ -48,6 +48,7 @@ sub parse
     my $hash = {};
     my $lastElt = "";
     my $validStart = 0;
+    my $validBody = 0;
 #    my $bugPath = "/^/BugInstance/^/";
 #    my $metricPath = "/^/Metric/^";
 #    my $bugSumPath = "/^/BugSummary/BugCategory/^";
@@ -180,8 +181,10 @@ sub parse
 #		    }
 #		}
 		$self->{callbacks}->{BugCallback}->($obj->{Value});#$hash);
+		$self->{validBody} = 1;
 	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
 		$self->{callbacks}->{MetricCallback}->($obj->{Value});#$hash);
+		$self->{validBody} = 1;
 	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
 	#	$hash = {};
 	#	for my $category ($obj->{Value}) {
@@ -198,6 +201,9 @@ sub parse
 		$self->{callbacks}->{MetricSummaryCallback}->($hash);
 	    }
 	}	
+    }
+    if ( $self->{validBody} == 0 ) {
+	print (" No BugInstances or Metrics found in file " );
     }
 }
 
