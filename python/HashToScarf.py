@@ -187,27 +187,7 @@ class HashToScarf:
 
 
     def addBugInstance(self, bugHash):
-		#check for req elmts
-#	for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
-#	    if reqElt not in bugHash:
-#		error(self.error_level, "Required element: %s could not be found in BugInstance: %s" % (reqElt, self.bugID))
-#	if "Methods" in bugHash:
-#	    for method in bugHash["Methods"]:
-#		methodID = 1
-#		if "primary" not in method:
-#		    error(self.error_level, "Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
-#		if "name" not in method:
-#		    error(self.error_level, "Required text: name not found for Method: %s in BugInstance: %s" % (methodID, self.bugID))
-#		methodID = methodID + 1
-#	if "BugLocations" in bugHash:	
-#	    for location in bugHash["BugLocations"]:
-#		if "primary" not in location:
-#		    error(self.error_level, "Required attribute: primary could not be found for Location: %s in BugInstance: %s" % (locID, bugID))
-#		for reqLocElt in ["SourceFile"]:
-#		    if reqLocElt not in location:
-#			error(self.error_level, "Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
-
-	
+	#check for req elmts
 	if self.error_level != 0 :
 	    errors =  checkBug(bugHash, self.bugID)
 	    for error in errors:
@@ -321,13 +301,17 @@ class HashToScarf:
 	else:
 	    code = "undefined"
 	
-	if (code, group) in self.bugSummaries:
-	    summary = self.bugSummaries[(code, group)]
-	    summary["count"] = summary["count"] + 1
-	    summary["bytes"] = summary["bytes"] + byte_count
-	    self.bugSummaries[(code, group)] = summary
+	if code in self.bugSummaries:
+	    if group in self.bugSummaries[code]:
+		summary = self.bugSummaries[code][group]
+		summary["count"] = summary["count"] + 1
+		summary["bytes"] = summary["bytes"] + byte_count
+		self.bugSummaries[code][group] = summary
+	    else:
+		self.bugSummaries[code][group] = {"count":1, "bytes":byte_count}
 	else:
-	    self.bugSummaries[(code, group)] = {"count":1, "bytes":byte_count}
+	    self.bugSummaries[code] = {}
+	    self.bugSummaries[code][group] = {"count":1, "bytes":byte_count}
 
 	bug.clear()
 	return self
@@ -421,13 +405,13 @@ class HashToScarf:
 
 	if self.bugSummaries:
 	    summaries = etree.Element("BugSummary")
-	    for (code,group) in self.bugSummaries:
-		summary = self.bugSummaries[(code,group)]
-		category = etree.SubElement(summaries, "BugCategory")
-		category.set("group", group)
-		category.set("code", code)
-		category.set("count", "%s" % summary["count"])
-		category.set("bytes", "%s" % summary["bytes"])
+	    for code in self.bugSummaries:
+		for group in code:
+		    summary = self.bugSummaries[code][group]
+		    codeBranch = etree.SubElement(summaries, code)
+		    groupBranch = etree.SubElement(codeBranch, group)
+		    groupBranch.set("count", "%s" % summary["count"])
+		    groupBranch.set("bytes", "%s" % summary["bytes"])
 	    self.output.write(etree.tostring(summaries, pretty_print = True))
 
 	if self.metricSummaries:

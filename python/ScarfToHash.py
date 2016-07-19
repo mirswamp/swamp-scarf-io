@@ -39,7 +39,10 @@ class ScarfToHash:
 		parent = elem
 
 		if "InitialCallback" in callback:
-		    callback["InitialCallback"](initialDetails)
+		    if "CallbackData" in callback:
+			callback["InitialCallback"](initialDetails, callback["CallbackData"])
+		    else:
+			callback["InitialCallback"](initialDetails)
 		parent.clear()
 		self.startValid = 1;
 		
@@ -106,9 +109,10 @@ class ScarfToHash:
 		    bug["Methods"] = methods
 		if len(cweids) != 0:
 		    bug["CweIds"] = cweids
-	
-		callback["BugCallback"](bug)
-		
+		if  "CallbackData" in callback :
+		    callback["BugCallback"](bug, callback["CallbackData"])
+		else:
+		    callback["BugCallback"](bug)
 		parent.clear()
 
 	    #parse metric
@@ -123,13 +127,15 @@ class ScarfToHash:
 			metric["SourceFile"] = subelement[0].text
 		    else:
 			metric[subelement.tag] = subelement.text
-	
-		callback["MetricCallback"](metric)
+		if  "CallbackData" in callback :
+		    callback["MetricCallback"](metric, callback["CallbackData"])
+		else:
+		    callback["MetricCallback"](metric)
 		parent.clear()
 	
 
 	    #parse summaries
-	    elif elem.tag == "MetricSummaries" and "SummaryCallback" in callback and event == "end":
+	    elif elem.tag == "MetricSummaries" and "MetricSummaryCallback" in callback and event == "end":
 		if  not self.startValid :
 		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
 		summary = {}
@@ -141,20 +147,27 @@ class ScarfToHash:
 			else:
 			    metricType = values.text
 		    summary[metricType] = sum_hash
-
-		callback["SummaryCallback"](summary)
+		if "CallbackData" in callback:
+		    callback["MetricSummaryCallback"](summary, callback["CallbackData"])
+		else:
+		    callback["MetricSummaryCallback"](summary)
 		parent.clear()
 
 
-	    elif elem.tag == "BugSummary" and "SummaryCallback" in callback and event == "end":
+	    elif elem.tag == "BugSummary" and "BugSummaryCallback" in callback and event == "end":
 		if  not self.startValid :
 		    print("Misformed SCARF File: No AnalyzerReport Tag before first element")
 		summary = {}
 		for category in elem:
 		    sum_hash = {"bytes":category.get("bytes"), "count":category.get("count")}
-		    summary[category.get("code"), category.get("group")] = sum_hash
-
-		callback["SummaryCallback"](summary)
+		    if category.get("code") not in summary:
+			summary[category.get("code")] = {}
+		    summary[code][category.get("group")] = sum_hash
+		
+		if "CallbackData" in callback:
+		    callback["BugSummaryCallback"](summary, callback["CallbackData"])
+		else:
+		    callback["BugSummaryCallback"](summary)
 		parent.clear()
 
 	    
