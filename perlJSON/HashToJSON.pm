@@ -275,7 +275,24 @@ sub addBugInstance
 	$self->{openBody} = 1;
     } 
     $self->{bodyType} = "bug";
-
+    $bugInstance->{BugId} = $bugID;
+    foreach my $location (@{$bugInstance->{BugLocations}}) {
+        my $primary;
+        if ($location->{primary}) {
+            $location->{primary} = "true";
+        } else {
+            $location->{primary} = "false";
+        }
+    if (defined $bugInstance->{Methods}) {
+        foreach my $method (@{$bugInstance->{Methods}}) {
+            my $primary;
+            if ($method->{primary}) {
+                $method->{primary} = "true";
+            } else {
+                $method->{primary} ="false";
+            }
+	}
+    }
     my $json = $self->{writer}->encode($bugInstance);
     $json =~ s/\n/\n    /g;
     $self->{output}->print("$json");
@@ -453,10 +470,11 @@ sub addMetric
 	$self->{openBody} = 1;
     } 
     $self->{bodyType} = "metric";
+    $bugInstance->{MetricId} = $metricID;
 
-    my $json = $self->{writer}->encode($bugInstance);
+    my $json = $self->{writer}->encode($metric);
     $json =~ s/\n/\n    /g;
-    $self->{output}->print("$json,");
+    $self->{output}->print("$json");
 
 #    $writer->start_object();
 #
@@ -512,7 +530,7 @@ sub addMetric
             $self->{MetricSummaries}->{$type} = $type_hash_data;
         }
     }
-    $writer->endTag();
+#    $writer->endTag();
     return $self;
 }
 
@@ -522,7 +540,7 @@ sub addSummary
 {
     my ($self) = @_ ;
     my $out = $self->{output};
-    if (defined $self->{BugSummaries} or defined $self->{MetricSummaries}) {
+    if ($self->{openBody}) {
 	$out->print("],\n ");
 #	$writer->end_array();
 #	$writer->end_property();
