@@ -52,33 +52,36 @@ class ParseContentHandler(YajlContentHandler):
                     if self.curr in ["primary", "MethodId"]:
                         self.data["Methods"][self.arrayLoc][self.curr] = stringNum
                 elif self.arrayType == "CweIds":
-            self.data[self.arrayType].append({})
-                        self.data["CweIds"][self.arrayLoc] = stringNum
-                        self.arrayLoc = self.arrayLoc + 1
+		    self.data[self.arrayType].append({})
+                    self.data["CweIds"][self.arrayLoc] = stringNum
+                    self.arrayLoc = self.arrayLoc + 1
         if self.hashType == "metric":
             if self.curr in ["MetricId", "Value"]:
                 self.data[self.curr] = stringNum;
         if self.hashType == "bugsum" :
             if self.curr in ["bytes", "count"]:
-        if  (self.sumCode) not in self.data:
-            self.data[self.sumCode] = {}
-        if (self.sumGroup) not in self.data[self.sumCode]:
-            self.data[self.sumCode][self.sumGroup] = {} 
-                self.data[self.sumCode][self.sumGroup][self.curr] = stringNum
+		if  (self.sumCode) not in self.data:
+		    self.data[self.sumCode] = {}
+		if (self.sumGroup) not in self.data[self.sumCode]:
+		    self.data[self.sumCode][self.sumGroup] = {} 
+		    self.data[self.sumCode][self.sumGroup][self.curr] = stringNum
         
         if self.hashType == "metrsum" :
             if self.curr in ["Sum", "Maximum", "Minimum", "Average", "Count", "SumOfSquares", "StandardDeviation"]:
-        if (self.sumGroup) not in self.data:
-            self.data[self.sumGroup] = {} 
-                self.data[self.sumGroup][self.curr] = stringNum
+		if (self.sumGroup) not in self.data:
+		    self.data[self.sumGroup] = {} 
+		    self.data[self.sumGroup][self.curr] = stringNum
 
     def yajl_string(self, ctx, stringVal):
         if not self.requiredStart and self.curr in ["uuid", "tool_name", "tool_version"]:
             self.initialInfo[self.curr] = stringVal
         if "uuid" in self.initialInfo and "tool_name" in self.initialInfo and "tool_version" in self.initialInfo:
-        self.requiredStart = 1
-        if "InitialCallback" in self.callbacks:
-            self.callbacks["InitialCallback"](self.initialInfo)
+	    self.requiredStart = 1
+	    if "InitialCallback" in self.callbacks:
+		if "CallbackInfo" in self.callbacks:
+		    self.callbacks["InitialCallback"](self.initialInfo, self.callbacks["CallbackInfo"])
+		else:
+		    self.callbacks["InitialCallback"](self.initialInfo)
 
         elif self.hashType == "bug":
             if self.curr in ["BugId", "AssessmentReportFile", "BuildId", "ClassName", "BugGroup", "BugCode", "BugRank", "BugSeverity", "BugMessage", "ResolutionSuggestion", "BugId"]:
@@ -106,7 +109,7 @@ class ParseContentHandler(YajlContentHandler):
                         else:
                             self.data["Methods"][self.arrayLoc]["primary"] = 0
                 elif self.arrayType == "CweIds":
-            self.data[self.arrayType].append({})
+		    self.data[self.arrayType].append({})
                     self.data["CweIds"][self.arrayLoc] = stringVal
                     self.arrayLoc = self.arrayLoc + 1;
         
@@ -116,23 +119,22 @@ class ParseContentHandler(YajlContentHandler):
 
         elif self.hashType == "bugsum" :
             if self.curr in ["bytes", "count"]:
-        if  (self.sumCode) not in self.data:
-            self.data[self.sumCode] = {}
-        if (self.sumGroup) not in self.data[self.sumCode]:
-            self.data[self.sumCode][self.sumGroup] = {} 
-                self.data[self.sumCode][self.sumGroup][self.curr] = stringVal
+		if  (self.sumCode) not in self.data:
+		    self.data[self.sumCode] = {}
+		if (self.sumGroup) not in self.data[self.sumCode]:
+		    self.data[self.sumCode][self.sumGroup] = {} 
+		    self.data[self.sumCode][self.sumGroup][self.curr] = stringVal
         
         elif self.hashType == "metrsum" :
             if self.curr in ["Sum", "Maximum", "Minimum", "Average", "Count", "SumOfSquares", "StandardDeviation"]:
-        if (self.sumGroup) not in self.data:
-            self.data[self.sumGroup] = {} 
-                self.data[self.sumGroup][self.curr] = stringVal
+		if (self.sumGroup) not in self.data:
+		    self.data[self.sumGroup] = {} 
+		    self.data[self.sumGroup][self.curr] = stringVal
 
     def yajl_start_map(self, ctx):
         self.depth = self.depth + 1
         if self.isArray:
-        self.data[self
-        .arrayType].append({})
+	    self.data[self.arrayType].append({})
 
     def yajl_map_key(self, ctx, stringVal):
         if self.depth == 1 and stringVal == "AnalyzerReport":
@@ -180,24 +182,39 @@ class ParseContentHandler(YajlContentHandler):
         elif self.hashType == "bugsum" and self.depth == 4:
             self.sumGroup = stringVal
         elif self.hashType == "metrsum" and self.depth == 3:
-        self.sumGroup = stringVal
+	    self.sumGroup = stringVal
         self.curr = stringVal
-    return self
+	return self
 
     def yajl_end_map(self, ctx):
         self.depth = self.depth - 1
         if self.depth == 2:
             if self.hashType == "bug" and "BugCallback" in self.callbacks:
-                self.callbacks["BugCallback"](self.data)                
+		if "CallbackData" in self.callbacks:
+		    self.callbacks["BugCallback"](self.data, self.callbacks["CallbackData"])                
+		else:
+		    self.callbacks["BugCallback"](self.data)                
             elif self.hashType == "metric" and "MetricCallback" in self.callbacks:
-                self.callbacks["MetricCallback"](self.data)                
+		if "CallbackData" in self.callbacks:
+		    self.callbacks["MetricCallback"](self.data, self.callbacks["CallbackData"])                
+		else:
+		    self.callbacks["MetricCallback"](self.data)                
             elif self.hashType == "bugsum" and "BugSummaryCallback" in self.callbacks:
-                self.callbacks["BugSummaryCallback"](self.data)                
+		if "CallbackData" in self.callbacks:
+		    self.callbacks["BugSummaryCallback"](self.data, self.callbacks["CallbackData"])                
+		else:
+		    self.callbacks["BugSummaryCallback"](self.data)                
             elif self.hashType == "metrsum" and "MetricSummaryCallback" in self.callbacks:
-                self.callbacks["MetricSummaryCallback"](self.data)                
+		if "CallbackData" in self.callbacks:
+		    self.callbacks["MetricSummaryCallback"](self.data, self.callbacks["CallbackData"])                
+		else:
+		    self.callbacks["MetricSummaryCallback"](self.data)                
         elif self.depth == 0:
             if "InitialCallback" in self.callbacks and not self.requiredStart:
-                self.callbacks["InitialCallback"](self.initialInfo)
+		if "CallbackData" in self.callbacks:
+		    self.callbacks["InitialCallback"](self.initialInfo, self.callbacks)
+		else:
+		    self.callbacks["InitialCallback"](self.initialInfo)
         if self.isArray:
             self.arrayLoc = self.arrayLoc + 1
         
@@ -215,12 +232,12 @@ class JSONToHash:
     def __init__(self, inputFile, callbacks):
         self.handler = ParseContentHandler(callbacks)
         self.parser = YajlParser(content_handler = self.handler)#callbacks))
-    self.filename = inputFile
+	self.filename = inputFile
 
     def parse(self):
-    fh = open (self.filename) 
+	fh = open (self.filename) 
         self.parser.parse(fh)
-    fh.close()
+	fh.close()
 
 
 1

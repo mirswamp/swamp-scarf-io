@@ -49,11 +49,12 @@ sub parse
     my $lastElt = "";
     $self->{parser}->setHandlers(
 				    "Start", sub { $hash = startHandler( \$hash, \$lastElt, 
-					    $self->{callbacks}->{InitialCallback}, \$self->{validStart}, \$self->{validBody},  @_ ) },
+					    $self->{callbacks}->{InitialCallback}, \$self->{validStart}, 
+					    \$self->{validBody}, $self->{callbacks}->{CallbackData},  @_ ) },
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
-					    $self->{callbacks}->{BugSummaryCallback}, 
-					    $self->{callbacks}->{MetricSummaryCallback}, \$self->{validBody}, @_ ) },
+					    $self->{callbacks}->{BugSummaryCallback}, $self->{callbacks}->{MetricSummaryCallback},
+					    \$self->{validBody}, $self->{callbacks}->{CallbackData}, @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
@@ -65,7 +66,7 @@ sub parse
 ##########Handler for start tags##########
 sub startHandler
 {
-    my ( $hash, $lastElt, $initialcallback, $validStart, $validBody, $parser, $elt, %atts ) = @_;
+    my ( $hash, $lastElt, $initialcallback, $validStart, $validBody, $data, $parser, $elt, %atts ) = @_;
     if ( $elt eq "AnalyzerReport" ) {
 	if (defined $initialcallback){
 	    if ( $$validStart ) {
@@ -74,7 +75,7 @@ sub startHandler
 		$$validStart = 1;
 	    }
 	    $$hash = { tool_name => $atts{tool_name}, tool_version => $atts{tool_version}, uuid => $atts{uuid} };
-	    $initialcallback->( $$hash );
+	    $initialcallback->( $$hash, $data );
 	    $$hash = {};
 	}
     } else {
@@ -136,27 +137,28 @@ sub startHandler
 sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
-	    $parser, $elt ) = @_;
+	    $data, $parser, $elt ) = @_;
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
-	$bugcallback->( $$hash );
+	$bugcallback->( $$hash, $data );
 	$$hash = {};
     } elsif ( $elt eq "Metric" && defined $metriccallback ) {
-	$metriccallback->( $$hash );
-        $$hash = {};
-    } elsif ( $elt eq "BugSummary" && defined $bugsumcallback ) {
-    	$bugsumcallback->( $$hash ); 
-        $$hash = {};
-    } elsif ( $elt eq "MetricSummaries" && defined $metricsumcallback ) {
-	if( exists $$hash->{SourceFile} && ! (defined $$hash->{SourceFile} ) ) {
+	if( ! defined $$hash->{SourceFile} ) {
 	    delete $$hash->{SourceFile};
 	}
-	if( exists $$hash->{Type} && ! (defined $$hash->{Type}) ) {
+	if( ! defined $$hash->{Type} ) {
 	    delete $$hash->{Type};
 	}
-	if( exists $$hash->{Method} && ! (defined $$hash->{Method}) ) {
+	if( ! defined $$hash->{Method} ) {
+	    print "hit\n";
 	    delete $$hash->{Method};
 	}
-	$metricsumcallback->( $$hash );
+	$metriccallback->( $$hash, $data );
+        $$hash = {};
+    } elsif ( $elt eq "BugSummary" && defined $bugsumcallback ) {
+	$bugsumcallback->( $$hash, $data ); 
+	$$hash = {};
+    } elsif ( $elt eq "MetricSummaries" && defined $metricsumcallback ) {
+	$metricsumcallback->( $$hash, $data );
         $$hash = {};
     } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {
 	printf "No BugInstances or Metrics found in file.";

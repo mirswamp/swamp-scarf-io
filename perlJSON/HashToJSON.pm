@@ -283,6 +283,7 @@ sub addBugInstance
         } else {
             $location->{primary} = "false";
         }
+    }
     if (defined $bugInstance->{Methods}) {
         foreach my $method (@{$bugInstance->{Methods}}) {
             my $primary;
@@ -542,76 +543,42 @@ sub addSummary
     my $out = $self->{output};
     if ($self->{openBody}) {
 	$out->print("],\n ");
-#	$writer->end_array();
-#	$writer->end_property();
 	$self->{openBody} = 0;
 	$self->{bodyType} = undef; 
         if (defined $self->{BugSummaries}) {
 
 	    $out->print("  \"BugSummaries\" : ");
 	    $out->print($self->{writer}->encode($self->{BugSummaries}));
-#	    $writer->start_property("BugSummary");
-#	    $writer->start_object();
-#	    $writer->start_property("BugCategory");
-#	    $writer->start_array();
-#	    foreach my $code (keys %{$self->{BugSummaries}}) {
-#		foreach my $group (keys %{$self->{BugSummaries}->{$code}}) {
-#                    my $hashes = $self->{BugSummaries}->{$code}->{$group};
-#		    $writer->start_object();
-#		    $writer->add_property("group", $group);
-#		    $writer->add_property("code", $code);
-#		    $writer->add_property("count", $hashes->{count});
-#		    $writer->add_property("bytes", $hashes->{bytes});
-#		    $writer->end_object();
-#                }
-#            }
-#	    $writer->end_array();
-#	    $writer->end_property();
-#	    $writer->end_object();
-#	    $writer->end_property();
 	    if ($self->{MetricSummaries}) {
 		$out->print(", ");		
 	    }
         }
     
         if ($self->{MetricSummaries}) {
-#	    $writer->start_property("MetricSumamries");
-#	    $writer->start_object();
-#	    $writer->start_property("MetricSummary");
-#	    $writer->start_array();
 	    foreach my $summaryName (keys(%{$self->{MetricSummaries}})) {
                 my $summary = $self->{MetricSummaries}->{$summaryName};
-#    	    
-#		$writer->add_property("Type", $summaryName);
-#    
-                my $count = $summary->{Count};
-#		$writer->add_property("Count", $count);
-#    
-#                if (defined $summary->{Sum}) {
-#                    for my $sumElt (qw/Sum SumOfSquares Minimum Maximum/) {
-#                        $writer->add_property($sumElt, $summary->{$sumElt});
-#                    }
-#    
-                my $average = 0;
-                if ($count != 0) {
-                    $average = $summary->{Sum}/$count;
-                }
-		$summary->{Average} = sprintf("%.2f", $average);
-#                    $writer->add_property("Average", (sprintf("%.2f", $average)));
-#    
-		my $denominator = $count * ($count - 1);
-                my $square_of_sum = $summary->{Sum} * $summary->{Sum};
-                my $standard_dev = 0;
-                if ($denominator != 0) {
-                    $standard_dev = sqrt(($summary->{SumOfSquares} * $count - $square_of_sum ) / $denominator);
-                }
-		$summary->{StandardDeviation} = (sprintf("%.2f", $standard_dev));
-#                   $writer->add_property("StandardDeviation", (sprintf("%.2f", $standard_dev)));
+		
+		if ( defined $summary->{Sum} ) {
+		    my $count = $summary->{Count};
+		    my $average = 0;
+		    if ($count != 0) {
+			$average = $summary->{Sum}/$count;
+		    }
+		    $summary->{Average} = sprintf("%.2f", $average);
+		    my $denominator = $count * ($count - 1);
+		    my $square_of_sum = $summary->{Sum} * $summary->{Sum};
+		    my $standard_dev = 0;
+		    if ($denominator != 0) {
+			$standard_dev = sqrt(($summary->{SumOfSquares} * $count - $square_of_sum ) / $denominator);
+		    }
+		    $summary->{StandardDeviation} = (sprintf("%.2f", $standard_dev));
+		}
 	    }
 	    $out->print(" \"MetricSummaries\" : ");
 	    $out->print($self->{writer}->encode($self->{MetricSummaries}));
 
-	}
+		
+	}	
     }
     return $self;
 }
@@ -619,7 +586,7 @@ sub addSummary
 
 
 
-return 1;
+1;
 
 
 

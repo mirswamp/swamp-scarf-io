@@ -99,7 +99,11 @@ sub parse
 		if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
 		    $validStart = 1;
 		    if ( defined $self->{callbacks}->{InitialCallback} ) {
-			$self->{callbacks}->{InitialCallback}->($hash);
+			if ( exists $self->{callbacks}->{CallbackData} ) {
+			    $self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData});
+			} else {
+			    $self->{callbacks}->{InitialCallback}->($hash);
+			}
 		    }
 		}
 	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/BugInstances\/)([0-9]+)/) {
@@ -180,10 +184,18 @@ sub parse
 #			$hash->{SourceFile} = $tempHash->{Location}->{SourceFile};
 #		    }
 #		}
-		$self->{callbacks}->{BugCallback}->($obj->{Value});#$hash);
+		if ( exists $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		} else {
+		    $self->{callbacks}->{BugCallback}->($obj->{Value});#$hash);
+		}
 		$self->{validBody} = 1;
 	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
-		$self->{callbacks}->{MetricCallback}->($obj->{Value});#$hash);
+		if ( exists $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		} else {
+		    $self->{callbacks}->{MetricCallback}->($obj->{Value});#$hash);
+		}
 		$self->{validBody} = 1;
 	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
 	#	$hash = {};
@@ -195,10 +207,19 @@ sub parse
 	#	    }
 	#	    $hash->{$code}->{$category->group} = $data;
 	#	}
-		$self->{callbacks}->{BugSummaryCallback}->($obj->{Value});#$hash);
+		
+		if ( exists $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		} else {
+		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value});#$hash);
+		}
 	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
 		$hash = $obj->{Value};
-		$self->{callbacks}->{MetricSummaryCallback}->($hash);
+		if ( exists $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData});
+		} else {
+		    $self->{callbacks}->{MetricSummaryCallback}->($hash);
+		}
 	    }
 	}	
     }
