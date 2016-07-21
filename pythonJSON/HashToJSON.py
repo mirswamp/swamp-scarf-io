@@ -395,15 +395,6 @@ class HashToJSON:
 	self.curr = "summary"
 
 	if self.bugSummaries:
-#            summaries = etree.Element("BugSummary")
-#            for (code,group) in self.bugSummaries:
-#                summary = self.bugSummaries[(code,group)]
-#                category = etree.SubElement(summaries, "BugCategory")
-#                category.set("group", group)
-#                category.set("code", code)
-#                category.set("count", "%s" % summary["count"])
-#                category.set("bytes", "%s" % summary["bytes"])
-#            self.output.write(etree.tostring(summaries, pretty_print = True))
 
             writer.yajl_gen_string("BugSummaries")
             writer.yajl_gen_array_open()

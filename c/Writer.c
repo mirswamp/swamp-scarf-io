@@ -139,22 +139,6 @@ int setErrorLevel(Writer * writerInfo, int errorLevel)
     return 1;
 }
 
-//void error (int errorLevel, char * message) 
-//{
-//    if (writerInfo != NULL) {
-//	if (errorLevel == 0) {
-//	    return;
-//	} else {
-//	    printf("%s", message);
-//	    if (errorLevel == 2) {
-//		exit(1);	
-//	    }
-//	}
-//    } else {
-//	printf ("invalid writer");
-//    }
-//
-//}
 
 void setIndent(Writer * writerInfo, int tabSpace) {
     xmlTextWriterSetIndent(writerInfo->writer, tabSpace);
@@ -168,7 +152,6 @@ char * checkBug(BugInstance * bug , int bugID)
     errors[0] = '\0';
     char * temp = malloc(140);    
 
-//    printf("errors: %p::%s\n", errors, errors);
     if (bug->bugLocations == NULL) {	
 	sprintf(temp, "Required element: BugLocations could not be found in BugInstance: %d\n", bugID);
 	errors = realloc(errors, strlen(errors) + strlen(temp));
@@ -267,40 +250,6 @@ char * checkBug(BugInstance * bug , int bugID)
 
 int addBug(Writer * writerInfo, BugInstance * bug)
 {
-//    if (bug->bugLocations == NULL) {
-//	error(writerInfo->errorLevel, "Required element: BugLocations could not be found in BugInstance");
-//    } 
-//    if (bug->bugMessage == NULL) {
-//	error(writerInfo->errorLevel, "Required element: BugMessage could not be found in BugInstance");
-//    } 
-//    if (bug->buildId == NULL) {
-//	error(writerInfo->errorLevel, "Required element: BuildId could not be found in BugInstance");
-//    } 
-//    if (bug->assessmentReportFile == NULL) {
-//	error(writerInfo->errorLevel, "Required element: AssessmentReportFile could not be found in BugInstance");
-//    } 
-//    if (bug->methods != NULL) {
-//	Method temp = bug->methods;
-//	while (temp != NULL) {
-//	    if (temp->primary != 0 && temp->primary != 1) {
-//		error(writerInfo->errorLevel, "Invalid primary attribute for Method");
-//	    }
-//	    if (temp->name == NULL) {
-//		error(writerInfo->errorLevel, "Required text: name of Method");
-//	    }
-//	    temp = temp->next;
-//	}
-//    }
-//    Location temp = bug->bugLocations;
-//    while (temp != NULL) {
-//        if (temp->primary != 0 && temp->primary != 1) {
-//	   error(writerInfo->errorLevel, "Invalid primary attribute for a Location");
-//        }
-//        if (temp->sourceFile == NULL) {
-//	   error(writerInfo->errorLevel, "Required Element: SourceFile of Location");
-//        }
-//        temp = temp->next;
-//    }
     char * errors = NULL;
     errors = checkBug(bug, writerInfo->bugId);
     if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
@@ -915,16 +864,6 @@ int addStartTag(Writer * writerInfo, Initial * initial)
     }
     free(errors);
     
-//    if ( initial->tool_name == NULL ) {
-//	error(writerInfo->errorLevel, "Required Attribute: tool_name not found in Initial");	
-//    }
-//    if ( initial->tool_version == NULL ) {
-//	error(writerInfo->errorLevel, "Required Attribute: tool_version not found in Initial");	
-//    }
-//    if ( initial->uuid == NULL ) {
-//	error(writerInfo->errorLevel, "Required Attribute: uuid not found in Initial");	
-//    }
-
     int rc;
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "AnalyzerReport");

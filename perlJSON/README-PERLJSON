@@ -1,0 +1,2 @@
+DEPENDENCIES: JSON::MaybeXS
+	      JSON::SL

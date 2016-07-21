@@ -7,7 +7,7 @@
 
 
 
-
+////////////////////structs///////////////////////////
 typedef struct BugSummaries {
     char * code;
     struct BugSummary * codeSummary;
@@ -28,7 +28,7 @@ typedef struct Writer {
 } Writer;
 
 
-
+//////////////constructor////////////////////
 Writer * newWriter(char * filename)
 {
     Writer * writerInfo = calloc(1, sizeof(Writer));
@@ -53,7 +53,7 @@ void closeWriter (Writer * writerInfo)
     free(writerInfo);
 }
 
-
+////////////////////////change options////////////////////////////////
 int setPretty ( Writer * writerInfo, int pretty_level ) {
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level); 
 }

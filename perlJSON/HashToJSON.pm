@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 
 package HashToJSON;
-use JSON::Streaming::Writer;
 use JSON::MaybeXS;
 
 sub new
@@ -9,10 +8,6 @@ sub new
     my ($class, $output_file, $error_level) = @_;
     my $self = {};
     open $self->{output}, ">", $output_file or die "invalid output file";
-#    $self->{output} = $output_file;
-
-#    $self->{writer} = JSON::Streaming::Writer->for_file($self->{output});
-#    $self->{writer}->pretty_output(1);
 
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
     $self->{writer} = $self->{writer}->allow_nonref ([$enable]);
@@ -120,13 +115,6 @@ sub addStartTag
     if ( $self->{openStart} == 0 ) {
 	$self->{output}->print("{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
 
-
-#	$jsonw->start_object();
-#	$jsonw->start_property("AnalyzerReport");
-#        $jsonw->start_object();
-#        $jsonw->add_property("tool_name" => $initial_details->{tool_name});
-#        $jsonw->add_property("tool_version" => $initial_details->{tool_version});
-#	$jsonw->add_property("uuid" => $initial_details->{uuid});
 	$self->{openStart} = 1;
     }
     return $self;
@@ -139,16 +127,11 @@ sub addEndTag
     
     if ( $self->{openBody} == 1 ) {
 	$self->{output}->print("]\n");
-#	$jsonw->end_array();    
-#	$jsonw->end_property();
 	$self->{openBody} = 0;
 	$self->{bodyType} = undef;
     }
     if ( $self->{openStart} == 1 ) {
 	$self->{output}->print("}\n}\n");
-#	$jsonw->end_object();
-#	$jsonw->end_property();
-#	$jsonw->end_object();
 	$self->{openStart} = 0;
     }
     return $self;
@@ -298,112 +281,6 @@ sub addBugInstance
     $json =~ s/\n/\n    /g;
     $self->{output}->print("$json");
 
-#   if ( defined $self->{MetricSummaries} ) {
-#	if ($self->{error_level} != 0) {
-#	    print  "Only one of BugInstances or Metrics allowed";
-#	}
-#	if ( $self->{error_level} == 2 ) {
-#	    die "Exiting";
-#	}
-#	$writer->end_array;
-#    } elsif ( ! ( defined $self->{BugSummaries} ) ) {
-#	$writer->start_property("BugInstance");
-#	$writer->start_array;
-#	$self->{openBody} = 1;
-#    } 
-#    $writer->add_value($bugInstance);
-#
-#    $writer->start_object();
-#    $writer->add_property("id", $bugID);
-#
-#    for my $baseElts( qw/ClassName BugGroup BugCode BugRank BugSeverity BugMessage ResolutionSuggestion/ ) {    
-#	if (defined $bugInstance->{$baseElts}) {
-#	    $writer->add_property($baseElts, $bugInstance->{$baseElts});
-#	}
-#    }
-#
-#    my $locID = 1;
-#    $writer->start_property("BugLocations");
-#    $writer->start_object();
-#    $writer->start_property("Location");
-#    $writer->start_array();
-#    foreach my $location (@{$bugInstance->{BugLocations}}) {
-#	$writer->start_object();
-#        my $primary;
-#        if ($location->{primary}) {
-#            $primary = "true";
-#        } else {
-#            $primary = "false";
-#        }
-#	$writer->add_property("id", $locID);
-#	$writer->add_property("primary", $primary);
-#        for my $locElt (qw/SourceFile StartLine EndLine StartColumn EndColumn Explanation/) {
-#            if ( defined $location->{$locElt}  ) {
-#		$writer->add_property($locElt, $location->{$locElt});
-#            }
-#        }
-#        $locID++;
-#	$writer->end_object();
-#    }
-#    $writer->end_array();
-#    $writer->end_property();
-#    $writer->end_object();
-#    $writer->end_property();
-#
-#    if (defined $bugInstance->{CweIds}) {
-#	$writer->start_property("CweId");
-#	$writer->add_value($bugInstance->{CweIds});
-#	$writer->end_property;
-##        foreach my $cweid (@{$bugInstance->{CweIds}}) {
-##            $writer->add_value($cweid);
-##        }
-#    }
-#
-#    if (defined $bugInstance->{Methods}) {
-#        my $methodID=1;
-#        $writer->start_property("Methods");
-#	$writer->start_array();
-#        foreach my $method (@{$bugInstance->{Methods}}) {
-#            my $primary;
-#            if ($method->{primary}) {
-#                $primary = "true";
-#            } else {
-#                $primary ="false";
-#            }
-#	    $writer->start_object();
-#	    $writer->add_property("name", $method->{name});
-#	    $writer->add_property("id", $methodID);
-#	    $writer->add_property("primary", $primary);
-#	    $writer->end_object();
-#            $methodID++;
-#        }
-#	$writer->end_array();
-#	$writer->end_property();
-#    }
-#
-#    $writer->start_property("BugTrace");
-#    $writer->start_object();
-#    if ( defined $bugInstance->{BuildId} ) {
-#	$writer->add_property("BuildId", $bugInstance->{BuildId});
-#    }
-#    if ( defined $bugInstance->{AssessmentReportFile} ) {
-#	$writer->add_property("AssessmentReportFile", $bugInstance->{AssessmentReportFile});
-#    }
-#    if ( defined $bugInstance->{InstanceLocation} ) {
-#	$writer->start_property("InstanceLocation");
-#        $writer->start_object();
-#        if ( defined $bugInstance->{InstanceLocation}->{Xpath} ) {
-#            $writer->add_property("Xpath", $bugInstance->{InstanceLocation}->{Xpath});
-#        }
-#        if ( defined $bugInstance->{InstanceLocation}->{LineNum} ) {
-#            $writer->add_property("LineNum", $bugInstance->{InstanceLocation}->{LineNum});
-#        }
-#        $writer->end_object();
-#        $writer->end_property();
-#    }
-#    $writer->end_object();
-#    $writer->end_property();
-#    $writer->end_object();
 
     #byte count info
     $final_byte_count = tell $self->{output};
@@ -477,23 +354,6 @@ sub addMetric
     $json =~ s/\n/\n    /g;
     $self->{output}->print("$json");
 
-#    $writer->start_object();
-#
-#    $writer->add_property("id", $metricID);
-#    $writer->start_property("Location");
-#    $writer->start_object();
-#    $writer->add_property("SourceFile", $metric->{SourceFile});
-#    $writer->end_object();
-#    $writer->end_property();
-#
-#    for my $metrElmt (qw/Class Method Type Value/) {
-#        if (defined $metric->{$metrElmt}) {
-#	    $writer->add_property($metrElmt, $metric->{$metrElmt});
-#        }
-#    }
-#
-#    $writer->end_object();
-#
     $metricID++;
     my $value = $metric->{Value};
     my $type = $metric->{Type};

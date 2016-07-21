@@ -18,7 +18,6 @@
 package ScarfToHash;
 use strict;
 use XML::Parser;
-use Data::Dumper;
 
 ##########Initialize Reader##########
 sub new
@@ -33,8 +32,6 @@ sub new
     $self->{parser} = new XML::Parser ();
     $self->{validStart} = 0;
     $self->{validBody} = 0;
-#    $self->{MetricSummary} = {};
-#    $self->{BugSummary} = {};
 
     bless $self, $class;
 
@@ -78,6 +75,7 @@ sub startHandler
 	    $initialcallback->( $$hash, $data );
 	    $$hash = {};
 	}
+
     } else {
 	if ( $$validStart == 0 ) {
 	    printf ("Invalid SCARF File: No Analyzer Report Start Tag");
@@ -141,6 +139,7 @@ sub endHandler
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
 	$bugcallback->( $$hash, $data );
 	$$hash = {};
+
     } elsif ( $elt eq "Metric" && defined $metriccallback ) {
 	if( ! defined $$hash->{SourceFile} ) {
 	    delete $$hash->{SourceFile};
@@ -154,15 +153,19 @@ sub endHandler
 	}
 	$metriccallback->( $$hash, $data );
         $$hash = {};
+
     } elsif ( $elt eq "BugSummary" && defined $bugsumcallback ) {
 	$bugsumcallback->( $$hash, $data ); 
 	$$hash = {};
+
     } elsif ( $elt eq "MetricSummaries" && defined $metricsumcallback ) {
 	$metricsumcallback->( $$hash, $data );
         $$hash = {};
+
     } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {
 	printf "No BugInstances or Metrics found in file.";
     }
+
     $$lastElt = "";
     return $$hash;
 }
@@ -180,6 +183,7 @@ sub charHandler
 	    return $$hash;
 	}
     }
+
     for my $metricSumElt ( qw/Type Count Sum SumOfSquares Minimum Maximum Average StandardDeviation/ ) {
 	if ( $elt eq $metricSumElt && defined $$hash->{MetricSummaries} ) {
 	    @{$$hash->{MetricSummaries}}[-1]->{$metricSumElt} = $chars;
@@ -220,8 +224,7 @@ sub charHandler
 	    return $$hash;
 	}
     }	
-
-    
+   
     if ( $elt eq "Xpath" && defined $$hash->{InstanceLocation} ) {
         $$hash->{InstanceLocation}->{Xpath} = $chars;
         return $$hash;

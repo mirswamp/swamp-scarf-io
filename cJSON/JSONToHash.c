@@ -114,6 +114,8 @@ int freeBug(BugInstance * bug)
     return 0;
 }
 
+
+////////////////////////handlers//////////////////////////////
 static int handle_null(void * ctx)
 {
     return 1;
@@ -138,7 +140,6 @@ static int handle_boolean(void * data, int boolean)
 		}
                 else {
                     ctx->method->primary = 0;
-                    //self->data[self->arrayType][self->arrayLoc]["primary"] = 0
 		}
 	    }
 	}
@@ -418,20 +419,8 @@ static int handle_map_key(void * data, const  unsigned char * string,
             printf("No BugInstances or Metrics present");
         }
 	strcpy(ctx->hashType, "metrsum");
-//    } else if ( strncmp(stringVal, "BugLocations", stringLen) == 0 && ctx->depth == 3 ) {
-//        ctx->bug->bugLocations = calloc(1, sizeof(Location));
-//    } else if ( strncmp(stringVal, "Methods", stringLen) == 0 && ctx->depth == 3 ) {
-//        ctx->bug->methods = calloc(1, sizeof(Method));
     } else if ( strncmp(stringVal, "InstanceLocation", stringLen) == 0 && ctx->depth == 3 ) {
         ctx->bug->instanceLocation = calloc(1, sizeof(InstanceLocation));
-//    } else if ( stringVal == "LineNum" && ctx->depth == 4 ) {
-//        ctx->bug->instanceLocation->LineNum = 
-//    } else if ( ctx->hashType == "bugsum" && ctx->depth == 3 ) {
-//        ctx->sumCode = stringVal;
-//    } else if ( ctx->hashType == "bugsum" && ctx->depth == 4 ) {
-//        ctx->sumGroup = stringVal;
-//    } else if ( ctx->hashType == "metrsum" && ctx->depth == 3 ) {
-//        ctx->sumGroup = stringVal;
     }
     free(ctx->curr);
     ctx->curr = malloc(stringLen + 1);
@@ -585,60 +574,8 @@ static yajl_callbacks callbacks = {
     handle_end_array
 };
 
-//static void
-//usage(const char * progname)
-//{
-//    fprintf(stderr, "%s: handle json from stdin\n"
-//            "usage:  json_handle [options]\n"
-//            "    -e escape any forward slashes (for embedding in HTML)\n"
-//            "    -m minimize json rather than beautify (default)\n"
-//            "    -s handle a stream of multiple json entites\n"
-//            "    -u allow invalid UTF8 inside strings during parsing\n",
-//            progname);
-//    exit(1);
-//}
 
-
-
-
-
-/////////////////Initiailize a Metric//////////////////////////////////////////////
-//Metric * initializeMetric()
-//{
-//    Metric * metric = calloc(1,sizeof(Metric));
-//    return metric;
-//}
-//
-//
-/////////////////Initiailize a BugInstance//////////////////////////////////////////////
-//BugInstance * initializeBug()
-//{
-//    BugInstance * bug = calloc(1,sizeof(BugInstance));
-//    return bug;
-//}
-//
-//
-/////////////////////////////get initial tag//////////////////////////////////////
-//Initial * nextInitial(Reader reader)
-//{
-//}
-//
-////////////////////Close parser////////////////////////////////////////////
-//int closeReader(Reader reader)
-//{
-//}
-//
-//////////////////////Process next bug/////////////////////////////////////////
-//BugInstance * nextBug(Reader reader)
-//{
-//}
-//
-//////////////////////Process next metric/////////////////////////////////////////
-//Metric * nextMetric(Reader reader)
-//{
-//}
-
-//////////////////////change filename/reset parser////////////////////////////////////////
+//////////////////////initializer and parser////////////////////////////////////////
 Reader newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricCallback Metric, MetricSummaryCallback MetricSummary, InitialCallback Initial, void * reference)
 {
     struct State * status = calloc(1, sizeof(struct State));
@@ -686,75 +623,3 @@ int parse(Reader hand, char * filename)
     return retval;
 }
 
-//int
-//main(int argc, char ** argv)
-//{
-//    /* generator config */
-//    yajl_gen g;
-//    int a = 1;
-//    g = yajl_gen_alloc(NULL);
-//    yajl_gen_config(g, yajl_gen_beautify, 1);
-//    yajl_gen_config(g, yajl_gen_validate_utf8, 1);
-//    /* ok->  open file->  let's read and parse */
-//    /* and let's allow comments by default */
-//    yajl_config(hand, yajl_allow_comments, 1);
-//    /* check arguments->*/
-//    while ((a < argc) && (argv[a][0] == '-') && (strlen(argv[a]) > 1)) {
-//        unsigned int i;
-//        for ( i=1; i < strlen(argv[a]); i++) {
-//            switch (argv[a][i]) {
-//                case 'm':
-//                    yajl_gen_config(g, yajl_gen_beautify, 0);
-//                    break;
-//                case 's':
-//                    yajl_config(hand, yajl_allow_multiple_values, 1);
-//                    s_streamhandle = 1;
-//                    break;
-//                case 'u':
-//                    yajl_config(hand, yajl_dont_validate_strings, 1);
-//                    break;
-//                case 'e':
-//                    yajl_gen_config(g, yajl_gen_escape_solidus, 1);
-//                    break;
-//                default:
-//                    fprintf(stderr, "unrecognized option: '%c'\n\n",
-//                            argv[a][i]);
-//                    usage(argv[0]);
-//            }
-//        }
-//        ++a;
-//    }
-//    if (a < argc) {
-//        usage(argv[0]);
-//    }
-//    for (;;) {
-//        rd = fread((void *) fileData, 1, sizeof(fileData) - 1, stdin);
-//        if (rd == 0) {
-//            if (!feof(stdin)) {
-//                fprintf(stderr, "error on file read->\n");
-//                retval = 1;
-//            }
-//            break;
-//        }
-//        fileData[rd] = 0;
-//        stat = yajl_parse(hand, fileData, rd);
-//        if (stat != yajl_status_ok) break;
-//        {
-//            const unsigned char * buf;
-//            size_t len;
-//            yajl_gen_get_buf(g, &buf, &len);
-//            fwrite(buf, 1, len, stdout);
-//            yajl_gen_clear(g);
-//        }
-//    }
-//    stat = yajl_complete_parse(hand);
-//    if (stat != yajl_status_ok) {
-//        unsigned char * str = yajl_get_error(hand, 1, fileData, rd);
-//        fprintf(stderr, "%s", (const char *) str);
-//        yajl_free_error(hand, str);
-//        retval = 1;
-//    }
-//    yajl_gen_free(g);
-//    yajl_free(hand);
-//    return retval;
-//}

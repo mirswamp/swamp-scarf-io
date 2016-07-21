@@ -1,0 +1,2 @@
+DEPENDENCIES: XML::Writer
+	      XML::Parser

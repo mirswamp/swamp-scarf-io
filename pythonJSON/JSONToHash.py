@@ -8,10 +8,6 @@ class ParseContentHandler(YajlContentHandler):
     def __init__(self, callbacks):
         self.callbacks = callbacks
         self.data = {}
-#        self.subData = {}
-#        self.currSub = ""
-#        self.tertiaryData = {}
-#        self.currTert = ""
         self.initialInfo = {}
 
         self.curr = ""
@@ -229,7 +225,7 @@ class ParseContentHandler(YajlContentHandler):
             
     def yajl_end_array(self, ctx):
             self.isArray = 0
-
+####################parser##############################
 class JSONToHash:
     def __init__(self, inputFile, callbacks):
         self.handler = ParseContentHandler(callbacks)

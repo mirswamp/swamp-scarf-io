@@ -18,7 +18,6 @@
 package HashToScarf;
 use XML::Writer;
 use strict;
-use Data::Dumper;
 
 my $byteCountHash;
 my $count_hash;
@@ -90,12 +89,12 @@ sub setErrorLevel
 	if ($error_level == 1 or $error_level == 2 or $error_level == 0) {
 	    $self->{error_level} = $error_level;
 	} else {
-	    print "Invalid error level";
+	    print "Invalid error level\n";
 	}
     }
 }
 
-
+#enable or disable pretty printing
 sub getPretty
 {
     my ($self) = @_;
@@ -113,20 +112,6 @@ sub setPretty
 	$self->{_writer}->setDataIndent(0);
     }
 }
-
-
-#handle errors
-#sub error
-#{
-#    my ($error_level, $error_message) = @_;
-#    if ($error_level == 0) {
-#	return;
-#    } elsif ($error_level == 1) {
-#	print "$error_message\n";
-#    } else {
-#	die $error_message;
-#    }
-#}
 
 
 #check required start elements
@@ -159,12 +144,6 @@ sub addStartTag
 	}
     }
 
-#    for my $reqAttr (qw/tool_name tool_version uuid/) {
-#	if (!(defined $initial_details->{$reqAttr})) {
-#	    error($self->{error_level}, "Required attribute: $reqAttr not found when creating startTag");	    
-#	}
-#    }
-
     $self->{writer}->startTag('AnalyzerReport', tool_name => $initial_details->{tool_name}, 
 	    tool_version => $initial_details->{tool_version}, uuid => $initial_details->{uuid});
     return $self;
@@ -192,7 +171,6 @@ sub checkBug
     }
     my $locID = 1;
     my $methodID = 1;
-#    print Dumper($bugInstance);
     if (defined $bugInstance->{Methods}) {
         my $methodprimary = 0;
 	foreach my $method (@{$bugInstance->{Methods}}) {
@@ -282,34 +260,6 @@ sub addBugInstance
     my($self, $bugInstance) = @_;
 
     #check for req elements existence
-#    for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
-#	if (!(defined $bugInstance->{$bugReqElt})) {
-#	    error($self->{error_level}, "Required element: $bugReqElt could not be found in BugInstance:$bugID");     
-#	}
-#    }
-#    my $locID = 1;
-#    my $methodID = 1;
-#    foreach my $method (@{$bugInstance->{Methods}}) {
-#	if (!(defined $method->{primary})) {
-#	    error($self->{error_level}, "Required attribute: primary not found for Method:$methodID in BugInstance:$bugID");
-#	}
-#	if (!(defined $method->{name})) {
-#	    error($self->{error_level}, "Required text: name not found for Method:$methodID in BugInstance:$bugID");
-#	}
-#	$methodID++;
-#    }
-#    foreach my $location (@{$bugInstance->{BugLocations}}) {
-#	if (!(defined $location->{primary})) {
-#	    error($self->{error_level}, "Required attribute: primary could not be found for Location:$locID in BugInstance:$bugID");	    
-#	}
-#	for my $locElt (qw/SourceFile/) {
-#	    if (!(defined $location->{$locElt})) {
-#		error($self->{error_level}, "Required element: $locElt could not be found for Location:$locID in BugInstance:$bugID");	    
-#	    }
-#	}
-#	$locID++;
-#    }
-
     if ($self->{error_level} != 0) {
 	my $errors = checkBug($bugInstance);
 	print "$_\n" for @$errors;
@@ -502,12 +452,6 @@ sub addMetric
 	    die "Exiting";
 	}
     }
-
-#    for my $reqMetrElt (qw/SourceFile Type Value/) {
-#	if (!(defined $metric->{$reqMetrElt})) {
-#	   error($self->{error_level}, "Required element: $reqMetrElt could not be found for Metric:$metricID");	    
-#	}
-#    }
 
     my $writer = $self->{writer};
     $writer->startTag('Metric', id => $metricID);   

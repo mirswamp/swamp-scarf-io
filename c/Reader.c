@@ -418,31 +418,3 @@ Metric * nextMetric(Reader reader)
 
 
 
-/////////////////////////////////////Main Method for tests///////////////////////
-/*int main(int argc, char **argv) 
-{
-    
-    char * filename = "../perl/parsed_results.xml";//user input eventually
-//    char * filename = "out.xml";
-    Reader reader = newReader(filename);
-    BugInstance * bug = nextBug(reader);
-  
-    while (bug != NULL) {
-	freeBug(bug);
-	bug = nextBug(reader);
-    }
-
-//    printf("assess: %s\n Location Start: %d\n", bug->assessmentReportFile, bug->bugLocations->startLine);
-
-//    freeBug(bug);
-
-//    bug = nextBug();
-
-//    printf("ID#2: %d", bug->bugId);
-
-//    newReader(filename);
-
-//    bug = nextBug();
-    
-    return 0;
-}*/

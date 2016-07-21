@@ -166,9 +166,6 @@ class HashToScarf:
 
 
     def addStartTag(self, initial_details):
-#	for reqAttr in ["tool_name", "tool_version", "uuid"]:
-#	    if reqAttr not in initial_details:
-#		error(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
 
 	if self.error_level != 0 :
 	    errors =  checkStart(initial_details)
@@ -242,8 +239,6 @@ class HashToScarf:
 			    locSubElement = etree.SubElement(wrtLocation, opt)
 			    locSubElement.text = "%s" % location[opt]
 		    locID = locID + 1
-#	    else:
-#		error(self.error_level, "Required Element: Could not find any Locations in BugInstance: %s" % self.bugID)
 	
 	if "CweIds" in bugHash:
 	    for cweid in bugHash["CweIds"]:
@@ -330,9 +325,6 @@ class HashToScarf:
 
 	metric = etree.Element("Metric")
 	metric.set("id", "%s" % self.metricID)
-#	for reqElt in ["Value", "Type", "SourceFile"]:
-#	    if reqElt not in metricHash:
-#		error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, self.metricID))
 	    
 	loc = etree.SubElement(metric,"Location")
 	source = etree.SubElement(loc, "SourceFile")	
