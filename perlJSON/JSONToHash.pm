@@ -82,7 +82,7 @@ sub parse
 
 #    print Dumper(@pointers);
     while (my $buf = <$fh>) {
-	print $buf;
+	#print $buf;
 	$parser->feed($buf); #parse what you can
 	#fetch anything that completed the parse and matches the JSON Pointer
 	while (my $obj = $parser->fetch) {

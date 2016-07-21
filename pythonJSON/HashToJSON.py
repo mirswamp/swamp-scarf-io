@@ -192,14 +192,14 @@ class HashToJSON:
 
 	for elmt in ["BuildId", "BugCode", "BugRank", "ClassName", "BugSeverity", "BugGroup", "BugMessage", "ResolutionSuggestion"]:
 	    if elmt in bugHash:
-	    writer.yajl_gen_string(elmt)
-	    writer.yajl_gen_string(bugHash[elmt])
+		writer.yajl_gen_string(elmt)
+		writer.yajl_gen_string(bugHash[elmt])
 
 	if "CweIds" in bugHash:
 	    writer.yajl_gen_string("CweIds")
 	    writer.yajl_gen_array_open()
 	    for cwe in bugHash["CweIds"]:
-	    writer.yajl_gen_number(str(cwe))
+		writer.yajl_gen_number(str(cwe))
 	    writer.yajl_gen_array_close()
 
 	if "Methods" in bugHash:
@@ -209,7 +209,7 @@ class HashToJSON:
             for method in bugHash["Methods"]:
                 writer.yajl_gen_map_open()
                 writer.yajl_gen_string("name")
-                writer.yajl_gen_number(str(method["name"]))
+                writer.yajl_gen_string(str(method["name"]))
                 writer.yajl_gen_string("primary")
                 if method["primary"]:
                     writer.yajl_gen_string("true")
@@ -230,12 +230,12 @@ class HashToJSON:
                 writer.yajl_gen_map_open()
                 for numLocElt in ["StartLine", "EndLine", "StartColumn", "EndColumn"]:
                     if numLocElt in location:
-                    writer.yajl_gen_string(numLocElt)
-                    writer.yajl_gen_number(str(location[numLocElt]))
+			writer.yajl_gen_string(numLocElt)
+			writer.yajl_gen_number(str(location[numLocElt]))
                 for strLocElt in ["SourceFile", "Explanation"]:
                     if strLocElt in location:
-                    writer.yajl_gen_string(strLocElt)
-                    writer.yajl_gen_string(location[strLocElt])
+			writer.yajl_gen_string(strLocElt)
+			writer.yajl_gen_string(location[strLocElt])
         
                 writer.yajl_gen_string("primary")
                 if location["primary"]:
@@ -330,8 +330,8 @@ class HashToJSON:
     
         for elmt in ["Value", "Class", "Method", "SourceFile", "Type"]:
             if elmt in metricHash:
-            writer.yajl_gen_string(elmt)
-            writer.yajl_gen_string(metricHash[elmt])
+		writer.yajl_gen_string(elmt)
+		writer.yajl_gen_string(metricHash[elmt])
         
         writer.yajl_gen_map_close()
 
@@ -411,15 +411,15 @@ class HashToJSON:
             for code in  self.bugSummaries:
                 writer.yajl_gen_string(code)
                 writer.yajl_gen_map_open()
-            for group in self.bugSummaries[code]:
-                writer.yajl_gen_string(group)
-                writer.yajl_gen_map_open()        
-                summary = self.bugSummaries[code][group]
-                writer.yajl_gen_string("count")
-                writer.yajl_gen_number(str(summary["count"]))
-                writer.yajl_gen_string("bytes")
-                writer.yajl_gen_number(str(summary["bytes"]))
-                writer.yajl_gen_map_close()        
+		for group in self.bugSummaries[code]:
+		    writer.yajl_gen_string(group)
+		    writer.yajl_gen_map_open()        
+		    summary = self.bugSummaries[code][group]
+		    writer.yajl_gen_string("count")
+		    writer.yajl_gen_number(str(summary["count"]))
+		    writer.yajl_gen_string("bytes")
+		    writer.yajl_gen_number(str(summary["bytes"]))
+		    writer.yajl_gen_map_close()        
             writer.yajl_gen_map_close()        
             writer.yajl_gen_array_close()        
             self.output.write(writer.yajl_gen_get_buf())
@@ -428,36 +428,36 @@ class HashToJSON:
         if self.metricSummaries:
             writer.yajl_gen_string("MetricSummaries")
             writer.yajl_gen_map_open()        
-                for metric in self.metricSummaries:
+            for metric in self.metricSummaries:
             
-                    summary = self.metricSummaries[metric]
+                summary = self.metricSummaries[metric]
     
-            writer.yajl_gen_string(metric)
-            writer.yajl_gen_map_open()        
-                    metricCount = summary["Count"]
-            writer.yajl_gen_string("Count")
-            writer.yajl_gen_number(str(metricCount))
+		writer.yajl_gen_string(metric)
+		writer.yajl_gen_map_open()        
+                metricCount = summary["Count"]
+		writer.yajl_gen_string("Count")
+		writer.yajl_gen_number(str(metricCount))
     
-                    if "Sum" in summary:
-                        metricSum = summary["Sum"]
-                        metricSumofSquares = summary["SumOfSquares"]
-                        average = metricSum / metricCount
+                if "Sum" in summary:
+                    metricSum = summary["Sum"]
+                    metricSumofSquares = summary["SumOfSquares"]
+                    average = metricSum / metricCount
     
-                        denominator = metricCount * (metricCount - 1)
-                        squareOfSum = metricSum * metricSum
-                        stdDeviation = 0
-                        if denominator != 0:
-                            stdDeviation = math.sqrt((metricSumofSquares * metricCount - squareOfSum) / denominator)
+                    denominator = metricCount * (metricCount - 1)
+                    squareOfSum = metricSum * metricSum
+                    stdDeviation = 0
+                    if denominator != 0:
+                        stdDeviation = math.sqrt((metricSumofSquares * metricCount - squareOfSum) / denominator)
     
-                        for sumElt in ["Sum", "SumOfSquares", "Minimum", "Maximum"]:
-                writer.yajl_gen_string(sumElt)
-                writer.yajl_gen_number(str(summary[sumElt]))
+                    for sumElt in ["Sum", "SumOfSquares", "Minimum", "Maximum"]:
+			writer.yajl_gen_string(sumElt)
+			writer.yajl_gen_number(str(summary[sumElt]))
     
-                writer.yajl_gen_string("Average")
-                writer.yajl_gen_number(str(average))
-                writer.yajl_gen_string("StandardDeviation")
-                writer.yajl_gen_number(str(stdDeviation))
-            writer.yajl_gen_map_close()        
+			writer.yajl_gen_string("Average")
+			writer.yajl_gen_number(str(average))
+			writer.yajl_gen_string("StandardDeviation")
+			writer.yajl_gen_number(str(stdDeviation))
+		writer.yajl_gen_map_close()        
             
             writer.yajl_gen_map_close()        
     

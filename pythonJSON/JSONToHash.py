@@ -42,8 +42,10 @@ class ParseContentHandler(YajlContentHandler):
     
     def yajl_number(self, ctx, stringNum):
         if self.hashType == "bug":
+	    if self.curr in ["BugId"]:
+		self.data[self.curr] = stringNum
             if self.curr in ["Start", "End"]:
-                self.data["InstanceLocation"]["LineNum"][self.curr] = stringVal
+                self.data["InstanceLocation"]["LineNum"][self.curr] = stringNum
             elif self.isArray:
                 if self.arrayType == "BugLocations":
                     if self.curr in ["primary", "LocationId", "EndLine", "StartLine", "EndColumn", "StartColumn"]:
@@ -75,16 +77,16 @@ class ParseContentHandler(YajlContentHandler):
     def yajl_string(self, ctx, stringVal):
         if not self.requiredStart and self.curr in ["uuid", "tool_name", "tool_version"]:
             self.initialInfo[self.curr] = stringVal
-        if "uuid" in self.initialInfo and "tool_name" in self.initialInfo and "tool_version" in self.initialInfo:
-	    self.requiredStart = 1
-	    if "InitialCallback" in self.callbacks:
-		if "CallbackInfo" in self.callbacks:
-		    self.callbacks["InitialCallback"](self.initialInfo, self.callbacks["CallbackInfo"])
-		else:
-		    self.callbacks["InitialCallback"](self.initialInfo)
+	    if "uuid" in self.initialInfo and "tool_name" in self.initialInfo and "tool_version" in self.initialInfo:
+		self.requiredStart = 1
+		if "InitialCallback" in self.callbacks:
+		    if "CallbackInfo" in self.callbacks:
+			self.callbacks["InitialCallback"](self.initialInfo, self.callbacks["CallbackInfo"])
+		    else:
+			self.callbacks["InitialCallback"](self.initialInfo)
 
         elif self.hashType == "bug":
-            if self.curr in ["BugId", "AssessmentReportFile", "BuildId", "ClassName", "BugGroup", "BugCode", "BugRank", "BugSeverity", "BugMessage", "ResolutionSuggestion", "BugId"]:
+            if self.curr in ["AssessmentReportFile", "BuildId", "ClassName", "BugGroup", "BugCode", "BugRank", "BugSeverity", "BugMessage", "ResolutionSuggestion", "BugId"]:
                 self.data[self.curr] = stringVal
             elif self.curr in ["Xpath"]:
                 self.data["InstanceLocation"][self.curr] = stringVal
@@ -93,7 +95,7 @@ class ParseContentHandler(YajlContentHandler):
 
             elif self.isArray:
                 if self.arrayType == "BugLocations":
-                    if self.curr in ["BugId", "LocationId", "EndLine", "StartLine", "EndColumn", "StartColumn", "SourceFile", "Explanation"]:
+                    if self.curr in ["LocationId", "EndLine", "StartLine", "EndColumn", "StartColumn", "SourceFile", "Explanation"]:
                         self.data["BugLocations"][self.arrayLoc][self.curr] = stringVal
                     elif self.curr == "primary":
                         if stringVal == "true" or stringVal == "1":
