@@ -4,13 +4,12 @@
 #include <string.h>
 #include "filestructure.h"
 
-typedef yajl_handle Reader;
-
-typedef void (*BugCallback)(BugInstance * bug, void * reference); 
-typedef void (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
-typedef void (*MetricCallback)(Metric * metr, void * reference);
-typedef void (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
-typedef void (*InitialCallback)(Initial * initial, void * reference);
+typedef int (*BugCallback)(BugInstance * bug, void * reference); 
+typedef int (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
+typedef int (*MetricCallback)(Metric * metr, void * reference);
+typedef int (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
+typedef int (*InitialCallback)(Initial * initial, void * reference);
+typedef void (*FinishCallback)(void * reference);
 
 typedef struct Callback {
     BugCallback bugCall;
@@ -18,6 +17,7 @@ typedef struct Callback {
     InitialCallback initialCall;
     BugSummaryCallback bugSumCall;
     MetricSummaryCallback metricSumCall;
+    FinishCallback finishCallback;
     void * CallbackData;
 } Callback;
 
@@ -44,6 +44,11 @@ typedef struct State {
     Initial * initial;
     Callback * callbacks;
 } State;
+
+typedef struct Reader {
+    yajl_handle reader;
+    State * state;
+} Reader;
 
 ///////////////////////////////Free initial struct//////////////////////////////////
 int freeInitial( Initial * initial ){
@@ -251,7 +256,7 @@ static int handle_string(void * data, const unsigned char * string,
 	if ( ctx->initial->tool_version != NULL && ctx->initial->tool_name != NULL && ctx->initial->uuid != NULL ) {
 	    ctx->requiredStart = 1;
 	    if ( ctx->callbacks->initialCall != NULL ) {
-		ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
+		return ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
 	    }
 	}
     } else if ( strcmp("bug", ctx->hashType) == 0 ) {
@@ -463,20 +468,20 @@ static int handle_end_map(void * data)
     if ( ctx->depth == 2 ) {
         if ( strcmp("bug", ctx->hashType) == 0 ) {
 	    if ( ctx->callbacks->bugCall != NULL ) {
-		ctx->callbacks->bugCall(ctx->bug, ctx->callbacks->CallbackData);
+		return ctx->callbacks->bugCall(ctx->bug, ctx->callbacks->CallbackData);
 	    } else {
 		freeBug(ctx->bug);
 	    }
 	} else if ( strcmp("metric", ctx->hashType) == 0 ) {
             if ( ctx->callbacks->metricCall != NULL ) {
-		ctx->callbacks->metricCall(ctx->metric, ctx->callbacks->CallbackData);
+		return ctx->callbacks->metricCall(ctx->metric, ctx->callbacks->CallbackData);
 	    } else {
 		freeMetric(ctx->metric);
 	    }
 	} else if ( ctx->callbacks->bugSumCall != NULL && ctx->bugSummaries != NULL) {
-            ctx->callbacks->bugSumCall(ctx->bugSummaries, ctx->callbacks->CallbackData);
+            return ctx->callbacks->bugSumCall(ctx->bugSummaries, ctx->callbacks->CallbackData);
 	} else if ( ctx->callbacks->metricSumCall != NULL && ctx->metricSummaries != NULL) {
-            ctx->callbacks->metricSumCall(ctx->metricSummaries, ctx->callbacks->CallbackData);
+            return ctx->callbacks->metricSumCall(ctx->metricSummaries, ctx->callbacks->CallbackData);
 	}
     } else if (ctx->depth == 3) {
 	if (ctx->isArray) {
@@ -528,7 +533,7 @@ static int handle_end_map(void * data)
         }
     } else if ( ctx->depth == 0 ) {
         if ( ctx->callbacks->initialCall != NULL && ! ctx->requiredStart ) {
-            ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
+            return ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
 	}
     }
     if ( ctx->isArray ) {
@@ -576,7 +581,7 @@ static yajl_callbacks callbacks = {
 
 
 //////////////////////initializer and parser////////////////////////////////////////
-Reader newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricCallback Metric, MetricSummaryCallback MetricSummary, InitialCallback Initial, void * reference)
+Reader * newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricCallback Metric, MetricSummaryCallback MetricSummary, InitialCallback Initial, FinishCallback fin, void * reference)
 {
     struct State * status = calloc(1, sizeof(struct State));
     struct Callback * calls= malloc(sizeof(struct Callback));
@@ -585,14 +590,17 @@ Reader newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricC
     calls->bugSumCall = BugSummary;
     calls->initialCall = Initial;
     calls->metricSumCall = MetricSummary;
+    calls->finishCallback = fin;
     calls->CallbackData = reference;
     status->callbacks = calls;
-    Reader reader =  yajl_alloc(&callbacks, NULL, status);
+    Reader * reader = malloc(sizeof(Reader));
+    reader->reader =  yajl_alloc(&callbacks, NULL, status);
+    reader->state = status;
     return reader;
 }
 
 
-int parse(Reader hand, char * filename)
+int parse(Reader * hand, char * filename)
 {
     int retval = 0;
 //    yajl_handle hand;
@@ -610,16 +618,19 @@ int parse(Reader hand, char * filename)
             break;
         }
         fileData[rd] = 0;
-        stat = yajl_parse(hand, fileData, rd);
+        stat = yajl_parse(hand->reader, fileData, rd);
         if (stat != yajl_status_ok) break;
     }
-    if (stat != yajl_status_ok) {
-        unsigned char * str = yajl_get_error(hand, 1, fileData, rd);
+/*    if (stat != yajl_status_ok) {
+        unsigned char * str = yajl_get_error(hand->reader, 1, fileData, rd);
         fprintf(stderr, "%s", (const char *) str);
-        yajl_free_error(hand, str);
+        yajl_free_error(hand->reader, str);
         retval = 1;
+    }*/
+    if ( hand->state->callbacks->finishCallback != NULL ) {
+	hand->state->callbacks->finishCallback(hand->state->callbacks->CallbackData);
     }
-    yajl_free(hand);
+    yajl_free(hand->reader);
     return retval;
 }
 

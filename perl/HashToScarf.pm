@@ -35,8 +35,14 @@ sub new
     my ($class, $handle, $error_level, $pretty_enable) = @_;
 #    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
-    $self->{output} = $handle;
-#    open $self->{output}, ">", $output_file or die "invalid output file";
+    if(ref $handle eq "IO") {
+	$self->{output} = $handle;
+    } elsif (ref $handle eq "SCALAR") {
+        open($self->{output}, ">", $handle) or die "invalid output file";
+    } else {
+	print("Could not open destination handle\n");
+	exit(1);
+    }
     if  ( $pretty_enable ) {
 	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
     } else {

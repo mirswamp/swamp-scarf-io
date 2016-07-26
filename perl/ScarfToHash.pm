@@ -56,7 +56,19 @@ sub parse
 				    "Default" ,\&defaultHandler
 				);
     #possibly use xsdValidator to verify scarf
-    $self->{parser}->parsefile($self->{source});
+    #$self->{parser}->parsefile($self->{source});
+    if ( ref $self eq "SCALAR" ) {
+	open($self->{source}, "<", $self->{source}) or die "Can't open source with filename $self->{source}";
+	$self->{parser}->parse($self->{source});
+    } elsif ( ref $self eq "IO" ) {
+	$self->{parser}->parse($self->{source});
+    } else {
+	print("Could not open source for parsing\n");
+	exit(1);
+    }
+    if ( defined $self->{callbacks}->{FinishCallback} ) {
+	$self->{callbacks}->{FinishCallback}($self->{callbacks}->{CallbackData});
+    }
 }
 
 
@@ -72,7 +84,7 @@ sub startHandler
 		$$validStart = 1;
 	    }
 	    $$hash = { tool_name => $atts{tool_name}, tool_version => $atts{tool_version}, uuid => $atts{uuid} };
-	    $initialcallback->( $$hash, $data );
+	    $initialcallback->( $$hash, $data ) and $parser->finish;
 	    $$hash = {};
 	}
 
@@ -135,9 +147,10 @@ sub startHandler
 sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
-	    $data, $parser, $elt ) = @_;
+	    $data, $parser, $elt ) = @_;    
+    print("$elt\n") ;
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
-	$bugcallback->( $$hash, $data );
+	$bugcallback->( $$hash, $data ) and $parser->finish;
 	$$hash = {};
 
     } elsif ( $elt eq "Metric" && defined $metriccallback ) {
@@ -151,15 +164,15 @@ sub endHandler
 	    print "hit\n";
 	    delete $$hash->{Method};
 	}
-	$metriccallback->( $$hash, $data );
+	$metriccallback->( $$hash, $data ) and $parser->finish;
         $$hash = {};
 
     } elsif ( $elt eq "BugSummary" && defined $bugsumcallback ) {
-	$bugsumcallback->( $$hash, $data ); 
+	$bugsumcallback->( $$hash, $data ) and $parser->finish; 
 	$$hash = {};
 
     } elsif ( $elt eq "MetricSummaries" && defined $metricsumcallback ) {
-	$metricsumcallback->( $$hash, $data );
+	$metricsumcallback->( $$hash, $data ) and $parser->finish;
         $$hash = {};
 
     } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {

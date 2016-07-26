@@ -40,9 +40,11 @@ class ScarfToHash:
 
 		if "InitialCallback" in callback:
 		    if "CallbackData" in callback:
-			callback["InitialCallback"](initialDetails, callback["CallbackData"])
+			if callback["InitialCallback"](initialDetails, callback["CallbackData"]):
+			    break			
 		    else:
-			callback["InitialCallback"](initialDetails)
+			if callback["InitialCallback"](initialDetails):
+			    break
 		parent.clear()
 		self.startValid = 1;
 		
@@ -110,9 +112,11 @@ class ScarfToHash:
 		if len(cweids) != 0:
 		    bug["CweIds"] = cweids
 		if  "CallbackData" in callback :
-		    callback["BugCallback"](bug, callback["CallbackData"])
+		    if callback["BugCallback"](bug, callback["CallbackData"]):
+			break
 		else:
-		    callback["BugCallback"](bug)
+		    if callback["BugCallback"](bug):
+			break
 		parent.clear()
 
 	    #parse metric
@@ -128,9 +132,11 @@ class ScarfToHash:
 		    else:
 			metric[subelement.tag] = subelement.text
 		if  "CallbackData" in callback :
-		    callback["MetricCallback"](metric, callback["CallbackData"])
+		    if callback["MetricCallback"](metric, callback["CallbackData"]):
+			break
 		else:
-		    callback["MetricCallback"](metric)
+		    if callback["MetricCallback"](metric):
+			break
 		parent.clear()
 	
 
@@ -148,9 +154,11 @@ class ScarfToHash:
 			    metricType = values.text
 		    summary[metricType] = sum_hash
 		if "CallbackData" in callback:
-		    callback["MetricSummaryCallback"](summary, callback["CallbackData"])
+		    if callback["MetricSummaryCallback"](summary, callback["CallbackData"]):
+			break
 		else:
-		    callback["MetricSummaryCallback"](summary)
+		    if callback["MetricSummaryCallback"](summary):
+			break
 		parent.clear()
 
 
@@ -165,12 +173,20 @@ class ScarfToHash:
 		    summary[code][category.get("group")] = sum_hash
 		
 		if "CallbackData" in callback:
-		    callback["BugSummaryCallback"](summary, callback["CallbackData"])
+		    if callback["BugSummaryCallback"](summary, callback["CallbackData"]):
+			break
 		else:
-		    callback["BugSummaryCallback"](summary)
+		    if callback["BugSummaryCallback"](summary):
+			break
 		parent.clear()
 
-	    
-	    elif elem.tag == "AnalyzerReport" and event == "end":
-		if not self.validBody:
-		    print("No BugInstances or Metrics present")
+	if "FinishCallback" in callback:
+	    if "CallbackData" in callback:
+                    if callback["FinishCallback"](callback["CallbackData"]):
+                        break
+                else:
+                    if callback["FinishCallback"]():
+                        break
+	if not self.validBody:
+	    print("No BugInstances or Metrics present")
+

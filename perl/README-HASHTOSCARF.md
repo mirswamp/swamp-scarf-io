@@ -27,7 +27,7 @@ Also if the error level is 2 and errors are found, then the program will exit to
 
 ### METHODS
 #### new(HANDLE [, ERRORLEVEL, PRETTYENABLE])
-This is a class method used to instatiate the writer. Handle is an object blessed into IO::Handle or one of its subclasses, or a reference to a string. If this parameter is not present, the module will write to standard output. Errorlevel is 0, 1, or 2 and sets the error level of the writer (default 2). Prettyenable will enable or disable pretty printing of output with a true or false value respectively (default true).
+This is a class method used to instatiate the writer. Handle is an object blessed into IO::Handle or one of its subclasses, or a string to a file path. Errorlevel is 0, 1, or 2 and sets the error level of the writer (default 2). Prettyenable will enable or disable pretty printing of output with a true or false value respectively (default true).
 
 #### getWriter
 Returns the XML::Writer used for writing.

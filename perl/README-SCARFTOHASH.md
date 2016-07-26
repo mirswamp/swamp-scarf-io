@@ -24,7 +24,7 @@ The parser is controlled primarily by the callbacks the user sets prior to calli
 
 The parser assumes that a valid Scarf file is inputted, but does do minor checks to ensure the file is Scarf. 
 ### METHODS
-*new(FILENAME, CALLBACKS)* - This is a class method used to instatiate the parser. Filename is the path to the file this parser should interpret. Callbacks is a hash containing specified callback functions for parsed data to be sent to. For additional information on Callbacks see below.
+*new(FILE, CALLBACKS)* - This is a class method used to instatiate the parser. FILE can be either a path to a file or an IO:Handle object. CALLBACKS is a hash containing specified callback functions for parsed data to be sent to. For additional information on CALLBACKS see below.
 
 *parse()* - This method initiates the parsing of the set file. If parsing fails a die call will be thrown, otherwise will return 0 on completion.
 

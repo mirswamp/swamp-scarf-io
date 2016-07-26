@@ -51,13 +51,22 @@ sub parse
     my $validStart = 0;
     my $validBody = 0;
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
-    open( my $fh, "<", $self->{source} );
+    my $fh;
+    if (ref $self->{source} eq "SCALAR"){
+	open( $fh, "<", $self->{source} );
+    } elsif ( ref $self->{source} eq "IO"){
+	$fh = $self->{source};
+    } else {
+	print("Invalid source file\n");
+	exit(1);
+    }
     local $/ = \self->{readSize}; #read only 5bytes bytes at a time
     my $hash;
 
     while (my $buf = <$fh>) {
 	$parser->feed($buf); #parse what you can
 	#fetch anything that completed the parse and matches the JSON Pointer
+
 	while (my $obj = $parser->fetch) {
 	    my $tempHash = {};
 	    if ( ! ( $validStart ) ) {
@@ -71,42 +80,50 @@ sub parse
 		if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
 		    $validStart = 1;
 		    if ( defined $self->{callbacks}->{InitialCallback} ) {
-			if ( exists $self->{callbacks}->{CallbackData} ) {
-			    $self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData});
+			if ( defined $self->{callbacks}->{CallbackData} ) {
+			    $self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData}) and break;
 			} else {
-			    $self->{callbacks}->{InitialCallback}->($hash);
+			    $self->{callbacks}->{InitialCallback}->($hash) and break;
 			}
 		    }
 		}
+
 	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/BugInstances\/)([0-9]+)/) {
-		if ( exists $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		if ( defined $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
 		} else {
-		    $self->{callbacks}->{BugCallback}->($obj->{Value});#$hash);
+		    $self->{callbacks}->{BugCallback}->($obj->{Value}) and break;#$hash);
 		}
 		$self->{validBody} = 1;
+	    
 	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
-		if ( exists $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		if ( defined $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
 		} else {
-		    $self->{callbacks}->{MetricCallback}->($obj->{Value});#$hash);
+		    $self->{callbacks}->{MetricCallback}->($obj->{Value}) and break;#$hash);
 		}
 		$self->{validBody} = 1;
+	    
 	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
-		if ( exists $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});#$hash);
+		if ( defined $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
 		} else {
-		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value});#$hash);
+		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}) and break;#$hash);
 		}
+	    
 	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
 		$hash = $obj->{Value};
-		if ( exists $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData});
+		if ( defined $self->{callbacks}->{CallbackData} ) {
+		    $self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData}) and break;
 		} else {
-		    $self->{callbacks}->{MetricSummaryCallback}->($hash);
+		    $self->{callbacks}->{MetricSummaryCallback}->($hash) and break;
 		}
 	    }
 	}	
+    }
+
+    if ( defined $self->{callbacks}->{FinishCallback} ) {
+	$self->{callbacks}->{FinishCallback}->($self->{callbacks}->{CallbackData});
     }
     if ( $self->{validBody} == 0 ) {
 	print (" No BugInstances or Metrics found in file " );

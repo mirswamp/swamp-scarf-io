@@ -7,8 +7,14 @@ sub new
 {
     my ($class, $handle, $error_level) = @_;
     my $self = {};
-#    open $self->{output}, ">", $output_file or die "invalid output file";
-    $self->{output} = $handle;
+    if ( ref $handle eq "SCALAR" ) {
+	open($self->{output}, ">", $output_file) or die "invalid output file";
+    elsif ( ref $handle eq "IO" ) {
+	$self->{output} = $handle;
+    } else {
+	print("Could not open destination handle");
+	exit(1);
+    }
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
     $self->{writer} = $self->{writer}->allow_nonref ([$enable]);
 

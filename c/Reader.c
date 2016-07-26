@@ -21,7 +21,30 @@
 
 /////////////////////////TypeDef for Clarity///////////////////////////////////////
 
-typedef xmlTextReaderPtr Reader;
+
+typedef int (*BugCallback)(BugInstance * bug, void * reference);
+typedef int (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
+typedef int (*MetricCallback)(Metric * metr, void * reference);
+typedef int (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
+typedef int (*InitialCallback)(Initial * initial, void * reference);
+typedef void (*FinishCallback)(void * reference);
+
+typedef struct Callback {
+    BugCallback bugCall;
+    MetricCallback  metricCall;
+    InitialCallback initialCall;
+    BugSummaryCallback bugSumCall;
+    MetricSummaryCallback metricSumCall;
+    FinishCallback finishCallback;
+    void * CallbackData;
+} Callback;
+
+
+typedef struct Reader{
+    xmlTextReaderPtr reader;
+    Callback * callback;
+} Reader;
+
 ///////////////Initiailize a Metric//////////////////////////////////////////////
 Metric * initializeMetric()
 {
@@ -38,13 +61,28 @@ BugInstance * initializeBug()
 }
 
 
+///////////////////////////////free summaries///////////////////////////////////
+int freeBugSummary(BugSummary * bugSummary){
+    xmlFree((xmlChar *) bugSummary->code);
+    xmlFree((xmlChar *) bugSummary->group);
+    free(bugSummary);
+    return 0;
+}
+
+int freeMetricSummary(MetricSummary * metricSummary){
+    xmlFree((xmlChar *) metricSummary->type);
+    free(metricSummary);
+    return 0;
+}
+
+
 ///////////////////////////////Free initial struct//////////////////////////////////
 int freeInitial(Initial * initial){
     xmlFree((xmlChar *) initial->tool_name);   
     xmlFree((xmlChar *) initial->tool_version);   
     xmlFree((xmlChar *) initial->uuid);   
     free(initial);
-    return 1;
+    return 0;
 }
 
 
@@ -57,7 +95,7 @@ int freeMetric(Metric * metric)
     xmlFree((xmlChar *) metric->sourceFile);
     xmlFree((xmlChar *) metric->value);
     free(metric);
-    return 1;
+    return 0;
 }
 
 
@@ -143,7 +181,7 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 
 
 ////////////////////parse singular line of bug file////////////////////////////////////
-int processBug(Reader reader, BugInstance * bug) 
+int processBug(xmlTextReaderPtr reader, BugInstance * bug) 
 {
     char * name = (char *) xmlTextReaderName(reader);
     int type = xmlTextReaderNodeType(reader);
@@ -316,105 +354,188 @@ int processBug(Reader reader, BugInstance * bug)
 
 
 //////////////////////change filename/reset parser////////////////////////////////////////
-Reader newReader(char * filename)
-{    
-    Reader reader = xmlNewTextReaderFilename(filename);
+
+Reader * newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricCallback Metric, MetricSummaryCallback MetricSummary, InitialCallback Initial, FinishCallback Fin, void * reference)
+{
+    struct Callback * calls= malloc(sizeof(struct Callback));
+    calls->bugCall = BugInstance;
+    calls->metricCall = Metric;
+    calls->bugSumCall = BugSummary;
+    calls->initialCall = Initial;
+    calls->metricSumCall = MetricSummary;
+    calls->finishCallback = Fin;
+    calls->CallbackData = reference;
+    Reader * reader = malloc(sizeof(Reader));
+    reader->reader = NULL;
+    reader->callback = calls;
     return reader;
 }
 
-
-///////////////////////////get initial tag//////////////////////////////////////
-Initial * nextInitial(Reader reader)
+int parse(Reader * hand, char * filename)
 {
-    Initial * initial = calloc(1, sizeof(Initial));
+    hand->reader = xmlNewTextReaderFilename(filename);
+    xmlTextReaderPtr reader = hand->reader;
     if (reader != NULL) {
-	int foundInit = 0;
-	int ret = xmlTextReaderRead(reader);
-	while (ret == 1 && foundInit == 0) {
-	    char * name = (char *) xmlTextReaderName(reader);
-	    int type = xmlTextReaderNodeType(reader);
-	    if (type == 1 && strcmp(name, "AnalyzerReport") == 0) {
-		foundInit = 1;
-		initial->tool_name = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "tool_name");
-		initial->tool_version = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "tool_version");
-		initial->uuid = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "uuid");
-	    } else {
-		ret = xmlTextReaderRead(reader);
+	char * name;
+	int type;
+	int kill = 0;
+	int ret = 1;
+	Callback * callback = hand->callback;
+        while (ret == 1 && kill == 0) {
+	    ret = xmlTextReaderRead(reader);
+	    name = (char *) xmlTextReaderName(reader);
+	    type = xmlTextReaderNodeType(reader); 
+	    if ( type == 1 ) {
+	        if ( strcmp ( name, "AnalyzerReport" ) == 0 && callback->initialCall != NULL ) {
+		    Initial * initial = calloc(1, sizeof(Initial));
+		    initial->tool_name = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "tool_name");
+		    initial->tool_version = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "tool_version");
+		    initial->uuid = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "uuid");
+		    kill = callback->initialCall(initial, callback->CallbackData);
+
+	        } else if ( strcmp ( name, "BugInstance" ) == 0 && callback->bugCall != NULL ) {
+		    int foundBug = 0;
+		    BugInstance * bug = initializeBug();
+		    while (ret == 1 && foundBug == 0) {
+			foundBug = processBug(reader, bug);
+			if (foundBug == 0) {
+			    ret = xmlTextReaderRead(reader);
+			}
+		    }
+		    if (foundBug == 1) {
+			kill = callback->bugCall(bug, callback->CallbackData);
+		    }
+
+	        } else if ( strcmp ( name, "Metric" ) == 0 && callback->metricCall != NULL ) {
+		    Metric * metric = initializeMetric();
+		    int foundMetric = 0;
+		    while (ret == 1 && foundMetric == 0) {
+			foundMetric = processMetric(reader, metric);
+			if (foundMetric == 0) {
+			    ret = xmlTextReaderRead(reader);
+			}	
+		    }
+		    if (foundMetric == 1) {
+			kill = callback->metricCall(metric, callback->CallbackData);
+		    }
+
+	        } else if ( strcmp ( name, "BugSummary" ) == 0 && callback->bugSumCall !=NULL ) {
+		    BugSummary * bugsum = NULL;
+		    int finSummary = 0;
+		    while (ret == 1 && !finSummary) {
+			ret = xmlTextReaderRead(reader);
+			if (type == 1) {
+			    if (strcmp(name, "BugCategory") == 0) {
+				BugSummary * temp = malloc(sizeof(BugSummary));
+				char * att = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "count");
+				temp->count = strtol(att, NULL, 10);
+				xmlFree((xmlChar *) att);
+				att = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "bytes");
+				temp->byteCount = strtol(att, NULL, 10);
+				xmlFree((xmlChar *) att);
+				temp->code = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "code");
+				temp->group = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "group");
+				if ( bugsum == NULL ) {
+				    bugsum = temp;
+				} else {
+				    BugSummary * curr = bugsum;
+				    while (curr->next != NULL) {
+					curr = curr->next;
+				    }
+				    curr->next = temp;
+				}
+			    }
+			} else if (type == 15 && strcmp(name, "BugSummary") == 0) {
+			    finSummary = 1;
+			}
+		    }
+		    if ( finSummary == 1 ) {
+			kill = callback->bugSumCall(bugsum, callback->CallbackData);
+		    }
+
+	        } else if ( strcmp ( name, "MetricSummaries") == 0 && callback->metricSumCall != NULL ) {
+		    MetricSummary * metricsum = NULL;
+		    MetricSummary * temp = NULL;
+		    int finSummary = 0;
+		    while (ret == 1 && !finSummary) {
+			ret = xmlTextReaderRead(reader);
+			if (type == 1) {
+			    if ( strcmp(name, "MetricSummary") == 0 ) {
+				temp = calloc(1, sizeof(MetricSummary));
+			    } else if ( strcmp(name, "Type") == 0 ) {
+				temp->type = (char *) xmlTextReaderReadInnerXml(reader);
+			    } else if ( strcmp(name, "Count") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->count = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "Minimum") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->min = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "Maximum") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->max = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "Average") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->average = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "StandardDeviation") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->stdDeviation = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "Sum") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->sum = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    } else if ( strcmp(name, "SumOfSquares") == 0 ) {
+				char * text = (char *) xmlTextReaderReadInnerXml(reader);
+				temp->sumOfSquares = strtod(text, NULL);
+				xmlFree((xmlChar *) text);
+			    }
+			} else if ( type == 15 ) {
+			    if ( strcmp(name, "MetricSummary") == 0 ) {
+				if ( metricsum == NULL ) {
+                                    metricsum = temp;
+                                } else {
+                                    MetricSummary * curr = metricsum;
+                                    while (curr->next != NULL) {
+                                        curr = curr->next;
+                                    }
+                                    curr->next = temp;
+				}
+			    } else if ( strcmp(name, "MetricSummaries") == 0 ) {
+				kill = callback->metricSumCall(metricsum, callback->CallbackData);
+				finSummary = 1;
+			    }
+			}
+		    }
+	        }
 	    }
-	}
-	if (foundInit == 1) {
-	    return initial;
 	}
 	if (ret != 0) {
 	    printf("Failed to parse set file\n");
+	    return 1;
 	}
+	if ( callback->finishCallback != NULL ) {
+	    callback->finishCallback(callback->CallbackData);
+	}
+	
     } else {
 	printf("Reader set to invalid file\n");
-    }
-    return NULL;
+	return 1;
+    } 
+    return 0;
 }
+
 
 
 //////////////////Close parser////////////////////////////////////////////
-int closeReader(Reader reader)
+int closeReader(Reader * reader)
 {
-    return xmlTextReaderClose(reader);
+    return xmlTextReaderClose(reader->reader);
 }
 
-
-////////////////////Process next bug/////////////////////////////////////////
-BugInstance * nextBug(Reader reader)
-{   
-    
-    BugInstance * bug = initializeBug();
-    int ret;
-    int foundBug = 0;
-    if (reader != NULL) {
-	ret = xmlTextReaderRead(reader);
-	while (ret == 1 && foundBug == 0) {
-	    foundBug = processBug(reader, bug);
-	    if (foundBug == 0) {
-		ret = xmlTextReaderRead(reader);
-	    }
-	}
-	if (foundBug == 1) {
-	    return bug;
-	}
-	if (ret != 0) {
-	    printf("Failed to parse set file\n");
-	}
-    } else {
-	printf("Reader set to invalid file\n");
-    }
-    return NULL;
-}
-
-
-////////////////////Process next metric/////////////////////////////////////////
-Metric * nextMetric(Reader reader)
-{
-    Metric * metric = initializeMetric();
-    int ret;
-    int foundMetric = 0;
-    if (reader != NULL) {
-	ret = xmlTextReaderRead(reader);
-	while (ret == 1 && foundMetric == 0) {
-	    foundMetric = processMetric(reader, metric);
-	    if (foundMetric == 0) {
-		ret = xmlTextReaderRead(reader);
-	    }
-	}
-	if (foundMetric == 1) {
-	    return metric;
-	}
-	if (ret != 0) {
-	    printf("Failed to parse set file\n");
-	}
-    } else {
-	printf("Reader set to invalid file\n");
-    }
-    return NULL;
-}
 
 
 
