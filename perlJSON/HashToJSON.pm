@@ -5,10 +5,10 @@ use JSON::MaybeXS;
 
 sub new
 {
-    my ($class, $output_file, $error_level) = @_;
+    my ($class, $handle, $error_level) = @_;
     my $self = {};
-    open $self->{output}, ">", $output_file or die "invalid output file";
-
+#    open $self->{output}, ">", $output_file or die "invalid output file";
+    $self->{output} = $handle;
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
     $self->{writer} = $self->{writer}->allow_nonref ([$enable]);
 
@@ -20,7 +20,8 @@ sub new
 
     $bugID = 1;
     $metricID = 1;
-  
+    
+    $self->{open} 
     $self->{bodyType} = undef;
     $self->{openBody} = 0;
     $self->{openStart} = 0;
@@ -80,6 +81,7 @@ sub setErrorLevel
     }
 }
 
+
 #check required start elements
 sub checkStart
 {
@@ -91,9 +93,7 @@ sub checkStart
             push @errors, "Required attribute: $reqAttr not found when creating startTag";
         }
     }
-
     return \@errors;
-
 }
 
 
@@ -103,7 +103,13 @@ sub addStartTag
     my ($self, $initial_details) = @_;
 
     if ($self->{error_level} != 0) {
-        my $errors = checkStart($initial_details);
+	if ( $self->{open} ) {
+            print "Scarf File already open";
+            if ( $self->{error_level} == 2 ) {
+                die "Exiting";
+            }
+        }
+	my $errors = checkStart($initial_details);
         print "$_\n" for @{$errors};
         if (@{$errors} and $self->{error_level} == 2) {
             die "Exiting";
@@ -117,11 +123,22 @@ sub addStartTag
 
 	$self->{openStart} = 1;
     }
+    $self->{MetricSummaries} = {};
+    $self->{BugSummaries} = {};
     return $self;
 }
 
+
 sub addEndTag
 {
+    if ($self->{error_level} == 0) {
+        if ( $self->{open} ) {
+            print "Scarf File already closed";
+            if ( $self->{error_level} == 2 ) {
+                die "Exiting";
+            }
+        }
+    }
     my ($self) = @_;
     $jsonw = $self->{writer};
     
@@ -137,6 +154,8 @@ sub addEndTag
     return $self;
 }
 
+
+#validate bug
 sub checkBug
 {
     my ($bugInstance) = @_;
@@ -235,6 +254,12 @@ sub addBugInstance
 {
     my($self, $bugInstance) = @_;
     if ($self->{error_level} != 0) {
+	if ($self->{bodyType} eq "summary") {
+	    print "Summary already written. Invalid Scarf";
+	    if ( $self->{error_level} == 2) {
+		die "Exiting";
+	    }
+	}
         my $errors = checkBug($bugInstance);
         print "$_\n" for @$errors;
         if (@$errors and $self->{error_level} == 2) {
@@ -311,6 +336,7 @@ sub addBugInstance
     return $self;
 }
 
+
 #check for metrics required elements
 sub checkMetric
 {
@@ -330,6 +356,12 @@ sub addMetric
 {
     my($self, $metric) = @_;
     if ($self->{error_level} != 0) {
+	if ($self->{bodyType} eq "summary") {
+	    print "Summary already written. Invalid Scarf";
+	    if ( $self->{error_level} == 2) {
+		die "Exiting";
+	    }
+	}
         my $errors = checkMetric($metric);
         print "$_\n" for @$errors;
         if (@$errors and $self->{error_level} == 2) {
@@ -404,7 +436,7 @@ sub addSummary
     if ($self->{openBody}) {
 	$out->print("],\n ");
 	$self->{openBody} = 0;
-	$self->{bodyType} = undef; 
+	$self->{bodyType} = "summary; 
         if (defined $self->{BugSummaries}) {
 
 	    $out->print("  \"BugSummaries\" : ");

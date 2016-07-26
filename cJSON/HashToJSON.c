@@ -8,18 +8,14 @@
 
 
 ////////////////////structs///////////////////////////
-typedef struct BugSummaries {
-    char * code;
-    struct BugSummary * codeSummary;
-    struct BugSummaries * next;
-} BugSummaries;
 
 typedef struct Writer {
     int bugId;
     int metricId;
     int errorLevel;
     int openBody;
-    char * filename;
+    int start;
+//    char * filename;
     FILE * file;
     char curr[20];
     struct BugSummaries * bugSums;
@@ -29,17 +25,17 @@ typedef struct Writer {
 
 
 //////////////constructor////////////////////
-Writer * newWriter(char * filename)
+Writer * newWriter(FILE * file)
 {
     Writer * writerInfo = calloc(1, sizeof(Writer));
     writerInfo->writer = yajl_gen_alloc(NULL);
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
-    writerInfo->filename = malloc(strlen(filename) + 1);
-    writerInfo->file = fopen(filename, "w");
+//    writerInfo->filename = malloc(strlen(filename) + 1);
+    writerInfo->file = file;//fopen(filename, "w");
     writerInfo->bugId = 1;
     writerInfo->metricId = 1;
     writerInfo->errorLevel = 1;
-    strcpy(writerInfo->filename, filename);
+//    strcpy(writerInfo->filename, filename);
     return writerInfo;
 }
 
@@ -49,7 +45,7 @@ void closeWriter (Writer * writerInfo)
     yajl_gen_free(writerInfo->writer);
     free(writerInfo->bugSums);
     free(writerInfo->metricSum);
-    free(writerInfo->filename);
+//    free(writerInfo->filename);
     free(writerInfo);
 }
 
@@ -193,16 +189,29 @@ char * checkBug(BugInstance * bug , int bugID)
 
 int addBug(Writer * writerInfo, BugInstance * bug)
 {
-    char * errors = NULL;
-    errors = checkBug(bug, writerInfo->bugId);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-        printf("%s", errors);
-        if ( writerInfo->errorLevel == 2 ) {
-            exit(1);
+    if (writerInfo->errorLevel != 0) {
+        if (strcmp(writerInfo->curr, "summary") == 0) {
+            printf("Summary already written. Invalid Scarf.\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
         }
+        if (writerInfo->start == 0) {
+            printf("Scarf file closed.\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
+        }
+        char * errors = NULL;
+        errors = checkBug(bug, writerInfo->bugId);
+        if ( strcmp(errors,"") != 0 ) {
+            printf("%s", errors);
+            if ( writerInfo->errorLevel == 2 ) {
+                exit(1);
+            }
+        }
+        free(errors);
     }
-    free(errors);
-
 
     yajl_gen writer = writerInfo->writer;
 
@@ -500,16 +509,30 @@ char * checkMetric(Metric * metric, int metricID)
 
 int addMetric(Writer *  writerInfo, Metric * metric)
 {
-    char * errors = NULL;
-    yajl_gen writer = writerInfo->writer;
-    errors = checkMetric(metric, writerInfo->metricId);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-        printf("%s\n", errors);
-        if ( writerInfo->errorLevel == 2 ) {
-            exit(1);
+    if (writerInfo->errorLevel != 0) {
+        if (strcmp(writerInfo->curr, "summary") == 0) {
+            printf("Summary already written. Invalid Scarf.\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
         }
+        if (writerInfo->start == 0) {
+            printf("Scarf file closed.\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
+        }
+        char * errors = NULL;
+        errors = checkBug(bug, writerInfo->bugId);
+        if ( strcmp(errors,"") != 0 ) {
+            printf("%s", errors);
+            if ( writerInfo->errorLevel == 2 ) {
+                exit(1);
+            }
+        }
+        free(errors);
     }
-    free(errors);
+
     if ( strcmp ( writerInfo->curr, "bug") == 0 ) {
         yajl_gen_array_close(writer);
     } else if (strcmp(writerInfo->curr, "metric") != 0) {
@@ -639,15 +662,23 @@ char * checkStart(Initial * initial){
 int addStartTag(Writer * writerInfo, Initial * initial)
 {
     strcpy(writerInfo->curr, "Init");
-    char * errors = NULL;
-    errors = checkStart(initial);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-        printf("%s\n", errors);
-        if ( writerInfo->errorLevel == 2 ) {
-            exit(1);
+    if (writerInfo->errorLevel != 0) {
+        if ( writerInfo->start == 1 ) {
+            printf("Scarf file already open\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
         }
+        char * errors = NULL;
+        errors = checkStart(initial);
+        if ( strcmp(errors,"") != 0) {
+            printf("%s", errors);
+            if ( writerInfo->errorLevel == 2 ) {
+                exit(1);
+            }
+        }
+        free(errors);
     }
-    free(errors);
     
     yajl_gen writer = writerInfo->writer;
     yajl_gen_map_open(writer);
@@ -680,6 +711,36 @@ int addStartTag(Writer * writerInfo, Initial * initial)
     fwrite(buf, 1, bufLen, writerInfo->file);
     yajl_gen_clear(writer);
 
+    BugSummaries freeBugSum = writerInfo->bugSums;
+    BugSummaries prevBugSum = NULL;
+    while ( freeBugSum != NULL ) {
+        prevBugSum = freeBugSum;
+        freeBugSum = freeBugSum->next;
+        free(prevBugSum->code);
+        BugSummary codeBugSum = prevBugSum->codeSummary;
+        BugSummary prevCodeBugSum = NULL;
+        while ( codeBugSum != NULL ) {
+            prevCodeBugSum = codeBugSum;
+            codeBugSum = codeBugSum->next;
+            free(prevCodeBugSum->code);
+            free(prevCodeBugSum->group);
+            free(prevCodeBugSum);
+        }
+        free(prevBugSum->codeSummary);
+        free(prevBugSum);
+    }
+    MetricSummary metrSum = writerInfo->metricSum;
+    MetricSummary prev = NULL;
+    while ( metrSum != NULL ) {
+        prev = metrSum;
+        metrSum = metrSum->next;
+        free(prev->type);
+        free(prev)
+    }
+
+    writerInfo->metricSum = null;
+    writerInfo->bugSums = null;
+
 }
 
 
@@ -689,6 +750,15 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 int addEndTag(Writer * writerInfo)
 {
     strcpy(writerInfo->curr, "end");
+    if (writerInfo->errorLevel != 0) {
+        if ( writerInfo->start == 0 ) {
+            printf("Scarf file already closed\n");
+            if (writerInfo->errorLevel == 2) {
+                exit(1);
+            }
+        }
+    }
+
     yajl_gen writer = writerInfo->writer;
     if (writerInfo->openBody) {
 	yajl_gen_array_close(writer);
@@ -719,6 +789,15 @@ int addSummary(Writer * writerInfo)
     int hasSummary = 0;
     if ( curBugSummary != NULL || curMetricSummary != NULL ) {
 	hasSummary = 1;
+    } else {
+	if (writerInfo->errorLevel != 0) {
+	    if ( writerInfo->start == 0 ) {
+		printf("Scarf file closed\n");
+		if (writerInfo->errorLevel == 2) {
+		    exit(1);
+		}
+	    }
+	}
     }
 
     char temp [1024];

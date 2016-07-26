@@ -114,19 +114,21 @@ def checkBug(bugHash, bugID):
 ##########################################################################################
 class HashToScarf:
 
-
 ##################Initialize Writer##################################################
     def __init__(self, output, error_level):
-	try:
-	    self.output = open(output, "w")
-	except IOError:
-	    print('cannot open file')
-	    sys.exit(1)
+#	try:
+#	    self.output = open(output, "w")
+#	except IOError:
+#	    print('cannot open file')
+#	    sys.exit(1)
+	self.output  = output
 	if error_level == 1 or error_level == 0:
 	    self.error_level = error_level
 	else:
 	    self.error_level = 2
-	self.pretty = 0;
+	self.pretty = 0
+	self.bodyType = ""
+	self.start = 0
 
 	self.bugID = 1
 	self.metricID = 1
@@ -168,11 +170,19 @@ class HashToScarf:
     def addStartTag(self, initial_details):
 
 	if self.error_level != 0 :
+	    if self.start:
+		print("Scarf file already open\n")
+		if self.error_level == 2:
+		    sys.exit(1)
 	    errors =  checkStart(initial_details)
 	    for error in errors:
 		print error
 	    if errors and self.error_level == 2:
 		sys.exit(1)
+	self.start = 1
+	self.bodyType = "body"
+	self.metricSummaries = {}
+	self.bugSummaries = {}
 
 	writer = self.output
 	writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" )
@@ -186,6 +196,10 @@ class HashToScarf:
     def addBugInstance(self, bugHash):
 	#check for req elmts
 	if self.error_level != 0 :
+	    if self.bodyType == "summary":
+		print("Summary already written. Invalid Scarf\n")
+		if self.error_level == 2:
+		    sys.exit(1)
 	    errors =  checkBug(bugHash, self.bugID)
 	    for error in errors:
 		print error
@@ -317,6 +331,10 @@ class HashToScarf:
     def addMetric(self, metricHash):
 
 	if self.error_level != 0 :
+	    if self.bodyType == "summary":
+		print("Summary already written. Invalid Scarf\n")
+		if self.error_level == 2:
+		    sys.exit(1)
 	    errors =  checkMetric(metricHash, self.metricID)
 	    for error in errors:
 		print error
@@ -396,6 +414,7 @@ class HashToScarf:
 	import math
 
 	if self.bugSummaries:
+	    self.bodyType = "summary"
 	    summaries = etree.Element("BugSummary")
 	    for code in self.bugSummaries:
 		for group in code:
@@ -407,6 +426,7 @@ class HashToScarf:
 	    self.output.write(etree.tostring(summaries, pretty_print = True))
 
 	if self.metricSummaries:
+	    self.bodyType = "summary"
 	    summaries = etree.Element("MetricSummaries")
 	    for metric in self.metricSummaries:
 		summary = self.metricSummaries[metric]
@@ -447,6 +467,12 @@ class HashToScarf:
 
     #######################Add end tag for analyzer report###########################################
     def addEndTag(self):
+	if self.error_level != 0:    
+	    if !self.start:
+		print("Scarf file already closed\n")
+		if self.error_level == 2:
+		    sys.exit(1)
+	self.start = 0
 	self.output.write("</AnalyzerReport>")
 	return self
 

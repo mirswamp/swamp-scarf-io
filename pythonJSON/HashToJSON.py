@@ -8,6 +8,7 @@ def checkStart(initial_details):
            errors.append(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
     return errors
 
+
 def checkMetric(metricHash, metricID):
     errors = []
     for reqElt in ["Value", "Type", "SourceFile"]:
@@ -15,11 +16,13 @@ def checkMetric(metricHash, metricID):
             error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, metricID))
     return errors
 
+
 def checkBug(bugHash, bugID):
     errors = []
     for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
         if reqElt not in bugHash:
            errors.append("Required element: %s could not be found in BugInstance: %s" % (reqElt, bugID))
+    
     if "Methods" in bugHash:
         methodID = 1
         methodPrimary = 0
@@ -80,16 +83,17 @@ def checkBug(bugHash, bugID):
         return errors;
 
 
-class HashToJSON:
-    
+
+class HashToJSON:    
 ##################Initialize Writer##################################################
     def __init__(self, output, error_level):
-        try:
-            self.output = open(output, "w")
-        except IOError:
-            print('cannot open file')
-            sys.exit(1)
-        if error_level == 1 or error_level == 0:
+#        try:
+#            self.output = open(output, "w")
+#        except IOError:
+#            print('cannot open file')
+#	    sys.exit(1)
+        self.output = output
+	if error_level == 1 or error_level == 0:
             self.error_level = error_level
         else:
             self.error_level = 2
@@ -100,6 +104,7 @@ class HashToJSON:
         self.bugID = 1
         self.metricID = 1
 
+	self.start = 0
         self.metricSummaries = {}
         self.bugSummaries = {}
 
@@ -133,12 +138,21 @@ class HashToJSON:
 #           if reqAttr not in initial_details:
 #               error(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
 
-        if self.error_level != 0 :
+        if self.error_level != 0:
+	    if self.start:
+                print("Scarf file already open\n")
+                if self.error_level == 2:
+                    sys.exit(1)
             errors =  checkStart(initial_details)
             for error in errors:
                 print error
             if errors and self.error_level == 2:
                 sys.exit(1)
+	
+	self.start = 1
+        self.curr = "body"
+        self.metricSummaries = {}
+        self.bugSummaries = {}
 
         writer = self.writer
         writer.yajl_gen_map_open()
@@ -164,6 +178,10 @@ class HashToJSON:
 	writer = self.writer
         #check for req elmts
         if self.error_level != 0 :
+	    if self.curr == "summary":
+                print("Summary already written. Invalid Scarf\n")
+                if self.error_level == 2:
+                    sys.exit(1)
             errors =  checkBug(bugHash, self.bugID)
             for error in errors:
                 print error
@@ -307,6 +325,10 @@ class HashToJSON:
 
         writer = self.writer
         if self.error_level != 0 :
+	    if self.curr == "summary":
+                print("Summary already written. Invalid Scarf\n")
+                if self.error_level == 2:
+                    sys.exit(1)
             errors =  checkMetric(metricHash, self.metricID)
             for error in errors:
 		print error
@@ -336,7 +358,8 @@ class HashToJSON:
         writer.yajl_gen_map_close()
 
         self.metricID = self.metricID + 1
-
+	
+	##########group metrics ########################
         metricType = metricHash["Type"]
         if metricType in  self.metricSummaries:
             summary = self.metricSummaries[metricType]
@@ -382,19 +405,19 @@ class HashToJSON:
                     self.metricSummaries[metricType] = {"Count":1}
 
 	self.output.write(writer.yajl_gen_get_buf())
-
         return self
+
 
 ############Add summary from written elements##############################################################
     def addSummary(self):
         import math
 
 	writer = self.writer
-	if self.curr == "bug" or self.curr == "metric":
-	    writer.yajl_gen_array_close()        
-	self.curr = "summary"
 
 	if self.bugSummaries:
+	    if self.curr == "bug" or self.curr == "metric":
+		writer.yajl_gen_array_close()        
+	    self.curr = "summary"
 
             writer.yajl_gen_string("BugSummaries")
             writer.yajl_gen_array_open()
@@ -417,6 +440,9 @@ class HashToJSON:
 
 
         if self.metricSummaries:
+	    if self.curr == "bug" or self.curr == "metric":
+		writer.yajl_gen_array_close()        
+	    self.curr = "summary"
             writer.yajl_gen_string("MetricSummaries")
             writer.yajl_gen_map_open()        
             for metric in self.metricSummaries:
@@ -459,10 +485,14 @@ class HashToJSON:
 
     #######################Add end tag for analyzer report###########################################
     def addEndTag(self):
-        
+       
+	if self.error_level != 0:
+            if !self.start:
+                print("Scarf file already closed\n")
+                if self.error_level == 2:
+                    sys.exit(1) 
         writer = self.writer
         if self.curr == "bug" or self.curr == "metric":
-            print("closing")
             writer.yajl_gen_array_close()     
         self.curr = "summary"
         writer.yajl_gen_map_close()     

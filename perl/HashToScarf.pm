@@ -32,9 +32,11 @@ my $bugID;
 #constructer
 sub new
 {
-    my ($class, $output_file, $error_level, $pretty_enable) = @_;
+    my ($class, $handle, $error_level, $pretty_enable) = @_;
+#    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
-    open $self->{output}, ">", $output_file or die "invalid output file";
+    $self->{output} = $handle;
+#    open $self->{output}, ">", $output_file or die "invalid output file";
     if  ( $pretty_enable ) {
 	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
     } else {
@@ -51,6 +53,8 @@ sub new
     $bugID = 1;
     $metricID = 1;
     
+    $self->{bodyType};
+    $self->{open};
     $self->{MetricSummaries};
     $self->{BugSummaries};
     
@@ -68,7 +72,7 @@ sub getWriter
 
 
 #return output file
-sub getFile
+sub getHandle
 {
     my ($self) = @_;
     return $self->{output};
@@ -88,8 +92,6 @@ sub setErrorLevel
     if (defined $error_level) {
 	if ($error_level == 1 or $error_level == 2 or $error_level == 0) {
 	    $self->{error_level} = $error_level;
-	} else {
-	    print "Invalid error level\n";
 	}
     }
 }
@@ -135,17 +137,26 @@ sub checkStart
 sub addStartTag
 {   
     my ($self, $initial_details) = @_;
-
     if ($self->{error_level} != 0) {
+	if ( $self->{open} ) {
+	    print "Scarf file already open";
+	    if ( $self->{error_level} == 2 ) {
+		die "Exiting";
+	    }
+	}
 	my $errors = checkStart($initial_details);
 	print "$_\n" for @{$errors};
 	if (@{$errors} and $self->{error_level} == 2) {
 	    die "Exiting";
 	}
     }
+    $self->{bodyType} = "body";
 
     $self->{writer}->startTag('AnalyzerReport', tool_name => $initial_details->{tool_name}, 
 	    tool_version => $initial_details->{tool_version}, uuid => $initial_details->{uuid});
+    $self->{open} = 1;
+    $self->{MetricSummaries} = {};
+    $self->{BugSummaries} = {};
     return $self;
 }
 
@@ -153,6 +164,15 @@ sub addStartTag
 #close	analyzer report
 sub addEndTag
 {
+    my ($self) = @_;
+    if ($self->{error_level} == 0) {
+	if ( $self->{open} ) {
+	    print "Scarf file already closed";
+	    if ( $self->{error_level} == 2 ) {
+		die "Exiting";
+	    }
+	}
+    }
     my ($self) = @_;
     $self->{writer}->endTag();
     return $self;
@@ -261,6 +281,12 @@ sub addBugInstance
 
     #check for req elements existence
     if ($self->{error_level} != 0) {
+        if ($self->{bodyType} eq "summary") {
+            print "Summary already written. Invalid Scarf";
+            if ( $self->{error_level} == 2) {
+                die "Exiting";
+            }
+        }
 	my $errors = checkBug($bugInstance);
 	print "$_\n" for @$errors;
 	if (@$errors and $self->{error_level} == 2) {
@@ -446,6 +472,12 @@ sub addMetric
     my($self, $metric) = @_;
  
     if ($self->{error_level} != 0) {
+        if ($self->{bodyType} eq "summary") {
+            print "Summary already written. Invalid Scarf";
+            if ( $self->{error_level} == 2) {
+                die "Exiting";
+            }
+        }
 	my $errors = checkMetric($metric);
 	print "$_\n" for @$errors;
 	if (@$errors and $self->{error_level} == 2) {
@@ -521,6 +553,12 @@ sub addSummary
 {
     my ($self) = @_ ;
     my $writer = $self->{writer};
+    if ($self->{bodyType} eq "summary") {
+        print "Summary already written. Invalid Scarf";
+        if ( $self->{error_level} == 2) {
+            die "Exiting";
+        }
+    }
     if (defined $self->{BugSummaries}) {
 	$writer->startTag('BugSummary');
 	foreach my $code (keys %{$self->{BugSummaries}}) {
@@ -530,6 +568,7 @@ sub addSummary
 	    }
 	}
 	$writer->endTag();
+	$self->{bodyType} = "summary";
     }	
     
     if ($self->{MetricSummaries}) {
@@ -579,6 +618,7 @@ sub addSummary
 	    $writer->endTag();
 	}
 	$writer->endTag();
+	$self->{bodyType} = "summary";
     }
 }
 

@@ -24,38 +24,14 @@
 ////////////////////Writer operation structs/////////////////////////////////////
 
 
-typedef struct BugSummary {
-    int count;
-    int byteCount;
-    char * code;
-    char * group;
-    struct BugSummary * next;
-} BugSummary;
-
-
-typedef struct BugSummaries {
-    char * code;
-    struct BugSummary * codeSummary;
-    struct BugSummaries * next;
-} BugSummaries;
-
-
-typedef struct MetricSummary {
-    int count;
-    int sum;
-    int sumOfSquares;
-    int max;
-    int min;
-    int valid;
-    char * type;
-    struct MetricSummary * next;
-} MetricSummary;
-
-
 typedef struct Writer {
     int bugId;
     int metricId;
     int errorLevel;
+    int start;
+    char * curr;
+    FILE * file;
+    xmlBufferPtr buf;
     struct BugSummaries * bugSums;
     struct MetricSummary * metricSum;
     xmlTextWriterPtr writer;
@@ -65,11 +41,17 @@ typedef struct Writer {
 ////////////////////////////Initializer/Closer////////////////////////////////////////
 
 
-Writer * newWriter(char * filename)
+Writer * newWriter(FILE * handle)
 {
     int rc;
     Writer * writerInfo = malloc(sizeof(Writer));
-    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
+//    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
+    writerInfo->buf = xmlBufferCreate();
+    if (writerInfo->buf == NULL) {
+	printf("testXmlwriterMemory: Error creating the xml buffer\n");
+	return NULL;
+    }
+    writerInfo->writer = xmlNewTextWriterMemory(writerInfo->buf, 0);
     xmlTextWriterSetIndent(writerInfo->writer, 2);
     if (writerInfo->writer == NULL) {
         printf("testXmlwriterFilename: Error creating the xml writer\n");
@@ -80,6 +62,13 @@ Writer * newWriter(char * filename)
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
     }
+    if (handle == NULL){
+	printf("Bad FILE * object\n");
+	exit(1);
+    }
+    writerInfo->file = handle;
+    writerInfo->curr = NULL;
+    writerInfo->start = 0;
     writerInfo->errorLevel = 2;
     writerInfo->bugId = 1;
     writerInfo->metricId = 1;
@@ -93,6 +82,8 @@ Writer * newWriter(char * filename)
 void closeWriter (Writer * writerInfo) 
 {
     xmlTextWriterEndDocument(writerInfo->writer);
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferFree(writerInfo->buf);
     free(writerInfo);
 }
 
@@ -250,15 +241,29 @@ char * checkBug(BugInstance * bug , int bugID)
 
 int addBug(Writer * writerInfo, BugInstance * bug)
 {
-    char * errors = NULL;
-    errors = checkBug(bug, writerInfo->bugId);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-	printf("%s", errors);
-	if ( writerInfo->errorLevel == 2 ) {
-	    exit(1);
+    if (writerInfo->errorLevel != 0) {
+	if (strcmp(writerInfo->curr, "summary") == 0) {
+	    printf("Summary already written. Invalid Scarf.\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);
+	    }
 	}
+	if (writerInfo->start == 0) {
+	    printf("Scarf file closed.\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);
+	    }
+	}
+	char * errors = NULL;
+        errors = checkBug(bug, writerInfo->bugId);
+        if ( strcmp(errors,"") != 0 ) {
+            printf("%s", errors);
+            if ( writerInfo->errorLevel == 2 ) {
+                exit(1);
+            }
+        }
+        free(errors);
     }
-    free(errors);
 
     char temp[24];
     int rc;
@@ -600,6 +605,9 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     bytes += rc;
     rc = xmlTextWriterFlush(writer);
     bytes += rc;
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferEmpty(writerInfo->buf);
+
     ///////////////////////////////Group bugs/////////////////////
     char * code = bug->bugCode;
     if (code == NULL) {
@@ -626,9 +634,9 @@ int addBug(Writer * writerInfo, BugInstance * bug)
         summary->count = 1;
         summary->byteCount = bytes;
         summary->next = NULL;
-        summary->code = malloc(strlen(code));
+        summary->code = malloc(strlen(code) + 1);
         strcpy(summary->code, code);
-        summary->group = malloc(strlen(group));
+        summary->group = malloc(strlen(group) + 1);
         strcpy(summary->group, group);
         summaries->codeSummary = summary;
         summaries->next = NULL;
@@ -701,16 +709,29 @@ char * checkMetric(Metric * metric, int metricID)
 
 int addMetric(Writer *  writerInfo, Metric * metric)
 {
-    char * errors = NULL;
-    errors = checkMetric(metric, writerInfo->metricId);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-	printf("%s", errors);
-	if ( writerInfo->errorLevel == 2 ) {
-	    exit(1);
+    if (writerInfo->errorLevel != 0) {
+	char * errors = NULL;
+	if (strcmp(writerInfo->curr, "summary") == 0) {
+	    printf("Summary already written. Invalid Scarf.\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);
+	    }
 	}
+	if (writerInfo->start == 0) {
+	    printf("Scarf file closed.\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);
+	    }
+	}
+	errors = checkMetric(metric, writerInfo->metricId);
+        if ( strcmp(errors,"") != 0) {
+            printf("%s", errors);
+            if ( writerInfo->errorLevel == 2 ) {
+                exit(1);
+            }
+        }
+	free(errors);
     }
-    free(errors);
-
 
     int rc;
     char temp[24];
@@ -771,6 +792,8 @@ int addMetric(Writer *  writerInfo, Metric * metric)
         return 1;
     }
     xmlTextWriterFlush(writer);
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferEmpty(writerInfo->buf);
 
     char * type = metric->type;
     if (type == NULL) {
@@ -853,17 +876,32 @@ char * checkStart(Initial * initial){
 
 int addStartTag(Writer * writerInfo, Initial * initial)
 {
-
-    char * errors = NULL;
-    errors = checkStart(initial);
-    if ( strcmp(errors,"") != 0  && writerInfo->errorLevel != 0) {
-	printf("%s", errors);
-	if ( writerInfo->errorLevel == 2 ) {
-	    exit(1);
+    printf("test\n");
+    if (writerInfo->errorLevel != 0) {
+    printf("test\n");
+	if ( writerInfo->start == 1 ) {
+	    printf("Scarf file already open\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);    
+	    }
 	}
+	char * errors = NULL;
+	errors = checkStart(initial);
+	if ( strcmp(errors,"") != 0) {
+	    printf("%s", errors);
+	    if ( writerInfo->errorLevel == 2 ) {
+		exit(1);
+	    }
+	}
+	free(errors);
     }
-    free(errors);
+    printf("test\n");
     
+    writerInfo->start = 1;
+    free(writerInfo->curr);
+    writerInfo->curr = malloc(strlen("start") + 1);
+    strcpy(writerInfo->curr, "start");
+
     int rc;
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "AnalyzerReport");
@@ -890,6 +928,37 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 	return 1;
     }
     xmlTextWriterFlush(writer);
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferEmpty(writerInfo->buf);
+
+    BugSummaries * freeBugSum = writerInfo->bugSums;
+    BugSummaries * prevBugSum = NULL;
+    while ( freeBugSum != NULL ) {
+	prevBugSum = freeBugSum;
+	freeBugSum = freeBugSum->next;
+	free(prevBugSum->code);
+	BugSummary * codeBugSum = prevBugSum->codeSummary;
+	BugSummary * prevCodeBugSum = NULL;
+	while ( codeBugSum != NULL ) {
+	    prevCodeBugSum = codeBugSum;
+	    codeBugSum = codeBugSum->next;
+	    free(prevCodeBugSum->code);
+	    free(prevCodeBugSum->group);
+	    free(prevCodeBugSum);
+	}
+	free(prevBugSum->codeSummary);
+	free(prevBugSum);
+    }
+    MetricSummary * metrSum = writerInfo->metricSum;
+    MetricSummary * prev = NULL;
+    while ( metrSum != NULL ) {
+	prev = metrSum;
+	metrSum = metrSum->next;
+	free(prev->type);
+	free(prev);
+    }
+    writerInfo->metricSum = NULL;
+    writerInfo->bugSums = NULL;
     return 0;
 }
 
@@ -897,6 +966,18 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 //////////////////////End initialtag/////////////////////////////////////////////
 int addEndTag(Writer * writerInfo)
 {
+    if (writerInfo->errorLevel != 0) {
+	if ( writerInfo->start == 0 ) {
+	    printf("Scarf file already closed\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);    
+	    }
+	}	
+    }
+    writerInfo->start = 0;
+    free(writerInfo->curr);
+    writerInfo->curr = malloc(strlen("end") + 1);
+    strcpy(writerInfo->curr, "end");
     int rc;
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterEndElement(writer);
@@ -905,6 +986,8 @@ int addEndTag(Writer * writerInfo)
 	return 1;
     }
     xmlTextWriterFlush(writer);
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferEmpty(writerInfo->buf);
     return 0;
 }
 
@@ -912,6 +995,14 @@ int addEndTag(Writer * writerInfo)
 //////////////Add summary generated from instances//////////////////////////////////
 int addSummary(Writer * writerInfo)
 {
+    if (writerInfo->errorLevel != 0) {
+	if ( writerInfo->start == 0 ) {
+	    printf("Scarf file already closed\n");
+	    if (writerInfo->errorLevel == 2) {
+		exit(1);    
+	    }
+	}	
+    }
     xmlTextWriterPtr writer = writerInfo->writer;
     int rc = -1;
     char temp[24];
@@ -921,6 +1012,9 @@ int addSummary(Writer * writerInfo)
     BugSummary * curBugSummaryGroup;
     
     if (curBugSummary != NULL) {
+	free(writerInfo->curr);
+	writerInfo->curr = malloc(strlen("summary") + 1);
+	strcpy(writerInfo->curr, "summary");
 	rc = xmlTextWriterStartElement(writer, (xmlChar *) "BugSummary");
 	if (rc < 0) {
 	    printf("Error adding BugSummary start tag\n");
@@ -976,6 +1070,9 @@ int addSummary(Writer * writerInfo)
 
     rc = -1;
     if (curMetricSummary != NULL) {
+	free(writerInfo->curr);
+	writerInfo->curr = malloc(strlen("summary") + 1);
+	strcpy(writerInfo->curr, "summary");
 	rc = xmlTextWriterStartElement(writer, (xmlChar *) "MetricSummaries");
 	if (rc < 0) {
 	    printf("Error adding MetricSummaries start tag\n");
@@ -984,8 +1081,8 @@ int addSummary(Writer * writerInfo)
     }
     while (curMetricSummary != NULL){
 	int count = curMetricSummary->count;
-	int sum = curMetricSummary->sum;
-	int sumOfSquares = curMetricSummary->sumOfSquares;
+	double sum = curMetricSummary->sum;
+	double sumOfSquares = curMetricSummary->sumOfSquares;
 
 	rc = xmlTextWriterStartElement(writer, (xmlChar *) "MetricSummary");
 	if (rc < 0) {
@@ -1004,25 +1101,25 @@ int addSummary(Writer * writerInfo)
 	    return 1;
 	}
 	if (curMetricSummary->valid != 0) {
-	    sprintf(temp, "%d", sum);
+	    sprintf(temp, "%lf", sum);
 	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Sum", (xmlChar *) temp);
 	    if (rc < 0) {
 		printf("Error writing Sum Element of MetricSummary\n");
 		return 1;
 	    }
-	    sprintf(temp, "%d", sumOfSquares);
+	    sprintf(temp, "%lf", sumOfSquares);
 	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "SumOfSquares", (xmlChar *) temp);
 	    if (rc < 0) {
 		printf("Error writing SumOfSquares Element of MetricSummary\n");
 		return 1;
 	    }
-	    sprintf(temp, "%d", curMetricSummary->max);
+	    sprintf(temp, "%lf", curMetricSummary->max);
 	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Maximum", (xmlChar *) temp);
 	    if (rc < 0) {
 		printf("Error writing Maximum Element of MetricSummary\n");
 		return 1;
 	    }
-	    sprintf(temp, "%d", curMetricSummary->min);
+	    sprintf(temp, "%lf", curMetricSummary->min);
 	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Minimum", (xmlChar *) temp);
 	    if (rc < 0) {
 		printf("Error writing Minimum Element of MetricSummary\n");
@@ -1066,6 +1163,10 @@ int addSummary(Writer * writerInfo)
 	}
     }
     xmlTextWriterFlush(writer);
+   // printf("%d\n", xmlBufferLength(writerInfo->buf));
+    //printf("%d\n", writerInfo->buf->alloc);
+    fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
+    xmlBufferEmpty(writerInfo->buf);
     return 0;
 }
 

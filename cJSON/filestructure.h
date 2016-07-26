@@ -3,6 +3,8 @@
 
 
 /////////////////////////Summary Data Struct///////////////////////////////////////
+
+
 typedef struct BugSummary{
     char * code;
     char * group;
@@ -10,6 +12,13 @@ typedef struct BugSummary{
     int bytes;
     struct BugSummary * next;
 } BugSummary;
+
+
+typedef struct BugSummaries {
+    char * code;
+    struct BugSummary * codeSummary;
+    struct BugSummaries * next;
+} BugSummaries;
 
 
 typedef struct MetricSummary{

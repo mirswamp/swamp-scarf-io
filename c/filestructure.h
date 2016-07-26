@@ -1,6 +1,38 @@
 #ifndef GRANDFATHER_H
 #define GRANDFATHER_H
 
+/////////////////Summary structs ///////////////////////////
+typedef struct BugSummary {
+    int count;
+    int byteCount;
+    char * code;
+    char * group;
+    struct BugSummary * next;
+} BugSummary;
+
+
+typedef struct BugSummaries {
+    char * code;
+    struct BugSummary * codeSummary;
+    struct BugSummaries * next;
+} BugSummaries;
+
+
+typedef struct MetricSummary {
+    double count;
+    double sum;
+    double sumOfSquares;
+    double max;
+    double min;
+    double stdDeviation;
+    double average;
+    int valid;
+    char * type;
+    struct MetricSummary * next;
+} MetricSummary;
+
+
+
 /////////////////////////Initial Data Struct///////////////////////////////////////
 typedef struct Initial{
     char *tool_name;
