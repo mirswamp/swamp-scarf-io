@@ -57,10 +57,10 @@ sub parse
 				);
     #possibly use xsdValidator to verify scarf
     #$self->{parser}->parsefile($self->{source});
-    if ( ref $self eq "SCALAR" ) {
+    if ( ref $self->{source} eq "SCALAR" ) {
 	open($self->{source}, "<", $self->{source}) or die "Can't open source with filename $self->{source}";
 	$self->{parser}->parse($self->{source});
-    } elsif ( ref $self eq "IO" ) {
+    } elsif ( ref $self->{source} eq "IO" ) {
 	$self->{parser}->parse($self->{source});
     } else {
 	print("Could not open source for parsing\n");
