@@ -3,6 +3,7 @@
 package HashToJSON;
 use JSON::MaybeXS;
 use Scalar::Util qw[openhandle];
+use IO qw[Handle Seekable File Pipe];
 
 sub new
 {
@@ -10,7 +11,7 @@ sub new
     my $self = {};
     if ( ref $handle eq "SCALAR" ) {
 	open($self->{output}, ">", $output_file) or die "invalid output file";
-    elsif ( openhandle($handle) ) {
+    elsif ( openhandle($handle) or ref $handle eq "IO") {
 	$self->{output} = $handle;
     } else {
 	print("Could not open destination handle");

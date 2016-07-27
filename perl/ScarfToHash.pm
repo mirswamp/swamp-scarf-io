@@ -19,7 +19,7 @@ package ScarfToHash;
 use strict;
 use XML::Parser;
 use Scalar::Util qw[openhandle];
-use IO;
+use IO qw[Handle Seekable File Pipe];
 ##########Initialize Reader##########
 sub new
 {
@@ -58,7 +58,7 @@ sub parse
 				);
     #possibly use xsdValidator to verify scarf
     #$self->{parser}->parsefile($self->{source});
-    if (openhandle($self->{source})){ 
+    if (openhandle($self->{source}) or ref $self->{source} eq "IO"){ 
 	$self->{parser}->parse($self->{source});
     } elsif ( ref $self->{source} eq "SCALAR" ) {
 	my $file;

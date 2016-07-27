@@ -19,6 +19,7 @@ package JSONToHash;
 use strict;
 use JSON::SL;
 use Scalar::Util qw[openhandle];
+use IO qw[Handle Seekable File Pipe];
 
 ##########Initialize Reader##########
 sub new
@@ -55,7 +56,7 @@ sub parse
     my $fh;
     if (ref $self->{source} eq "SCALAR"){
 	open( $fh, "<", $self->{source} );
-    } elsif ( openhandle($self->{source}) ){
+    } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
 	$fh = $self->{source};
     } else {
 	print("Invalid source file\n");
