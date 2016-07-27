@@ -175,8 +175,8 @@ sub endHandler
 	if ( ! $$validBody ) {
 	    printf "No BugInstances or Metrics found in file.";
 	}
-	if ( defined $self->{callbacks}->{FinishCallback} ) {
-	    $finishcallback->($self->{callbacks}->{CallbackData});
+	if ( defined $finishcallback ) {
+	    $finishcallback->($data);
 	}
     } 
 
