@@ -2,6 +2,7 @@
 
 package HashToJSON;
 use JSON::MaybeXS;
+use Scalar::Util qw[openhandle];
 
 sub new
 {
@@ -9,7 +10,7 @@ sub new
     my $self = {};
     if ( ref $handle eq "SCALAR" ) {
 	open($self->{output}, ">", $output_file) or die "invalid output file";
-    elsif ( ref $handle eq "IO" ) {
+    elsif ( openhandle($handle) ) {
 	$self->{output} = $handle;
     } else {
 	print("Could not open destination handle");

@@ -18,6 +18,7 @@
 package JSONToHash;
 use strict;
 use JSON::SL;
+use Scalar::Util qw[openhandle];
 
 ##########Initialize Reader##########
 sub new
@@ -54,7 +55,7 @@ sub parse
     my $fh;
     if (ref $self->{source} eq "SCALAR"){
 	open( $fh, "<", $self->{source} );
-    } elsif ( ref $self->{source} eq "IO"){
+    } elsif ( openhandle($self->{source}) ){
 	$fh = $self->{source};
     } else {
 	print("Invalid source file\n");

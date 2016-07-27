@@ -17,6 +17,7 @@
 
 package HashToScarf;
 use XML::Writer;
+use Scalar::Util qw[openhandle];
 use strict;
 
 my $byteCountHash;
@@ -35,7 +36,7 @@ sub new
     my ($class, $handle, $error_level, $pretty_enable) = @_;
 #    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
-    if(ref $handle eq "IO") {
+    if(openhandle($handle)) {
 	$self->{output} = $handle;
     } elsif (ref $handle eq "SCALAR") {
         open($self->{output}, ">", $handle) or die "invalid output file";

@@ -18,7 +18,8 @@
 package ScarfToHash;
 use strict;
 use XML::Parser;
-
+use Scalar::Util qw[openhandle];
+use IO;
 ##########Initialize Reader##########
 sub new
 {
@@ -57,14 +58,14 @@ sub parse
 				);
     #possibly use xsdValidator to verify scarf
     #$self->{parser}->parsefile($self->{source});
-    if ( ref $self->{source} eq "SCALAR" ) {
-	open($self->{source}, "<", $self->{source}) or die "Can't open source with filename $self->{source}";
+    if (openhandle($self->{source})){ 
 	$self->{parser}->parse($self->{source});
-    } elsif ( ref $self->{source} eq "IO" ) {
-	$self->{parser}->parse($self->{source});
+    } elsif ( ref $self->{source} eq "SCALAR" ) {
+	my $file;
+	open($file, "<", ${$self->{source}}) or die "Can't open source with filename ${$self->{source}}";
+	$self->{parser}->parse($file);
     } else {
-	print("Could not open source for parsing\n");
-	exit(1);
+	$self->{parser}->parse($self->{source});
     }
     if ( defined $self->{callbacks}->{FinishCallback} ) {
 	$self->{callbacks}->{FinishCallback}($self->{callbacks}->{CallbackData});
@@ -79,7 +80,7 @@ sub startHandler
     if ( $elt eq "AnalyzerReport" ) {
 	if (defined $initialcallback){
 	    if ( $$validStart ) {
-		printf ("Invalid SCARF File: Multiple Start Tags");
+		print ("Invalid SCARF File: Multiple Start Tags");
 	    } else {
 		$$validStart = 1;
 	    }
@@ -90,7 +91,7 @@ sub startHandler
 
     } else {
 	if ( $$validStart == 0 ) {
-	    printf ("Invalid SCARF File: No Analyzer Report Start Tag");
+	    print ("Invalid SCARF File: No Analyzer Report Start Tag");
 	}
         if ( $elt eq "BugInstance" ) {
             $$hash->{BugId} = $atts{id};
@@ -148,7 +149,6 @@ sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
 	    $data, $parser, $elt ) = @_;    
-    print("$elt\n") ;
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
 	$bugcallback->( $$hash, $data ) and $parser->finish;
 	$$hash = {};
@@ -161,7 +161,6 @@ sub endHandler
 	    delete $$hash->{Type};
 	}
 	if( ! defined $$hash->{Method} ) {
-	    print "hit\n";
 	    delete $$hash->{Method};
 	}
 	$metriccallback->( $$hash, $data ) and $parser->finish;
