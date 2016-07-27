@@ -180,13 +180,14 @@ class ScarfToHash:
 			break
 		parent.clear()
 
-	if "FinishCallback" in callback:
-	    if "CallbackData" in callback:
-                    if callback["FinishCallback"](callback["CallbackData"]):
-                        break
-                else:
-                    if callback["FinishCallback"]():
-                        break
+	    elif elem.tag == "AnalyzerReport" and event == "end":
+		if "FinishCallback" in callback:
+		    if "CallbackData" in callback:
+			if callback["FinishCallback"](callback["CallbackData"]):
+			    break
+			else:
+			    if callback["FinishCallback"]():
+				break
 	if not self.validBody:
 	    print("No BugInstances or Metrics present")
 

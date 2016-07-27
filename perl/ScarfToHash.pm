@@ -52,7 +52,7 @@ sub parse
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
 					    $self->{callbacks}->{BugSummaryCallback}, $self->{callbacks}->{MetricSummaryCallback},
-					    \$self->{validBody}, $self->{callbacks}->{CallbackData}, @_ ) },
+					    \$self->{validBody}, $self->{FinishCallback}, $self->{callbacks}->{CallbackData}, @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
@@ -66,9 +66,6 @@ sub parse
 	$self->{parser}->parse($file);
     } else {
 	$self->{parser}->parse($self->{source});
-    }
-    if ( defined $self->{callbacks}->{FinishCallback} ) {
-	$self->{callbacks}->{FinishCallback}($self->{callbacks}->{CallbackData});
     }
 }
 
@@ -148,7 +145,7 @@ sub startHandler
 sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
-	    $data, $parser, $elt ) = @_;    
+	    $finishcallback, $data, $parser, $elt ) = @_;    
     if ( $elt eq "BugInstance" && defined $bugcallback ) {
 	$bugcallback->( $$hash, $data ) and $parser->finish;
 	$$hash = {};
@@ -175,8 +172,13 @@ sub endHandler
         $$hash = {};
 
     } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {
-	printf "No BugInstances or Metrics found in file.";
-    }
+	if ( ! $$validBody ) {
+	    printf "No BugInstances or Metrics found in file.";
+	}
+	if ( defined $self->{callbacks}->{FinishCallback} ) {
+	    $finishcallback->($self->{callbacks}->{CallbackData});
+	}
+    } 
 
     $$lastElt = "";
     return $$hash;

@@ -424,6 +424,8 @@ int parse(Reader * hand, char * filename)
 		    int finSummary = 0;
 		    while (ret == 1 && !finSummary) {
 			ret = xmlTextReaderRead(reader);
+			name = (char *) xmlTextReaderName(reader);
+			type = xmlTextReaderNodeType(reader); 
 			if (type == 1) {
 			    if (strcmp(name, "BugCategory") == 0) {
 				BugSummary * temp = malloc(sizeof(BugSummary));
@@ -459,6 +461,8 @@ int parse(Reader * hand, char * filename)
 		    int finSummary = 0;
 		    while (ret == 1 && !finSummary) {
 			ret = xmlTextReaderRead(reader);
+			name = (char *) xmlTextReaderName(reader);
+			type = xmlTextReaderNodeType(reader); 
 			if (type == 1) {
 			    if ( strcmp(name, "MetricSummary") == 0 ) {
 				temp = calloc(1, sizeof(MetricSummary));
@@ -507,6 +511,11 @@ int parse(Reader * hand, char * filename)
 			    } else if ( strcmp(name, "MetricSummaries") == 0 ) {
 				kill = callback->metricSumCall(metricsum, callback->CallbackData);
 				finSummary = 1;
+			    } else if ( strcmp(name, "AnalyzerReport") == 0 ) {
+				if ( callback->finishCallback != NULL ) {
+				    callback->finishCallback(callback->CallbackData);
+				}
+
 			    }
 			}
 		    }
@@ -516,9 +525,6 @@ int parse(Reader * hand, char * filename)
 	if (ret != 0) {
 	    printf("Failed to parse set file\n");
 	    return 1;
-	}
-	if ( callback->finishCallback != NULL ) {
-	    callback->finishCallback(callback->CallbackData);
 	}
 	
     } else {
