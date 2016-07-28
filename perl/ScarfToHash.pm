@@ -171,7 +171,7 @@ sub endHandler
 	$metricsumcallback->( $$hash, $data ) and $parser->finish;
         $$hash = {};
 
-    } elsif ( $elt eq "AnalyzerReport" && !($$validBody) ) {
+    } elsif ( $elt eq "AnalyzerReport") {
 	if ( ! $$validBody ) {
 	    printf "No BugInstances or Metrics found in file.";
 	}
