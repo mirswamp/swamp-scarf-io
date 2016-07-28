@@ -52,7 +52,7 @@ sub parse
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
 					    $self->{callbacks}->{BugSummaryCallback}, $self->{callbacks}->{MetricSummaryCallback},
-					    \$self->{validBody}, $self->{FinishCallback}, $self->{callbacks}->{CallbackData}, @_ ) },
+					    \$self->{validBody}, $self->{callbacks}->{FinishCallback}, $self->{callbacks}->{CallbackData}, @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
