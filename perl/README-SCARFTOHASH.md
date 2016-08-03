@@ -5,8 +5,10 @@ ScarfToHash - A perl module for parsing Scarf
 use ScarfToHash;
 
 my $input = "/path/to/file";
+my $data = DATA;
 
 my $callbackHash ={};
+$callbackHash->{'CallbackData'} = $data;
 $callbackHash->{'InitialCallback'} = \&init;
 $callbackHash->{'MetricCallback'} = \&metric;
 $callbackHash->{'BugCallback'} = \&bug;
@@ -20,11 +22,11 @@ $test_reader->parse;
 ### DESCRIPTION
 This module provides the ability to convert Scarf files into Perl data structures. It is dependant on XML::Parser, which is used to handle parsing of the XML document.
 
-The parser is controlled primarily by the callbacks the user sets prior to calling the parse method. Each callback receives as parameters a reference to a hash containing information on one hash of parsed data and the data stored in the CallbackData key of the callback hash. Upon completion of the parse the FinishCallback  will be called with just the CallbackData key.
+The parser is controlled primarily by the callbacks the user sets prior to calling the parse method. Each callback receives as parameters a reference to a hash containing information on one hash of parsed data and the data stored in the CallbackData key of the callback hash. Upon reaching the end of an Analyzer Report the FinishCallback  will be called with just the CallbackData key.
 
 The parser assumes that a valid Scarf file is inputted, but does do minor checks to ensure the file is Scarf. 
 ### METHODS
-*new(FILE, CALLBACKS)* - This is a class method used to instatiate the parser. FILE can be either a path to a file or an IO:Handle object. CALLBACKS is a hash containing specified callback functions for parsed data to be sent to. For additional information on CALLBACKS see below.
+*new(FILE, CALLBACKS)* - This is a class method used to instatiate the parser. FILE can be an open handle, a reference to a string scalar containing the filename of a file, or a scalar containing the entire file. CALLBACKS is a hash containing specified callback functions for parsed data to be sent to. For additional information on CALLBACKS see below.
 
 *parse()* - This method initiates the parsing of the set file. If parsing fails a die call will be thrown, otherwise will return 0 on completion.
 
@@ -42,7 +44,7 @@ The main purpose of this module is to interpret the events generated from XML::P
 
 *MetricSummaryCallback(METRICSUMMARYDATA[, CALLBACKDATA])* - This is called once all MetricSummaries have been parsed. Any non-zero return value will terminate parsing and skip to FinishCallback.
 
-*FinishCallback([CALLBACKDATA])* -  This is called once parsing has been completed.
+*FinishCallback([CALLBACKDATA])* -  This is called after reaching an AnalayzerReport end tag.
 
 
 ### DATA STRUCTURES
