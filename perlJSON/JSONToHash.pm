@@ -63,7 +63,6 @@ sub parse
 	exit(1);
     }
     local $/ = \$self->{readSize}; #read only 5bytes bytes at a time
-    my $hash;
 
     while (my $buf = <$fh>) {
 	$parser->feed($buf); #parse what you can
