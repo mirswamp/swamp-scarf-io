@@ -146,7 +146,7 @@ sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
 	    $finishcallback, $data, $parser, $elt ) = @_;    
-    for my $cmpElt ( qw/AssessmentReportFile BugCode BugRank ClassName BugSeverity BugGroup BugMessage ResolutionSuggestion Class Type/ ) {
+    for my $cmpElt ( qw/AssessmentReportFile BugCode BugRank ClassName BugSeverity BugGroup BugMessage ResolutionSuggestion Class/ ) {
 	if ( $elt eq $cmpElt ) {
 	    $$hash->{$elt} =~ s/(^\s+)|(\s+$)//g;
 	}
