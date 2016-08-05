@@ -56,7 +56,6 @@ sub parse
     my $validBody = 0;
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
     my $fh;
-    print "$self->{source} , $self->{source}\n";
     if (ref $self->{source} eq "SCALAR"){
 	open( $fh, "<", ${$self->{source}} );
     } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
@@ -93,6 +92,24 @@ sub parse
 		    }
 
 		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/BugInstances\/)([0-9]+)/) {
+		    my $bug = $obj->{Value};
+		    my @bugLocs;
+		    for my $loc( @{$bug->{BugLocations}} ) {
+			if ($loc->{primary} eq "true"){
+			    $loc->{primary} = 1;
+			} else {
+			    $loc->{primary} = 0;
+			}
+#			push @bugLocs, $loc;
+		    }
+#		    $bug->{BugLocations} = \@bugLocs;
+		    for my $method( @{$bug->{Methods}} ) {
+			if ($method->{primary} eq "true"){
+			    $method->{primary} = 1;
+			} else {
+			    $method->{primary} = 0;
+			}
+		    }
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
 			$self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
 		    } else {
