@@ -40,7 +40,7 @@ sub new
     if(openhandle($handle) or ref $handle eq "IO") {
 	$self->{output} = $handle;
     } elsif (ref $handle eq "SCALAR") {
-        open($self->{output}, ">", $handle) or die "invalid output file";
+        open($self->{output}, ">", $$handle) or die "invalid output file";
     } else {
 	print("Could not open destination handle\n");
 	exit(1);
