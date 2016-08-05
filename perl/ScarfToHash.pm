@@ -146,12 +146,12 @@ sub endHandler
 {
     my ( $hash, $lastElt, $bugcallback, $metriccallback, $bugsumcallback, $metricsumcallback, $validBody, 
 	    $finishcallback, $data, $parser, $elt ) = @_;    
-    for my $cmpElt ( qw/AssessmentReportFile BuildId BugCode BugId BugRank ClassName BugSeverity BugGroup BugMessage ResolutionSuggestion Class Value Type Count Sum SumOfSquares Minimum Maximum Average StandardDeviation/ ) {
+    for my $cmpElt ( qw/AssessmentReportFile BugCode BugRank ClassName BugSeverity BugGroup BugMessage ResolutionSuggestion Class Type/ ) {
 	if ( $elt eq $cmpElt ) {
 	    $$hash->{$elt} =~ s/(^\s+)|(\s+$)//g;
 	}
     }
-    for my $locElt ( qw/EndColumn EndLine Explanation StartLine StartColumn/ ) {
+    for my $locElt ( qw/Explanation/ ) {
 	if ( $elt eq $locElt ) {
 	    @{$$hash->{BugLocations}}[-1]->{$elt} =~ s/(^\s+)|(\s+$)//g;	    
 	}
