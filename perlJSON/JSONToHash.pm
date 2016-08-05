@@ -96,7 +96,7 @@ sub parse
 		    } else {
 			$self->{callbacks}->{BugCallback}->($obj->{Value}) and last FINISH;#$hash);
 		    }
-		    $self->{validBody} = 1;
+		    $validBody = 1;
 	    
 		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
@@ -104,7 +104,7 @@ sub parse
 		    } else {
 			$self->{callbacks}->{MetricCallback}->($obj->{Value}) and last FINISH;#$hash);
 		    }
-		    $self->{validBody} = 1;
+		    $validBody = 1;
 	    
 		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
@@ -128,7 +128,7 @@ sub parse
     if ( defined $self->{callbacks}->{FinishCallback} ) {
 	$self->{callbacks}->{FinishCallback}->($self->{callbacks}->{CallbackData});
     }
-    if ( $self->{validBody} == 0 ) {
+    if ( $validBody == 0 ) {
 	print (" No BugInstances or Metrics found in file " );
     }
 }
