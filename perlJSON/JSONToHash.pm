@@ -20,6 +20,7 @@ use strict;
 use JSON::SL;
 use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];
+use Data::Dumper;
 
 ##########Initialize Reader##########
 sub new
@@ -47,6 +48,7 @@ sub setReadSize
 sub parse
 {
     my ( $self ) = @_;
+    print Dumper($self);
     my $parser = $self->{parser};
     my $hash = {};
     my $lastElt = "";
@@ -54,16 +56,16 @@ sub parse
     my $validBody = 0;
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
     my $fh;
+    print "$self->{source} , $self->{source}\n";
     if (ref $self->{source} eq "SCALAR"){
-	open( $fh, "<", $$self->{source} );
+	open( $fh, "<", ${$self->{source}} );
     } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
 	$fh = $self->{source};
     } else {
 	print("Invalid source file\n");
 	exit(1);
     }
-    local $/ = \$self->{readSize}; #read only 5bytes bytes at a time
-
+    local $/ = \$self->{readSize}; 
     FINISH: {
 	while (my $buf = <$fh>) {
 	    $parser->feed($buf); #parse what you can
@@ -129,7 +131,7 @@ sub parse
 	$self->{callbacks}->{FinishCallback}->($self->{callbacks}->{CallbackData});
     }
     if ( $validBody == 0 ) {
-	print (" No BugInstances or Metrics found in file " );
+	print (" No BugInstances or Metrics found in file \n" );
     }
 }
 
