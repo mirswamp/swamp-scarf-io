@@ -55,7 +55,7 @@ sub parse
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
     my $fh;
     if (ref $self->{source} eq "SCALAR"){
-	open( $fh, "<", $self->{source} );
+	open( $fh, "<", $$self->{source} );
     } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
 	$fh = $self->{source};
     } else {
