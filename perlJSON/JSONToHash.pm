@@ -64,63 +64,65 @@ sub parse
     }
     local $/ = \$self->{readSize}; #read only 5bytes bytes at a time
 
-    while (my $buf = <$fh>) {
-	$parser->feed($buf); #parse what you can
-	#fetch anything that completed the parse and matches the JSON Pointer
+    FINISH: {
+	while (my $buf = <$fh>) {
+	    $parser->feed($buf); #parse what you can
+	    #fetch anything that completed the parse and matches the JSON Pointer
 
-	while (my $obj = $parser->fetch) {
-	    my $tempHash = {};
-	    if ( ! ( $validStart ) ) {
-		if ( $obj->{JSONPointer} eq "/^/tool_name" ) { 
-		    $hash->{tool_name} = $obj->{Value};
-		} elsif ( $obj->{JSONPointer} eq "/^/tool_version" ) { 
-		    $hash->{tool_version} = $obj->{Value};
-		} elsif ( $obj->{JSONPointer} eq "/^/uuid" ) { 
-		    $hash->{uuid} = $obj->{Value};
-		} 
-		if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
-		    $validStart = 1;
-		    if ( defined $self->{callbacks}->{InitialCallback} ) {
-			if ( defined $self->{callbacks}->{CallbackData} ) {
-			    $self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData}) and break;
-			} else {
-			    $self->{callbacks}->{InitialCallback}->($hash) and break;
+	    while (my $obj = $parser->fetch) {
+		my $tempHash = {};
+		if ( ! ( $validStart ) ) {
+		    if ( $obj->{JSONPointer} eq "/^/tool_name" ) { 
+			$hash->{tool_name} = $obj->{Value};
+		    } elsif ( $obj->{JSONPointer} eq "/^/tool_version" ) { 
+			$hash->{tool_version} = $obj->{Value};
+		    } elsif ( $obj->{JSONPointer} eq "/^/uuid" ) { 
+			$hash->{uuid} = $obj->{Value};
+		    }	 
+		    if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
+			$validStart = 1;
+			if ( defined $self->{callbacks}->{InitialCallback} ) {
+			    if ( defined $self->{callbacks}->{CallbackData} ) {
+				$self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData}) and last FINISH;
+			    } else {
+				$self->{callbacks}->{InitialCallback}->($hash) and last FINISH;
+			    }
 			}
 		    }
-		}
 
-	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/BugInstances\/)([0-9]+)/) {
-		if ( defined $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
-		} else {
-		    $self->{callbacks}->{BugCallback}->($obj->{Value}) and break;#$hash);
-		}
-		$self->{validBody} = 1;
+		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/BugInstances\/)([0-9]+)/) {
+		    if ( defined $self->{callbacks}->{CallbackData} ) {
+			$self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+		    } else {
+			$self->{callbacks}->{BugCallback}->($obj->{Value}) and last FINISH;#$hash);
+		    }
+		    $self->{validBody} = 1;
 	    
-	    } elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
-		if ( defined $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
-		} else {
-		    $self->{callbacks}->{MetricCallback}->($obj->{Value}) and break;#$hash);
-		}
-		$self->{validBody} = 1;
+		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
+		    if ( defined $self->{callbacks}->{CallbackData} ) {
+			$self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+		    } else {
+			$self->{callbacks}->{MetricCallback}->($obj->{Value}) and last FINISH;#$hash);
+		    }
+		    $self->{validBody} = 1;
 	    
-	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
-		if ( defined $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and break;#$hash);
-		} else {
-		    $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}) and break;#$hash);
-		}
+		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
+		    if ( defined $self->{callbacks}->{CallbackData} ) {
+			$self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+		    } else {
+			$self->{callbacks}->{BugSummaryCallback}->($obj->{Value}) and last FINISH;#$hash);
+		    }
 	    
-	    } elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
-		$hash = $obj->{Value};
-		if ( defined $self->{callbacks}->{CallbackData} ) {
-		    $self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData}) and break;
-		} else {
-		    $self->{callbacks}->{MetricSummaryCallback}->($hash) and break;
+		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
+		    $hash = $obj->{Value};
+		    if ( defined $self->{callbacks}->{CallbackData} ) {
+			$self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData}) and last FINISH;
+		    } else {
+			$self->{callbacks}->{MetricSummaryCallback}->($hash) and last FINISH;
+		    }
 		}
-	    }
-	}	
+    	    }	
+        }
     }
 
     if ( defined $self->{callbacks}->{FinishCallback} ) {
