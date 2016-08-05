@@ -151,7 +151,7 @@ sub endHandler
 	    $$hash->{$elt} =~ s/(^\s+)|(\s+$)//g;
 	}
     }
-    for my $locElt ( qw/EndColumn EndLine Explanation StartLine SourceFile StartColumn/ ) {
+    for my $locElt ( qw/EndColumn EndLine Explanation StartLine StartColumn/ ) {
 	if ( $elt eq $locElt ) {
 	    @{$$hash->{BugLocations}}[-1]->{$elt} =~ s/(^\s+)|(\s+$)//g;	    
 	}
