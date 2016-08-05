@@ -62,7 +62,7 @@ sub parse
 	print("Invalid source file\n");
 	exit(1);
     }
-    local $/ = \self->{readSize}; #read only 5bytes bytes at a time
+    local $/ = \$self->{readSize}; #read only 5bytes bytes at a time
     my $hash;
 
     while (my $buf = <$fh>) {
