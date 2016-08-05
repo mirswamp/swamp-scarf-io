@@ -10,8 +10,8 @@ sub new
     my ($class, $handle, $error_level) = @_;
     my $self = {};
     if ( ref $handle eq "SCALAR" ) {
-	open($self->{output}, ">", $output_file) or die "invalid output file";
-    elsif ( openhandle($handle) or ref $handle eq "IO") {
+	open($self->{output}, ">", $$handle) or die "invalid output file";
+    } elsif ( openhandle($handle) or ref $handle eq "IO") {
 	$self->{output} = $handle;
     } else {
 	print("Could not open destination handle");
@@ -29,7 +29,7 @@ sub new
     $bugID = 1;
     $metricID = 1;
     
-    $self->{open} 
+    $self->{open}; 
     $self->{bodyType} = undef;
     $self->{openBody} = 0;
     $self->{openStart} = 0;
@@ -128,6 +128,7 @@ sub addStartTag
 
     if ( $self->{openStart} == 0 ) {
 	$self->{output}->print("{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
+#	print($self->{output}, "{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
 
 	$self->{openStart} = 1;
     }
@@ -444,7 +445,7 @@ sub addSummary
     if ($self->{openBody}) {
 	$out->print("],\n ");
 	$self->{openBody} = 0;
-	$self->{bodyType} = "summary; 
+	$self->{bodyType} = "summary"; 
         if (defined $self->{BugSummaries}) {
 
 	    $out->print("  \"BugSummaries\" : ");
