@@ -48,7 +48,6 @@ sub setReadSize
 sub parse
 {
     my ( $self ) = @_;
-    print Dumper($self);
     my $parser = $self->{parser};
     my $hash = {};
     my $lastElt = "";
