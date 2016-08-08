@@ -230,9 +230,9 @@ class HashToJSON:
                 writer.yajl_gen_string(str(method["name"]))
                 writer.yajl_gen_string("primary")
                 if method["primary"]:
-                    writer.yajl_gen_string("true")
+                    writer.yajl_gen_bool(True)
                 else:
-                    writer.yajl_gen_string("false")
+                    writer.yajl_gen_bool(False)
         
                 writer.yajl_gen_string("MethodId")
                 writer.yajl_gen_number(str(methodId))
@@ -257,9 +257,9 @@ class HashToJSON:
         
                 writer.yajl_gen_string("primary")
                 if location["primary"]:
-                    writer.yajl_gen_string("true")
+                    writer.yajl_gen_bool(True)
                 else:
-                    writer.yajl_gen_string("false")
+                    writer.yajl_gen_bool(False)
                 writer.yajl_gen_string("LocationId")
                 writer.yajl_gen_number(str(locId))
                 locId = locId + 1

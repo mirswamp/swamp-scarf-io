@@ -1,9 +1,10 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 package HashToJSON;
 use JSON::MaybeXS;
 use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];
+use strict;
 
 sub new
 {
@@ -18,7 +19,6 @@ sub new
 	exit(1);
     }
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
-    $self->{writer} = $self->{writer}->allow_nonref ([$enable]);
 
     if (defined $error_level && $error_level == 0 || $error_level == 1) {
         $self->{error_level} = $error_level;
@@ -26,8 +26,8 @@ sub new
 	$self->{error_level} = 2;
     }
 
-    $bugID = 1;
-    $metricID = 1;
+    $self->{bugID} = 1;
+    $self->{metricID} = 1;
     
     $self->{open}; 
     $self->{bodyType} = undef;
@@ -44,13 +44,13 @@ sub new
 sub getPretty
 {
     my ($self) = @_;
-    return $self->{_writer}->get_space_before;
+    return $self->{writer}->get_space_before;
 }
 
 sub setPretty
 {
     my ($self, $pretty_enable) = @_;
-    $self->{_writer}->pretty([$pretty_enable]);
+    $self->{writer}->pretty([$pretty_enable]);
 }
 
 
@@ -58,7 +58,7 @@ sub setPretty
 sub getWriter
 {
     my ($self) = @_;
-    return $self->{_writer};
+    return $self->{writer};
 }
 
 
@@ -124,7 +124,7 @@ sub addStartTag
         }
     }
    
-    $jsonw = $self->{writer};
+    my $jsonw = $self->{writer};
 
     if ( $self->{openStart} == 0 ) {
 	$self->{output}->print("{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
@@ -140,6 +140,7 @@ sub addStartTag
 
 sub addEndTag
 {
+    my ($self) = @_;
     if ($self->{error_level} == 0) {
         if ( $self->{open} ) {
             print "Scarf File already closed";
@@ -149,7 +150,7 @@ sub addEndTag
         }
     }
     my ($self) = @_;
-    $jsonw = $self->{writer};
+    my $jsonw = $self->{writer};
     
     if ( $self->{openBody} == 1 ) {
 	$self->{output}->print("]\n");
@@ -167,7 +168,7 @@ sub addEndTag
 #validate bug
 sub checkBug
 {
-    my ($bugInstance) = @_;
+    my ($bugInstance, $bugID) = @_;
     my @errors = ();
     for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
         if (!(defined $bugInstance->{$bugReqElt})) {
@@ -269,7 +270,7 @@ sub addBugInstance
 		die "Exiting";
 	    }
 	}
-        my $errors = checkBug($bugInstance);
+        my $errors = checkBug($bugInstance, $self->{bugID});
         print "$_\n" for @$errors;
         if (@$errors and $self->{error_level} == 2) {
             die "Exiting";
@@ -291,23 +292,27 @@ sub addBugInstance
 	$self->{output}->print("    \"BugInstances\" : [\n    ");
 	$self->{openBody} = 1;
     } 
+
+    my $true = JSON->true;
+    my $false = JSON->false;
+
     $self->{bodyType} = "bug";
-    $bugInstance->{BugId} = $bugID;
+    $bugInstance->{BugId} = $self->{bugID};
     foreach my $location (@{$bugInstance->{BugLocations}}) {
         my $primary;
         if ($location->{primary}) {
-            $location->{primary} = "true";
+            $location->{primary} = $true;
         } else {
-            $location->{primary} = "false";
+            $location->{primary} = $false;
         }
     }
     if (defined $bugInstance->{Methods}) {
         foreach my $method (@{$bugInstance->{Methods}}) {
             my $primary;
             if ($method->{primary}) {
-                $method->{primary} = "true";
+                $method->{primary} = $true;
             } else {
-                $method->{primary} ="false";
+                $method->{primary} = $false;
             }
 	}
     }
@@ -341,7 +346,7 @@ sub addBugInstance
         $self->{BugSummaries}->{$code}->{$group} = $bugSummary;
     }
     
-    $bugID++;
+    $self->{bugID}++;
     return $self;
 }
 
@@ -349,7 +354,7 @@ sub addBugInstance
 #check for metrics required elements
 sub checkMetric
 {
-    my ($metric) = @_;
+    my ($metric, $metricID) = @_;
     my @errors = ();
     for my $reqMetrElt (qw/SourceFile Type Value/) {
         if (!(defined $metric->{$reqMetrElt})) {
@@ -371,7 +376,7 @@ sub addMetric
 		die "Exiting";
 	    }
 	}
-        my $errors = checkMetric($metric);
+        my $errors = checkMetric($metric, $self->{metricID});
         print "$_\n" for @$errors;
         if (@$errors and $self->{error_level} == 2) {
             die "Exiting";
@@ -389,13 +394,13 @@ sub addMetric
 	$self->{openBody} = 1;
     } 
     $self->{bodyType} = "metric";
-    $bugInstance->{MetricId} = $metricID;
+    $metric->{MetricId} = $self->{metricID};
 
     my $json = $self->{writer}->encode($metric);
     $json =~ s/\n/\n    /g;
     $self->{output}->print("$json");
 
-    $metricID++;
+    $self->{metricID}++;
     my $value = $metric->{Value};
     my $type = $metric->{Type};
     if (!(defined $type) ) {
