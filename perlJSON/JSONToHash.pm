@@ -94,7 +94,7 @@ sub parse
 		    my $bug = $obj->{Value};
 		    my @bugLocs;
 		    for my $loc( @{$bug->{BugLocations}} ) {
-			if ($loc->{primary} eq "true"){
+			if ($loc->{primary}){
 			    $loc->{primary} = 1;
 			} else {
 			    $loc->{primary} = 0;
@@ -103,7 +103,7 @@ sub parse
 		    }
 #		    $bug->{BugLocations} = \@bugLocs;
 		    for my $method( @{$bug->{Methods}} ) {
-			if ($method->{primary} eq "true"){
+			if ($method->{primary}){
 			    $method->{primary} = 1;
 			} else {
 			    $method->{primary} = 0;
