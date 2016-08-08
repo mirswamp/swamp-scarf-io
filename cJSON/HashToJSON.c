@@ -300,9 +300,9 @@ int addBug(Writer * writerInfo, BugInstance * bug)
             yajl_gen_string(writer, temp, tempLen);
             yajl_gen_string(writer, "primary", 7);
             if ( method->primary ) {
-                yajl_gen_string(writer, "true", 4);
+                yajl_gen_bool(writer, true);
             } else {
-                yajl_gen_string(writer, "false", 5);
+                yajl_gen_bool(writer, false);
 	    }
             yajl_gen_string(writer, "MethodId", 8);
 	    tempLen = sprintf(temp, "%d", methodId);
@@ -357,9 +357,9 @@ int addBug(Writer * writerInfo, BugInstance * bug)
             
 	    yajl_gen_string(writer, "primary", 7);
             if ( location->primary ) {
-                yajl_gen_string(writer, "true", 4);
+                yajl_gen_bool(writer, true);
             } else {
-                yajl_gen_string(writer, "false", 5);
+                yajl_gen_bool(writer, false);
 	    }
 	    
             yajl_gen_string(writer, "LocationId", 10);
