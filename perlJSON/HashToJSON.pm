@@ -10,13 +10,10 @@ sub new
 {
     my ($class, $handle, $error_level) = @_;
     my $self = {};
-    if ( ref $handle eq "SCALAR" ) {
-	open($self->{output}, ">", $$handle) or die "invalid output file";
-    } elsif ( openhandle($handle) or ref $handle eq "IO") {
+    if ( openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
 	$self->{output} = $handle;
     } else {
-	print("Could not open destination handle");
-	exit(1);
+	open($self->{output}, ">", $handle) or die "invalid output file";
     }
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
 
@@ -335,7 +332,7 @@ sub addBugInstance
         $group = "undefined";
     }
 
-    my $type_hash = $self->{BugSummaries}->{$code}->{$group};
+    my $type_hash = $self->{BugSummaries}->{$group}->{$code};
     if (defined $type_hash) {
         $type_hash->{count}++;
         $type_hash->{bytes} += $byte_count;
@@ -343,7 +340,7 @@ sub addBugInstance
         my $bugSummary = {};
         $bugSummary->{count} = 1;
         $bugSummary->{bytes} = $byte_count;
-        $self->{BugSummaries}->{$code}->{$group} = $bugSummary;
+        $self->{BugSummaries}->{$group}->{$code} = $bugSummary;
     }
     
     $self->{bugID}++;

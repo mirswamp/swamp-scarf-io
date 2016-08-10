@@ -37,13 +37,10 @@ sub new
     my ($class, $handle, $error_level, $pretty_enable) = @_;
 #    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
-    if(openhandle($handle) or ref $handle eq "IO") {
+    if (openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
 	$self->{output} = $handle;
-    } elsif (ref $handle eq "SCALAR") {
-        open($self->{output}, ">", $$handle) or die "invalid output file";
     } else {
-	print("Could not open destination handle\n");
-	exit(1);
+        open($self->{output}, ">", $handle) or die "invalid output file\n";
     }
     if  ( $pretty_enable ) {
 	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
@@ -75,7 +72,7 @@ sub new
 sub getWriter
 {
     my ($self) = @_;
-    return $self->{_writer};
+    return $self->{writer};
 }
 
 
@@ -108,18 +105,18 @@ sub setErrorLevel
 sub getPretty
 {
     my ($self) = @_;
-    return $self->{_writer}->getDataMode();
+    return $self->{writer}->getDataMode();
 }
 
 sub setPretty
 {
     my ($self, $pretty_enable) = @_;
     if ( $pretty_enable ) {
-	$self->{_writer}->setDataMode('true');
-	$self->{_writer}->setDataIndent(2);
+	$self->{writer}->setDataMode('true');
+	$self->{writer}->setDataIndent(2);
     } else {
-	$self->{_writer}->setDataMode(0);
-	$self->{_writer}->setDataIndent(0);
+	$self->{writer}->setDataMode(0);
+	$self->{writer}->setDataIndent(0);
     }
 }
 

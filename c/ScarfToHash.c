@@ -22,12 +22,12 @@
 /////////////////////////TypeDef for Clarity///////////////////////////////////////
 
 
-typedef int (*BugCallback)(BugInstance * bug, void * reference);
-typedef int (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
-typedef int (*MetricCallback)(Metric * metr, void * reference);
-typedef int (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
-typedef int (*InitialCallback)(Initial * initial, void * reference);
-typedef void (*FinishCallback)(void * reference);
+typedef void * (*BugCallback)(BugInstance * bug, void * reference);
+typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
+typedef void * (*MetricCallback)(Metric * metr, void * reference);
+typedef void * (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
+typedef void * (*InitialCallback)(Initial * initial, void * reference);
+typedef void * (*FinishCallback)(void * killValue, void * reference);
 
 typedef struct Callback {
     BugCallback bugCall;
@@ -40,10 +40,11 @@ typedef struct Callback {
 } Callback;
 
 
-typedef struct Reader{
+typedef struct ScarfToHash{
+    char * filename;
     xmlTextReaderPtr reader;
     Callback * callback;
-} Reader;
+} ScarfToHash;
 
 ///////////////Initiailize a Metric//////////////////////////////////////////////
 Metric * initializeMetric()
@@ -89,11 +90,11 @@ int freeInitial(Initial * initial){
 ///////////////////////////////Free a Metric///////////////////////////////////
 int freeMetric(Metric * metric) 
 {
-    xmlFree((xmlChar *) metric->type);
-    xmlFree((xmlChar *) metric->clas);
-    xmlFree((xmlChar *) metric->method);
-    xmlFree((xmlChar *) metric->sourceFile);
-    xmlFree((xmlChar *) metric->value);
+    free(metric->type);
+    free(metric->clas);
+    free(metric->method);
+    free(metric->sourceFile);
+    free(metric->value);
     free(metric);
     return 0;
 }
@@ -102,23 +103,23 @@ int freeMetric(Metric * metric)
 ///////////////////////////////Free a BugInstance///////////////////////////////////
 int freeBug(BugInstance * bug) 
 {
-    xmlFree((xmlChar *) bug->assessmentReportFile);
-    xmlFree((xmlChar *) bug->buildId);
-    xmlFree((xmlChar *) bug->bugCode);
-    xmlFree((xmlChar *) bug->bugRank);
-    xmlFree((xmlChar *) bug->className);
-    xmlFree((xmlChar *) bug->bugSeverity);
-    xmlFree((xmlChar *) bug->bugGroup);
-    xmlFree((xmlChar *) bug->bugMessage);
-    xmlFree((xmlChar *) bug->resolutionSuggestion);
-    xmlFree((xmlChar *) bug->instanceLocation);
+    free(bug->assessmentReportFile);
+    free(bug->buildId);
+    free(bug->bugCode);
+    free(bug->bugRank);
+    free(bug->className);
+    free(bug->bugSeverity);
+    free(bug->bugGroup);
+    free(bug->bugMessage);
+    free(bug->resolutionSuggestion);
+    free(bug->instanceLocation);
 
     CweIds * cwe = bug->cweIds;
     CweIds * prevCwe;
     while (cwe != NULL) {
 	prevCwe = cwe;
 	cwe = cwe->next;
-	xmlFree(prevCwe);
+	free(prevCwe);
     }
 
     Method * method = bug->methods;
@@ -126,8 +127,8 @@ int freeBug(BugInstance * bug)
     while (method != NULL) {
 	prevMethod = method;
 	method = method->next;
-	xmlFree((xmlChar *) prevMethod->name);
-	xmlFree(prevMethod);
+	free(prevMethod->name);
+	free(prevMethod);
     }
 
     Location * loc = bug->bugLocations;
@@ -135,13 +136,33 @@ int freeBug(BugInstance * bug)
     while (loc != NULL) {
 	prevLoc = loc;
 	loc = loc->next;	
-	xmlFree((xmlChar *) prevLoc->sourceFile);
-	xmlFree((xmlChar *) prevLoc->explanation);
-	xmlFree(prevLoc);
+	free(prevLoc->sourceFile);
+	free(prevLoc->explanation);
+	free(prevLoc);
     }
 
     free(bug);
     return 0;
+}
+
+//////////////////Generic clear leading/trailing whitespace method//////////////////////
+char * trim(char *str)
+{
+    char *end;
+    while ( isspace(*str) ) {
+	str++;
+    }
+    if ( *str == 0 ) {
+	return str;
+    }
+    end = str + strlen(str) - 1;
+    while ( end > str && isspace(*end) ) {
+	end--;
+    }
+    *(end+1) = '\0';
+    char * newStr = malloc(strLen(str) + 1);
+    strcpy(newStr, str);
+    return newStr;
 }
 
 
@@ -157,16 +178,26 @@ int processMetric(xmlTextReaderPtr reader, Metric * metric)
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 	    metric->id = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
-	} else if (strcmp(name, "Value") == 0) {
-	    metric->value = (char *) xmlTextReaderReadInnerXml(reader); 
+	} else if (strcmp(name, "Value") == 0) { 
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    metric->value = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "Type") == 0) {
-	    metric->type = (char *) xmlTextReaderReadInnerXml(reader);	
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    metric->type = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "Class") == 0) {
-	    metric->clas = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    metric->clas = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "Method") == 0) {
-	    metric->method = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    metric->method = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "SourceFile") == 0) {
-	    metric->sourceFile = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    metric->sourceFile = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	}
 
     //type 15 == end tag
@@ -199,7 +230,9 @@ int processBug(xmlTextReaderPtr reader, BugInstance * bug)
 	    bug->instanceLocation = inst;
 
 	} else if (strcmp(name, "Xpath") == 0) {
-	    bug->instanceLocation->xPath = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->instanceLocation->xPath = trim(temp);
+	    xmlFree((xmlChar *) temp);
 
 	} else if (strcmp(name, "LineNum") == 0) {
 	    LineNum lineNum = {0};
@@ -235,13 +268,15 @@ int processBug(xmlTextReaderPtr reader, BugInstance * bug)
 	    char * temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 	    method->methodId = strtol(temp, NULL, 10);  
 	    xmlFree((xmlChar *) temp);
-	    method->name =  (char *) xmlTextReaderReadInnerXml(reader);
 	    temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "primary");
 	    if (strcmp(temp, "true") == 0) {
 		method->primary = 1;
 	    } else {
 		method->primary = 0;
 	    }
+	    xmlFree((xmlChar *) temp);
+	    temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    method->name = trim(temp);
 	    xmlFree((xmlChar *) temp);
 	    if (bug->methods == NULL) {
 		bug->methods = method;
@@ -312,32 +347,54 @@ int processBug(xmlTextReaderPtr reader, BugInstance * bug)
 	    while (cur->next != NULL) {
 	        cur = cur->next;
 	    }
-	    cur->explanation = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    cur->explanation = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"SourceFile") == 0) {
 	    Location *  cur = bug->bugLocations;
 	    while (cur->next != NULL) {
 	        cur = cur->next;
 	    }
-	    cur->sourceFile = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    cur->sourceFile = trim(temp);
+	    xmlFree((xmlChar *) temp);
 
 	} else if (strcmp(name, "AssessmentReportFile") == 0) {
-	    bug->assessmentReportFile = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->assessmentReportFile = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BuildId") == 0) {
-	    bug->buildId = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->buildId = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BugCode") == 0) {
-	    bug->bugCode = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->bugCode = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BugRank") == 0) {
-	    bug->bugRank = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->bugRank = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "ClassName") == 0) {
-	    bug->className = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->className = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BugSeverity") == 0) {
-	    bug->bugSeverity = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->bugSeverity = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BugGroup") == 0) {
-	    bug->bugGroup = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->bugGroup = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "BugMessage") == 0) {
-	    bug->bugMessage = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->bugMessage = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name, "ResolutionSuggestion") == 0) {
-	    bug->resolutionSuggestion = (char *) xmlTextReaderReadInnerXml(reader);
+	    char * temp = (char *) xmlTextReaderReadInnerXml(reader); 
+	    bug->resolutionSuggestion = trim(temp);
+	    xmlFree((xmlChar *) temp);
 	}
     
     //end tags
@@ -355,33 +412,75 @@ int processBug(xmlTextReaderPtr reader, BugInstance * bug)
 
 //////////////////////change filename/reset parser////////////////////////////////////////
 
-Reader * newReader(BugCallback BugInstance, BugSummaryCallback BugSummary, MetricCallback Metric, MetricSummaryCallback MetricSummary, InitialCallback Initial, FinishCallback Fin, void * reference)
+ScarfToHash * newScarfToHash(char * filename)
 {
-    struct Callback * calls= malloc(sizeof(struct Callback));
-    calls->bugCall = BugInstance;
-    calls->metricCall = Metric;
-    calls->bugSumCall = BugSummary;
-    calls->initialCall = Initial;
-    calls->metricSumCall = MetricSummary;
-    calls->finishCallback = Fin;
-    calls->CallbackData = reference;
-    Reader * reader = malloc(sizeof(Reader));
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    ScarfToHash * reader = malloc(sizeof(ScarfToHash));
+    reader->filename = malloc(strlen(filename) + 1 ) ;
+    strcpy(reader->filename, filename);
     reader->reader = NULL;
     reader->callback = calls;
     return reader;
 }
 
-int parse(Reader * hand, char * filename)
+void setBugCallback(ScarfToHash * reader, BugCallback callback) {
+    reader->callback->bugCall = callback;
+}
+void setMetricCallback(ScarfToHash * reader, MetricCallback callback) {
+    reader->callback->metricCall = callback;
+}
+void setBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) {
+    reader->callback->bugSumCall = callback;
+}
+void setMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
+    reader->callback->metricSumCall = callback;
+}
+void setFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+    reader->callback->finishCall = callback;
+}
+void setInitialCallback(ScarfToHash * reader, InitialCallback callback) {
+    reader->callback->initialCall = callback;
+}
+void setCallbackData(ScarfToHash * reader, void * callbackData) {
+    reader->callback->CallbackData = callbackData;
+}
+
+
+BugCallback getBugCallback(ScarfToHash * reader, BugCallback callback) {
+    return reader->callback->bugCall;
+}
+MetricCallback getMetricCallback(ScarfToHash * reader, MetricCallback callback) {
+    return reader->callback->metricCall;
+}
+BugSummaryCallback getBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) {
+    returnreader->callback->bugSumCall;
+}
+MetricSummaryCallback getMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
+    return reader->callback->metricSumCall;
+}
+FinishCallback getFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+    return reader->callback->finishCall;
+}
+InitialCallback getInitialCallback(ScarfToHash * reader, InitialCallback callback) {
+    return reader->callback->initialCall;
+}
+void * getCallbackData(ScarfToHash * reader, void * callbackData) {
+    return reader->callback->CallbackData;
+}
+
+
+int parse(ScarfToHash * hand)
 {
-    hand->reader = xmlNewTextReaderFilename(filename);
+    hand->reader = xmlNewTextReaderFilename(hand->filename);
     xmlTextReaderPtr reader = hand->reader;
     if (reader != NULL) {
 	char * name;
+	int finished = 0;
 	int type;
-	int kill = 0;
+	void * kill = NULL;
 	int ret = 1;
 	Callback * callback = hand->callback;
-        while (ret == 1 && kill == 0) {
+        while (ret == 1 && kill == NULL) {
 	    ret = xmlTextReaderRead(reader);
 	    name = (char *) xmlTextReaderName(reader);
 	    type = xmlTextReaderNodeType(reader); 
@@ -513,7 +612,8 @@ int parse(Reader * hand, char * filename)
 				finSummary = 1;
 			    } else if ( strcmp(name, "AnalyzerReport") == 0 ) {
 				if ( callback->finishCallback != NULL ) {
-				    callback->finishCallback(callback->CallbackData);
+				    kill = callback->finishCallback(kill, callback->CallbackData);
+				    finished = 1;
 				}
 
 			    }
@@ -524,20 +624,24 @@ int parse(Reader * hand, char * filename)
 	}
 	if (ret != 0) {
 	    printf("Failed to parse set file\n");
-	    return 1;
+	    return NULL;
+	} else if ( kill != NULL and !finished ) {
+	    if ( callback->finishCallback != NULL ) {
+		kill = callback->finishCallback(kill, callback->CallbackData);
+	    }
 	}
 	
     } else {
-	printf("Reader set to invalid file\n");
-	return 1;
+	printf("ScarfToHash set to invalid file\n");
+	return NULL;
     } 
-    return 0;
+    return kill;
 }
 
 
 
 //////////////////Close parser////////////////////////////////////////////
-int closeReader(Reader * reader)
+int closeScarfToHash(ScarfToHash * reader)
 {
     return xmlTextReaderClose(reader->reader);
 }

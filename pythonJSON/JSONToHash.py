@@ -4,8 +4,8 @@ from yajl import YajlContentHandler
 from yajl import YajlParser
 
 class KillParse(Exception):
-    def __init__(self):
-	pass
+    def __init__(self, ret):
+	self.ret = ret
 
 ##############################Callbacks#################################
 class ParseContentHandler(YajlContentHandler):
@@ -20,6 +20,7 @@ class ParseContentHandler(YajlContentHandler):
         self.requiredStart = 0
         self.validBody = 0
         self.depth = 0
+	self.ret = None
 
         self.isArray = 0
         self.arrayLoc = 0
@@ -86,11 +87,13 @@ class ParseContentHandler(YajlContentHandler):
                 self.requiredStart = 1
                 if "InitialCallback" in self.callbacks:
                     if "CallbackInfo" in self.callbacks:
-                        if self.callbacks["InitialCallback"](self.initialInfo, self.callbacks["CallbackInfo"]):
-                            raise KillParse()
+                        ret = self.callbacks["InitialCallback"](self.initialInfo, self.callbacks["CallbackInfo"])
+                        if ret is not None:
+			    raise KillParse(ret)
                     else:
-                        if self.callbacks["InitialCallback"](self.initialInfo):
-                            raise KillParse()
+                        ret = self.callbacks["InitialCallback"](self.initialInfo)
+                        if ret is not None:
+			    raise KillParse(ret)
 
         elif self.hashType == "bug":
             if self.curr in ["AssessmentReportFile", "BuildId", "ClassName", "BugGroup", "BugCode", "BugRank", "BugSeverity", "BugMessage", "ResolutionSuggestion", "BugId"]:
@@ -207,44 +210,54 @@ class ParseContentHandler(YajlContentHandler):
         if self.depth == 2:
             if self.hashType == "bug" and "BugCallback" in self.callbacks:
                 if "CallbackData" in self.callbacks:
-                    if self.callbacks["BugCallback"](self.data, self.callbacks["CallbackData"]): 
-                        raise KillParse()
+                    ret = self.callbacks["BugCallback"](self.data, self.callbacks["CallbackData"])
+		    if ret is not None:
+                        raise KillParse(ret)
                 else:
-                    if self.callbacks["BugCallback"](self.data):
-                        raise KillParse() 
+                    ret self.callbacks["BugCallback"](self.data)
+		    if ret is not None:
+                        raise KillParse(ret) 
             
 	    elif self.hashType == "metric" and "MetricCallback" in self.callbacks:
                 if "CallbackData" in self.callbacks:
-                    if self.callbacks["MetricCallback"](self.data, self.callbacks["CallbackData"]):
-                        raise KillParse()
+                    ret self.callbacks["MetricCallback"](self.data, self.callbacks["CallbackData"])
+		    if ret is not None:
+                        raise KillParse(ret)
                 else:
-                    if self.callbacks["MetricCallback"](self.data):
-                        raise KillParse()
+                    ret self.callbacks["MetricCallback"](self.data)
+		    if ret is not None:
+                        raise KillParse(ret)
             
 	    elif self.hashType == "bugsum" and "BugSummaryCallback" in self.callbacks:
                 if "CallbackData" in self.callbacks:
-                    if self.callbacks["BugSummaryCallback"](self.data, self.callbacks["CallbackData"]):
-                        raise KillParse()
+                    ret = self.callbacks["BugSummaryCallback"](self.data, self.callbacks["CallbackData"])
+		    if ret is not None:
+                        raise KillParse(ret)
                 else:
-                    if self.callbacks["BugSummaryCallback"](self.data):
-                        raise KillParse()
+                    ret = self.callbacks["BugSummaryCallback"](self.data)
+		    if ret is not None:
+                        raise KillParse(ret)
             
 	    elif self.hashType == "metrsum" and "MetricSummaryCallback" in self.callbacks:
                 if "CallbackData" in self.callbacks:
-                    if self.callbacks["MetricSummaryCallback"](self.data, self.callbacks["CallbackData"]):
-                        raise KillParse()
+                    ret = self.callbacks["MetricSummaryCallback"](self.data, self.callbacks["CallbackData"])
+		    if ret is not None:
+                        raise KillParse(ret)
                 else:
-                    if self.callbacks["MetricSummaryCallback"](self.data):
-                        raise KillParse()
+                    ret = self.callbacks["MetricSummaryCallback"](self.data)
+		    if ret is not None:
+                        raise KillParse(ret)
         
 	elif self.depth == 0:
             if "InitialCallback" in self.callbacks and not self.requiredStart:
                 if "CallbackData" in self.callbacks:
-                    if self.callbacks["InitialCallback"](self.initialInfo, self.callbacks):
-                        raise KillParse()
+                    ret = self.callbacks["InitialCallback"](self.initialInfo, self.callbacks)
+		    if ret is not None:
+                        raise KillParse(ret)
                 else:
-                    if self.callbacks["InitialCallback"](self.initialInfo):
-                        raise KillParse()
+                    ret = self.callbacks["InitialCallback"](self.initialInfo)
+		    if ret is not None:
+                        raise KillParse(ret)
         if self.isArray:
             self.arrayLoc = self.arrayLoc + 1
         
@@ -263,24 +276,79 @@ class ParseContentHandler(YajlContentHandler):
 
 ####################parser##############################
 class JSONToHash:
-    def __init__(self, inputFile, callbacks):
-        self.callbacks = callbacks
-        self.handler = ParseContentHandler(callbacks)
-        self.parser = YajlParser(content_handler = self.handler)#callbacks))
+    def __init__(self, inputFile):
+        self.callbacks = {}
+        self.handler = None
+        self.parser = None
         self.filename = inputFile
 
+    #################Callback Accessors/Mutators##############
+    def SetInitialCallback(self, callback):
+        self.callback["InitialCallback"] = callback
+
+    def SetBugCallback(self, callback):
+        self.callback["BugCallback"] = callback
+
+    def SetMetricCallback(self, callback):
+        self.callback["MetricCallback"] = callback
+
+    def SetBugSummaryCallback(self, callback):
+        self.callback["BugSummaryCallback"] = callback
+
+    def SetMetricSummaryCallback(self, callback):
+        self.callback["MetricSummaryCallback"] = callback
+
+    def SetFinishCallback(self, callback):
+        self.callback["FinishCallback"] = callback
+
+    def SetCallbackData(self, callbackData):
+        self.callback["CallbackData"] = callback
+
+
+    def GetInitialCallback(self):
+        return self.callback["InitialCallback"]
+
+    def GetBugCallback(self):
+        return self.callback["BugCallback"]
+
+    def GetMetricCallback(self):
+        return self.callback["MetricCallback"]
+
+    def GetBugSummaryCallback(self):
+        return self.callback["BugSummaryCallback"]
+
+    def GetMetricSummaryCallback(self):
+        return self.callback["MetricSummaryCallback"]
+
+    def GetFinishCallback(self):
+        return self.callback["FinishCallback"]
+
+    def GetCallbackData(self):
+        return self.callback["CallbackData"]
+
+
+
     def parse(self):
-        fh = open (self.filename) 
+	ret = None
+        self.handler = ParseContentHandler(callbacks)
+        self.parser = YajlParser(content_handler = self.handler)
+        fh = self.filename
+	try:
+            fh.read()
+        except AttributeError:
+            fh =  open(self.filename, 'r')
+
 	try:
 	    self.parser.parse(fh)
-	except KillParse:
-	    pass
+	except KillParse as e:
+	    ret = e.ret
         if "FinishCallback" in self.callbacks:
             if "CallbackData" in self.callbacks:
-                self.callbacks["FinishCallback"](self.callbacks)
+                ret = self.callbacks["FinishCallback"](ret, self.callbacks)
             else:
-                self.callbacks["FinishCallback"]()
+                ret = self.callbacks["FinishCallback"](ret)
         fh.close()
+	return ret
 
 
 1

@@ -93,6 +93,12 @@ class HashToJSON:
 #            print('cannot open file')
 #	    sys.exit(1)
         self.output = output
+
+        try:
+            output.write()
+        except AttributeError:
+            self.output =  open(output, 'w')
+
 	if error_level == 1 or error_level == 0:
             self.error_level = error_level
         else:

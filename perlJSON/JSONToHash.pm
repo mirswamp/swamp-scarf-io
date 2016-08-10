@@ -25,43 +25,136 @@ use Data::Dumper;
 ##########Initialize Reader##########
 sub new
 {
-    my ($class, $source, $callbacks) = @_;
+    my ($class, $source) = @_;
     my $hashref = {};
     my $self->{hashref} = $hashref;
     $self->{source} = $source;
     die "no callbacks detected" if !(defined $callbacks);
-    $self->{callbacks} = $callbacks;
+    $self->{callbacks} = {};
     $self->{parser} = JSON::SL->new();
     $self->{readSize} = 4096;
     bless $self, $class;
 }
 
-sub setReadSize
+sub SetReadSize
 {
-    my( $self, $size ) = @_;
+    my ( $self, $size ) = @_;
     $self->{readSize} = $size;
     return 0;
 }
 
+sub GetReadSize
+{
+    my ( $self ) = @_;
+    return $self->{readSize};
+}
+
+#################Callback accessors/mutators###################
+
+sub SetInitialCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{InitialCallback} = $callback;
+}
+
+sub SetBugCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{BugCallback} = $callback;
+}
+
+sub SetMetricCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{MetricCallback} = $callback;
+}
+
+sub SetBugSummaryCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{BugSummaryCallback} = $callback;
+}
+
+sub SetMetricSummaryCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{MetricSummaryCallback} = $callback;
+}
+
+sub SetFinishCallback
+{
+    my ($self, $callback) = @_;
+    $self->{callbacks}->{FinishCallback} = $callback;
+}
+
+sub SetCallbackData
+{
+    my ($self, $callbackData) = @_;
+    $self->{callbacks}->{CallbackData} = $callbackData;
+}
+
+
+sub GetInitialCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{InitialCallback};
+}
+
+sub GetBugCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{BugCallback};
+}
+
+sub GetMetricCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{MetricCallback};
+}
+
+sub GetBugSummaryCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{BugSummaryCallback};
+}
+
+sub GetMetricSummaryCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{MetricSummaryCallback};
+}
+
+sub GetFinishCallback
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{FinishCallback};
+}
+
+sub GetCallbackData
+{
+    my ($self) = @_;
+    return $self->{callbacks}->{CallbackData};
+}
+
 
 ##########Initiate parsing of file##########
-sub parse
+sub Parse
 {
     my ( $self ) = @_;
     my $parser = $self->{parser};
     my $hash = {};
+    my $return = undef;
     my $lastElt = "";
     my $validStart = 0;
     my $validBody = 0;
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
     my $fh;
-    if (ref $self->{source} eq "SCALAR"){
-	open( $fh, "<", ${$self->{source}} );
+    if (ref $self->{source} eq "SCALAR"){	
+	open( $fh, "<", $self->{source} ) or die "Could not open specified string\n";
     } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
 	$fh = $self->{source};
     } else {
-	print("Invalid source file\n");
-	exit(1);
+	open( $fh, "<", $self->{source} ) or die "Could not open specified file\n";
     }
     local $/ = \$self->{readSize}; 
     FINISH: {
@@ -83,9 +176,15 @@ sub parse
 			$validStart = 1;
 			if ( defined $self->{callbacks}->{InitialCallback} ) {
 			    if ( defined $self->{callbacks}->{CallbackData} ) {
-				$self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData}) and last FINISH;
+				$return = $self->{callbacks}->{InitialCallback}->($hash, $self->{callbacks}->{CallbackData});
+				if ( defined $return ) {
+				    last FINISH;
+				}
 			    } else {
-				$self->{callbacks}->{InitialCallback}->($hash) and last FINISH;
+				$return = $self->{callbacks}->{InitialCallback}->($hash);
+				if (defined $return) {
+				    last FINISH;
+				}
 			    }
 			}
 		    }
@@ -110,33 +209,57 @@ sub parse
 			}
 		    }
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
-			$self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{BugCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    } else {
-			$self->{callbacks}->{BugCallback}->($obj->{Value}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{BugCallback}->($obj->{Value});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    }
 		    $validBody = 1;
 	    
 		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
-			$self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    } else {
-			$self->{callbacks}->{MetricCallback}->($obj->{Value}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{MetricCallback}->($obj->{Value});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    }
 		    $validBody = 1;
 	    
 		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
-			$self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    } else {
-			$self->{callbacks}->{BugSummaryCallback}->($obj->{Value}) and last FINISH;#$hash);
+			$return = $self->{callbacks}->{BugSummaryCallback}->($obj->{Value});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    }
 	    
 		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
 		    $hash = $obj->{Value};
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
-			$self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData}) and last FINISH;
+			$return = $self->{callbacks}->{MetricSummaryCallback}->($hash, $self->{callbacks}->{CallbackData});
+			if (defined $return) {
+			    last FINISH;
+			}
 		    } else {
-			$self->{callbacks}->{MetricSummaryCallback}->($hash) and last FINISH;
+			$return = $self->{callbacks}->{MetricSummaryCallback}->($hash);
+			if (defined $return) {
+			    last FINISH;
+			}
 		    }
 		}
     	    }	
@@ -144,11 +267,12 @@ sub parse
     }
 
     if ( defined $self->{callbacks}->{FinishCallback} ) {
-	$self->{callbacks}->{FinishCallback}->($self->{callbacks}->{CallbackData});
+	$return = $self->{callbacks}->{FinishCallback}->($ret, $self->{callbacks}->{CallbackData});
     }
     if ( $validBody == 0 ) {
 	print (" No BugInstances or Metrics found in file \n" );
     }
+    return $return;
 }
 
 

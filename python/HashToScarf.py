@@ -121,6 +121,11 @@ class HashToScarf:
 #	except IOError:
 #	    print('cannot open file')
 #	    sys.exit(1)
+	self.output = output
+	try:
+	    output.write()
+	except AttributeError:
+	    self.output =  open(output, 'w')
 	self.output  = output
 	if error_level == 1 or error_level == 0:
 	    self.error_level = error_level
@@ -160,7 +165,7 @@ class HashToScarf:
 	    self.error_level = 1
 	elif error_level == 0:
 	    self.error_level = 0
-	else:
+	elif error_level == 2:
 	    self.error_level = 2
 
 
