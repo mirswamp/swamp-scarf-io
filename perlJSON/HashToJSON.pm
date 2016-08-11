@@ -12,8 +12,10 @@ sub new
     my $self = {};
     if ( openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
 	$self->{output} = $handle;
+	$self->{filetype} = 0;
     } else {
 	open($self->{output}, ">", $handle) or die "invalid output file";
+	$self->{filetype} = 1;
     }
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
 
@@ -34,6 +36,16 @@ sub new
     $self->{BugSummaries} = undef;
 
     bless $self, $class;
+    return $self;
+}
+
+sub close
+{
+    my ($self) = @_;
+    if ( $self->{filetype} == 1 ){
+	close $self->{output};
+    }
+    $self = undef;
     return $self;
 }
 

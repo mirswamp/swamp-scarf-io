@@ -20,7 +20,7 @@ from xml.dom import minidom
 from lxml.etree import ElementTree as ET
 from lxml import etree
 
-
+/
 ###################Handle errors#############################################################
 def error(error_level, message):
     if error_level == 0:
@@ -31,82 +31,82 @@ def error(error_level, message):
 	print message
 	sys.exit(1)
 
-def checkStart(initial_details):
+def CheckStart(initial_details):
     errors = []
     for reqAttr in ["tool_name", "tool_version", "uuid"]:
         if reqAttr not in initial_details:
 	   errors.append(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
     return errors
 
-def checkMetric(metricHash, metricID):
+def CheckMetric(metricHash):
     errors = []
     for reqElt in ["Value", "Type", "SourceFile"]:
 	if reqElt not in metricHash:
-	    error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, metricID))
+	    error(self.error_level, "Required element: %s could not be found for Metric" % (reqElt))
     return errors
 
-def checkBug(bugHash, bugID):
+def CheckBug(bugHash):
     errors = []
     for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
         if reqElt not in bugHash:
-	   errors.append("Required element: %s could not be found in BugInstance: %s" % (reqElt, bugID))
+	   errors.append("Required element: %s could not be found in BugInstance" % (reqElt))
     if "Methods" in bugHash:
         methodID = 1
         methodPrimary = 0
         for method in bugHash["Methods"]:
 	    if "primary" not in method:
-		errors.append("Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+		errors.append("Required attribute: primary not found for Method: %s in BugInstance" % (methodID))
 	    elif (method["primary"]) :
 		if (methodPrimary) :
-		    errors.append("Misformed Element: More than one primary Method found in BugInstance: %s" % (bugID));
+		    errors.append("Misformed Element: More than one primary Method found in BugInstance");
 		else :
 		    methodPrimary = 1;
 	    if "name" not in method:
-		error.append("Required text: name not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+		error.append("Required text: name not found for Method: %s in BugInstance" % (methodID))
 	    methodID = methodID + 1
 #	if not methodPrimary :
-#       	errors.append("Misformed Element: No primary Method found in  BugInstance: %s." % (bugID));
+#       	errors.append("Misformed Element: No primary Method found in  BugInstance: %s.");
 
     if "BugLocations" in bugHash:	
 	locPrimary = 0
 	locID = 1
 	for location in bugHash["BugLocations"]:
 	    if "primary" not in location:
-	        errors.append("Required attribute: primary not found for Location: %s in BugInstance: %s" % (locID, bugID))
+	        errors.append("Required attribute: primary not found for Location: %s in BugInstance" % (locID))
 	    elif (location["primary"]) :
 	        if (locPrimary) :
-		   errors.append("Misformed Element: More than one primary Location found in BugInstance: %s" % (bugID));
+		   errors.append("Misformed Element: More than one primary Location found in BugInstance");
 	        else :
 		    methodPrimary = 1;
 	    for reqLocElt in ["SourceFile"]:
 	        if reqLocElt not in location:
-		    errors.append("Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
+		    errors.append("Required Element: %s could not be found for Location: %s in BugInstance" % (reqLocElt, locID))
 	    for optNum in ["StartLine", "EndLine", "StartColumn", "EndColumn"]:
 	        if optNum in location:
 		    if not location[optNum].isdigit():
-			errors.append("Wrong value type: $optLocElt child of BugLocation in BugInstance %s requires a positive integer." % (bugID))
+			errors.append("Wrong value type: $optLocElt child of BugLocation in BugInstance %s requires a positive integer.")
 #	if not locPrimary :
-#           errors.append("Misformed Element: No primary Location found in  BugInstance: %s." % (bugID));
+#           errors.append("Misformed Element: No primary Location found in  BugInstance: %s.");
 	locID = locID + 1
 
     if "CweIds" in bugHash:
 	for cweid in bugHash["CweIds"]:
 	    if not cweid.isdigit():
-		errors.append("Wrong value type: CweID expected to be a positive integer in BugInstance %s." % (bugID))
+		errors.append("Wrong value type: CweID expected to be a positive integer in BugInstance %s.")
 
     if "InstanceLocation" in bugHash:
 	if "LineNum" in bugHash["InstanceLocation"]:
 	    line_num = bugHash["InstanceLocation"]["LineNum"]
 	    if "Start" not in line_num :
-                errors.append("Required element missing: Could not find Start child of a LineNum in BugInstance: %s." % (bugID))
+                errors.append("Required element missing: Could not find Start child of a LineNum in BugInstance")
             elif not line_num["Start"].isdigit() :
- 	        errors.append("Wrong value type: Start child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+ 	        errors.append("Wrong value type: Start child of LineNum requires a positive integer BugInstance")
 	    if "End" not in line_num:
-		errors.append("Required element missing: Could not find End child of a LineNum BugInstance: %s." % (bugID))
+		errors.append("Required element missing: Could not find End child of a LineNum BugInstance")
 	    elif not line_num["End"].isdigit() :
-		errors.append("Wrong value type: End child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+		errors.append("Wrong value type: End child of LineNum requires a positive integer BugInstance")
 	elif "Xpath" not in bugHash["InstanceLocation"]:
-	    errors.append("Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: %s" % (bugID));
+	    errors.append("Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance");
 	return errors;
 
 
@@ -115,15 +115,17 @@ def checkBug(bugHash, bugID):
 class HashToScarf:
 
 ##################Initialize Writer##################################################
-    def __init__(self, output, error_level):
+    def __init__(self, output, error_level, pretty_enable):
 #	try:
 #	    self.output = open(output, "w")
 #	except IOError:
 #	    print('cannot open file')
 #	    sys.exit(1)
 	self.output = output
+	self.filetype = 1
 	try:
 	    output.write()
+	    self.filetype = 0
 	except AttributeError:
 	    self.output =  open(output, 'w')
 	self.output  = output
@@ -134,6 +136,7 @@ class HashToScarf:
 	self.pretty = 0
 	self.bodyType = ""
 	self.start = 0
+	self.pretty = pretty_enable
 
 	self.bugID = 1
 	self.metricID = 1
@@ -143,24 +146,24 @@ class HashToScarf:
 
 
 #########################Returns file#######################################################
-    def getFile(self):
+    def GetHandle(self):
 	return self.output
 
 
 ######################Returns current set error level######################################################
-    def getErrorLevel(self):
+    def GetErrorLevel(self):
 	return self.error_level
 
 
 #######################Pretty Print Options##########################################################
-    def getPrettyPrint(self):
+    def GetPrettyPrint(self):
 	return self.pretty;
 
-    def setPrettyPrint(self, pretty_enable):
+    def SetPrettyPrint(self, pretty_enable):
 	self.pretty = pretty_enable;
 
 ####################Allows change of error level############################################################
-    def setErrorLevel(self, error_level):
+    def SetErrorLevel(self, error_level):
 	if error_level == 1:
 	    self.error_level = 1
 	elif error_level == 0:
@@ -172,14 +175,14 @@ class HashToScarf:
 #######################Write a start tag######################################
 
 
-    def addStartTag(self, initial_details):
+    def AddStartTag(self, initial_details):
 
 	if self.error_level != 0 :
 	    if self.start:
 		print("Scarf file already open\n")
 		if self.error_level == 2:
 		    sys.exit(1)
-	    errors =  checkStart(initial_details)
+	    errors =  CheckStart(initial_details)
 	    for error in errors:
 		print error
 	    if errors and self.error_level == 2:
@@ -198,14 +201,14 @@ class HashToScarf:
 ####################Write a bug instance#########################################################
 
 
-    def addBugInstance(self, bugHash):
-	#check for req elmts
+    def AddBugInstance(self, bugHash):
+	#Check for req elmts
 	if self.error_level != 0 :
 	    if self.bodyType == "summary":
 		print("Summary already written. Invalid Scarf\n")
 		if self.error_level == 2:
 		    sys.exit(1)
-	    errors =  checkBug(bugHash, self.bugID)
+	    errors =  CheckBug(bugHash)
 	    for error in errors:
 		print error
 	    if errors and self.error_level == 2:
@@ -217,7 +220,7 @@ class HashToScarf:
 	initial_byte_count = self.output.tell()
 
 
-	#addbug	
+	#Addbug	
 	bug = etree.Element("BugInstance")
 	bug.set("id", "%s" % self.bugID)
 
@@ -333,14 +336,14 @@ class HashToScarf:
 
 ###########Writer a metric##################################################
 
-    def addMetric(self, metricHash):
+    def AddMetric(self, metricHash):
 
 	if self.error_level != 0 :
 	    if self.bodyType == "summary":
 		print("Summary already written. Invalid Scarf\n")
 		if self.error_level == 2:
 		    sys.exit(1)
-	    errors =  checkMetric(metricHash, self.metricID)
+	    errors =  CheckMetric(metricHash)
 	    for error in errors:
 		print error
 	    if errors and self.error_level == 2:
@@ -415,7 +418,7 @@ class HashToScarf:
 	return self
 
 ############Add summary from written elements##############################################################
-    def addSummary(self):
+    def AddSummary(self):
 	import math
 
 	if self.bugSummaries:
@@ -471,7 +474,7 @@ class HashToScarf:
 
 
     #######################Add end tag for analyzer report###########################################
-    def addEndTag(self):
+    def AddEndTag(self):
 	if self.error_level != 0:    
 	    if !self.start:
 		print("Scarf file already closed\n")
@@ -481,4 +484,11 @@ class HashToScarf:
 	self.output.write("</AnalyzerReport>")
 	return self
 
-
+    def Close(self):
+	if self.start:
+	    self.output.write("</AnalyzerReport>")
+	if self.filetype == 1:
+	    self.output.close()
+	self = None
+	return self
+	

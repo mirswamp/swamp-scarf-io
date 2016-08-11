@@ -21,6 +21,10 @@ use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];
 use strict;
 
+use Exporter qw(import);
+@EXPORT_OK = qw(CheckStart CheckBug CheckMetric);
+
+
 my $byteCountHash;
 my $count_hash;
 my $metric_count_hash;
@@ -28,8 +32,6 @@ my $metric_sum_hash;
 my $metric_sumofsquares_hash;
 my $metric_max_hash;
 my $metric_min_hash;
-my $metricID;
-my $bugID;
 
 #constructer
 sub new
@@ -39,8 +41,10 @@ sub new
     my $self = {};
     if (openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
 	$self->{output} = $handle;
+	$self->{filetype} = 0;
     } else {
         open($self->{output}, ">", $handle) or die "invalid output file\n";
+	$self->{filetype} = 1;
     }
     if  ( $pretty_enable ) {
 	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
@@ -54,9 +58,9 @@ sub new
     } else {
 	$self->{error_level} = 2;
     }
-
-    $bugID = 1;
-    $metricID = 1;
+    
+    $self->{bugID} = 1;
+    $self->{metricID} = 1;
     
     $self->{bodyType};
     $self->{open};
@@ -64,6 +68,17 @@ sub new
     $self->{BugSummaries};
     
     bless $self, $class;
+    return $self;
+}
+
+sub Close
+{
+    my ($self) = @_;
+    $self->{writer}->end();
+    if ( $self->{filetype} == 1 ) {
+	close $self->{output};
+    }
+    $self = undef;
     return $self;
 }
 
@@ -121,8 +136,8 @@ sub setPretty
 }
 
 
-#check required start elements
-sub checkStart
+#Check required start elements
+sub CheckStart
 {
     my ($initial) = @_;
     my @errors = ();
@@ -149,7 +164,7 @@ sub addStartTag
 		die "Exiting";
 	    }
 	}
-	my $errors = checkStart($initial_details);
+	my $errors = CheckStart($initial_details);
 	print "$_\n" for @{$errors};
 	if (@{$errors} and $self->{error_level} == 2) {
 	    die "Exiting";
@@ -184,14 +199,17 @@ sub addEndTag
 }
 
 
-#check bug for required elements
-sub checkBug
+#Check bug for required elements
+sub CheckBug
 {
-    my ($bugInstance) = @_;
+    my ($bugInstance, $bugID) = @_;
     my @errors = ();
+    if (not defined $bugID){
+	$bugID = "";
+    }
     for my $bugReqElt (qw/BugLocations BugMessage BuildId AssessmentReportFile/) {
 	if (!(defined $bugInstance->{$bugReqElt})) {
-	    push @errors, "Required element: $bugReqElt could not be found in BugInstance:$bugID";
+	    push @errors, "Required element: $bugReqElt could not be found in BugInstance $bugID";
 	}
     }
     my $locID = 1;
@@ -200,20 +218,20 @@ sub checkBug
         my $methodprimary = 0;
 	foreach my $method (@{$bugInstance->{Methods}}) {
 	    if (!(defined $method->{primary})) {
-		push @errors, "Required attribute: primary not found for Method:$methodID in BugInstance:$bugID";
+		push @errors, "Required attribute: primary not found for Method$methodID in BugInstance $bugID";
 	    } elsif ($method->{primary}) {
 	        if ($methodprimary) {
-		    push @errors, "Misformed Element: More than one primary Method found";
+		    push @errors, "Misformed Element: More than one primary Method found in BugInstance $bugID";
 		} else {
 		    $methodprimary = 1;
 		}
 	    }
 	    if (!(defined $method->{name})) {
-		push @errors, "Required text: name not found for Method:$methodID in BugInstance:$bugID";
+		push @errors, "Required text: name not found for Method$methodID in BugInstance $bugID";
 	    }
 	}
 	if (!($methodprimary)) {
-#	    push @errors, "Misformed Element: No primary Method found in  BugInstance: $bugID.";
+#	    push @errors, "Misformed Element: No primary Method found in  BugInstance $bugID";
 	}
 	$methodID++;
     }
@@ -221,36 +239,36 @@ sub checkBug
     my $locprimary = 0;
     foreach my $location (@{$bugInstance->{BugLocations}}) {
 	if (!(defined $location->{primary})) {
-	    push @errors, "Required attribute: primary could not be found for Location:$locID in BugInstance:$bugID";	    
+	    push @errors, "Required attribute: primary could not be found for Location$locID in BugInstance $bugID";	    
 	} elsif ($location->{primary}) {
 	    if ($locprimary) {
-#		push @errors, "Misformed Element: More than one primary BugLocation found in  BugInstance: $bugID";
+#		push @errors, "Misformed Element: More than one primary BugLocation found in  BugInstance $bugID";
 	    } else {
 		$locprimary = 1;
 	    }
 	}
 	for my $locElt (qw/SourceFile/) {
 	    if (!(defined $location->{$locElt})) {
-		push @errors, "Required element: $locElt could not be found for Location:$locID in BugInstance:$bugID";	    
+		push @errors, "Required element: $locElt could not be found for Location$locID in BugInstance $bugID";	    
 	    }
 	}
 	for my $optLocElt (qw/StartColumn EndColumn StartLine EndLine/) {
 	    if (defined $location->{$optLocElt}  ) {
 		if ($location->{$optLocElt} !~ /[0-9]+/) {
-		    push @errors, "Wrong value type: $optLocElt child of BugLocation in BugInstance: $bugID requires a positive integer.";
+		    push @errors, "Wrong value type: $optLocElt child of BugLocation in BugInstance$bugID requires a positive integer";
 		}
 	    }
 	}
 	$locID++;
     }
     if (!($locprimary)) {
-        push @errors, "Misformed Element: No primary BugLocation found in BugInstance: $bugID.";
+        push @errors, "Misformed Element: No primary BugLocation found in BugInstance $bugID";
     }
 
     if (defined $bugInstance->{CweIds}) {
 	for my $cweid (@{$bugInstance->{CweIds}}) {
             if ($cweid !~ /[0-9]+/) {
-		push @errors, "Wrong value type: CweID expected to be a positive integer in BugInstance: $bugID";
+		push @errors, "Wrong value type: CweID expected to be a positive integer in BugInstance $bugID";
 	    }
 	}
     }
@@ -259,18 +277,18 @@ sub checkBug
         if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
             my $line_num = $bugInstance->{InstanceLocation}->{LineNum};
             if (!(defined $line_num->{Start})) {
-                push @errors, "Required element missing: Could not find Start child of a LineNum in BugInstance: $bugID.";
+                push @errors, "Required element missing: Could not find Start child of a LineNum in BugInstance $bugID";
             } elsif ($line_num->{Start} !~ /[0-9]+/ ) {
-               push @errors, "Wrong value type: Start child of LineNum requires a positive integer BugInstance: $bugID.";
+               push @errors, "Wrong value type: Start child of LineNum requires a positive integer BugInstance $bugID";
             }
             if (!(defined $line_num->{End})) {
-                push @errors, "Required element missing: Could not find End child of a LineNum BugInstance: $bugID.";
+                push @errors, "Required element missing: Could not find End child of a LineNum BugInstance $bugID";
 	    } elsif ($line_num->{End} !~ /[0-9]+/) {
-                push @errors, "Wrong value type: End child of LineNum requires a positive integer BugInstance: $bugID.";
+                push @errors, "Wrong value type: End child of LineNum requires a positive integer BugInstance $bugID";
 	    }
 	}
 	elsif (!(defined $bugInstance->{InstanceLocation}->{Xpath})) {
-	    push @errors, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: $bugID.";
+	    push @errors, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance $bugID";
 	}
     }
 
@@ -284,7 +302,7 @@ sub addBugInstance
 {
     my($self, $bugInstance) = @_;
 
-    #check for req elements existence
+    #Check for req elements existence
     if ($self->{error_level} != 0) {
         if ($self->{bodyType} eq "summary") {
             print "Summary already written. Invalid Scarf";
@@ -292,7 +310,7 @@ sub addBugInstance
                 die "Exiting";
             }
         }
-	my $errors = checkBug($bugInstance);
+	my $errors = CheckBug($bugInstance, $self->{bugID});
 	print "$_\n" for @$errors;
 	if (@$errors and $self->{error_level} == 2) {
 	    die "Exiting";
@@ -457,14 +475,14 @@ sub addBugInstance
 }
 
 
-#check for metrics required elements
-sub checkMetric
+#Check for metrics required elements
+sub CheckMetric
 {
     my ($metric) = @_;
     my @errors = ();
     for my $reqMetrElt (qw/SourceFile Type Value/) {
 	if (!(defined $metric->{$reqMetrElt})) {
-	   push @errors, "Required element: $reqMetrElt could not be found for Metric:$metricID";	    
+	   push @errors, "Required element: $reqMetrElt could not be found for Metric $metricID";	    
 	}
     }
     return \@errors;
@@ -483,7 +501,7 @@ sub addMetric
                 die "Exiting";
             }
         }
-	my $errors = checkMetric($metric);
+	my $errors = CheckMetric($metric, $self->{metricID});
 	print "$_\n" for @$errors;
 	if (@$errors and $self->{error_level} == 2) {
 	    die "Exiting";
@@ -559,7 +577,7 @@ sub addSummary
     my ($self) = @_ ;
     my $writer = $self->{writer};
     if ($self->{bodyType} eq "summary") {
-        print "Summary already written. Invalid Scarf";
+        print "Summary already written Invalid Scarf";
         if ( $self->{error_level} == 2) {
             die "Exiting";
         }

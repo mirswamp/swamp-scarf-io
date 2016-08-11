@@ -298,8 +298,8 @@ class JSONToHash:
     def SetMetricSummaryCallback(self, callback):
         self.callback["MetricSummaryCallback"] = callback
 
-    def SetFinishCallback(self, callback):
-        self.callback["FinishCallback"] = callback
+    def SetFinalCallback(self, callback):
+        self.callback["FinalCallback"] = callback
 
     def SetCallbackData(self, callbackData):
         self.callback["CallbackData"] = callback
@@ -320,8 +320,8 @@ class JSONToHash:
     def GetMetricSummaryCallback(self):
         return self.callback["MetricSummaryCallback"]
 
-    def GetFinishCallback(self):
-        return self.callback["FinishCallback"]
+    def GetFinalCallback(self):
+        return self.callback["FinalCallback"]
 
     def GetCallbackData(self):
         return self.callback["CallbackData"]
@@ -342,11 +342,11 @@ class JSONToHash:
 	    self.parser.parse(fh)
 	except KillParse as e:
 	    ret = e.ret
-        if "FinishCallback" in self.callbacks:
+        if "FinalCallback" in self.callbacks:
             if "CallbackData" in self.callbacks:
-                ret = self.callbacks["FinishCallback"](ret, self.callbacks)
+                ret = self.callbacks["FinalCallback"](ret, self.callbacks)
             else:
-                ret = self.callbacks["FinishCallback"](ret)
+                ret = self.callbacks["FinalCallback"](ret)
         fh.close()
 	return ret
 

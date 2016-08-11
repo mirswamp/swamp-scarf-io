@@ -9,7 +9,7 @@ typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
 typedef void * (*MetricCallback)(Metric * metr, void * reference);
 typedef void * (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
 typedef void * (*InitialCallback)(Initial * initial, void * reference);
-typedef void * (*FinishCallback)(void * returnValue, void * reference);
+typedef void * (*FinalCallback)(void * returnValue, void * reference);
 
 typedef struct Callback {
     BugCallback bugCall;
@@ -17,7 +17,7 @@ typedef struct Callback {
     InitialCallback initialCall;
     BugSummaryCallback bugSumCall;
     MetricSummaryCallback metricSumCall;
-    FinishCallback finishCallback;
+    FinalCallback finishCallback;
     void * CallbackData;
 } Callback;
 
@@ -46,11 +46,12 @@ typedef struct State {
     Callback * callbacks;
 } State;
 
-typedef struct Reader {
-    char * filename;
+typedef struct JSONToHash {
+    FILE * file;
     yajl_handle reader;
     State * state;
-} Reader;
+    int filetype;
+} JSONToHash;
 
 ///////////////////////////////Free initial struct//////////////////////////////////
 int freeInitial( Initial * initial ){
@@ -601,74 +602,109 @@ static yajl_callbacks callbacks = {
 
 
 //////////////////////initializer and parser////////////////////////////////////////
-Reader * newReader(char * filename)
+JSONToHash * newJSONToHashFilename(char * filename)
 {
     struct State * status = calloc(1, sizeof(struct State));
     struct Callback * calls= calloc(1, sizeof(struct Callback));
     status->callbacks = calls;
-    Reader * reader = calloc(1, sizeof(Reader));
-    reader->filename = malloc(strlen(filename) + 1);
-    strcpy(reader->filename, filename);
+    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
+    reader->file = fopen(filename, 'w');
+    if (reader->file == NULL){
+        printf("File could not open\n");
+        free(writerInfo);
+        return NULL;
+    }
+    reader->filetype = 0;
+    reader->state = status;
+    return reader;
+}
+JSONToHash * newJSONToHashFile(FILE * file)
+{
+    struct State * status = calloc(1, sizeof(struct State));
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    status->callbacks = calls;
+    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
+    reader->filetype = 1;
+    reader->file = file;
+    reader->state = status;
+    return reader;
+}
+JSONToHash * newJSONToHashString(char * str)
+{
+    struct State * status = calloc(1, sizeof(struct State));
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    status->callbacks = calls;
+    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
+    reader->file = open_memstream (&str, &size);
+    if (reader->file == NULL){
+        printf("File could not open\n");
+        free(writerInfo);
+        return NULL;
+    }
+    reader->filetype = 2;
     reader->state = status;
     return reader;
 }
 
-void closeReader(Reader * reader) {
+void closeJSONToHash(JSONToHash * reader) {
     yajl_free(reader->reader);
-    free(reader->filename);
     free(reader->state->arrayType);
     free(reader->state->curr);
     free(reader->state->callbacks);
     free(reader->state);
+    if(reader->filetype == 1 || reader->filetype == 2) {
+	fclose(reader->file);
+    }
+    free(reader);
 }
 
-void setBugCallback(ScarfToHash * reader, BugCallback callback) {
+void setBugCallback(JSONToHash * reader, BugCallback callback) {
     reader->state->callbacks->bugCall = callback;
 }
-void setMetricCallback(ScarfToHash * reader, MetricCallback callback) {
+void setMetricCallback(JSONToHash * reader, MetricCallback callback) {
     reader->state->callbacks->metricCall = callback;
 }
-void setBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) {
+void setBugSummaryCallback(JSONToHash * reader, BugSummaryCallback callback) {
     reader->state->callbacks->bugSumCall = callback;
 }
-void setMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
+void setMetricSummaryCallback(JSONToHash * reader, MetricSummaryCallback callback) {
     reader->state->callbacks->metricSumCall = callback;
 }
-void setFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+void setFinalCallback(JSONToHash * reader, FinalCallback callback) {
     reader->state->callbacks->finishCall = callback;
 }
-void setInitialCallback(ScarfToHash * reader, InitialCallback callback) {
+void setInitialCallback(JSONToHash * reader, InitialCallback callback) {
     reader->state->callbacks->initialCall = callback;
 }
-void setCallbackData(ScarfToHash * reader, void * callbackData) {
+void setCallbackData(JSONToHash * reader, void * callbackData) {
     reader->state->callbacks->CallbackData = callbackData;
 }
 
 
-BugCallback getBugCallback(ScarfToHash * reader, BugCallback callback) {
+BugCallback getBugCallback(JSONToHash * reader, BugCallback callback) {
     return reader->state->callbacks->bugCall;
 }
-MetricCallback getMetricCallback(ScarfToHash * reader, MetricCallback callback) {
+MetricCallback getMetricCallback(JSONToHash * reader, MetricCallback callback) {
     return reader->state->callbacks->metricCall;
 }
-BugSummaryCallback getBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) {
+BugSummaryCallback getBugSummaryCallback(JSONToHash * reader, BugSummaryCallback callback) {
     return reader->state->callbacks->bugSumCall;
 }
-MetricSummaryCallback getMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
+MetricSummaryCallback getMetricSummaryCallback(JSONToHash * reader, MetricSummaryCallback callback) {
     return reader->state->callbacks->metricSumCall;
 }
-FinishCallback getFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+FinalCallback getFinalCallback(JSONToHash * reader, FinalCallback callback) {
     return reader->state->callbacks->finishCall;
 }
-InitialCallback getInitialCallback(ScarfToHash * reader, InitialCallback callback) {
+InitialCallback getInitialCallback(JSONToHash * reader, InitialCallback callback) {
     return reader->state->callbacks->initialCall;
 }
-void * getCallbackData(ScarfToHash * reader, void * callbackData) {
+void * getCallbackData(JSONToHash * reader, void * callbackData) {
     return reader->state->callbacks->CallbackData;
 }
 
 
-void * parse(Reader * hand)
+void * parse(JSONToHash * hand)
 {
     hand->reader =  yajl_alloc(&reader->state->callbacks, NULL, status);
     int retval = 0;
@@ -676,7 +712,7 @@ void * parse(Reader * hand)
     static unsigned char fileData[65536];
     size_t rd;
     yajl_status stat;
-    FILE * fh = fopen(reader->filename, "r");
+    FILE * fh = reader->file;
     for (;;) {
         rd = fread((void *) fileData, 1, sizeof(fileData) - 1, fh);
         if (rd == 0) {

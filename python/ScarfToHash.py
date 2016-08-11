@@ -39,8 +39,8 @@ class ScarfToHash:
     def SetMetricSummaryCallback(self, callback):
 	self.callback["MetricSummaryCallback"] = callback
 
-    def SetFinishCallback(self, callback):
-	self.callback["FinishCallback"] = callback
+    def SetFinalCallback(self, callback):
+	self.callback["FinalCallback"] = callback
 
     def SetCallbackData(self, callbackData):
 	self.callback["CallbackData"] = callback
@@ -61,8 +61,8 @@ class ScarfToHash:
     def GetMetricSummaryCallback(self):
 	return self.callback["MetricSummaryCallback"]
 
-    def GetFinishCallback(self):
-	return self.callback["FinishCallback"]
+    def GetFinalCallback(self):
+	return self.callback["FinalCallback"]
 
     def GetCallbackData(self):
 	return self.callback["CallbackData"]
@@ -87,14 +87,14 @@ class ScarfToHash:
                     if "CallbackData" in callback:
                         ret = callback["InitialCallback"](initialDetails, callback["CallbackData"]
 			if ret is not None:
-			    if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret, callback["CallbackData"])
+			    if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret, callback["CallbackData"])
                             break                        
                     else:
                         ret = callback["InitialCallback"](initialDetails):
 			if ret is not None:
-			    if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret)
+			    if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret)
                             break
                 parent.clear()
                 self.startValid = 1;
@@ -165,14 +165,14 @@ class ScarfToHash:
                 if  "CallbackData" in callback :
                     ret = callback["BugCallback"](bug, callback["CallbackData"])
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret, callback["CallbackData"])
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret, callback["CallbackData"])
                         break
                 else:
                     ret = callback["BugCallback"](bug)
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret):
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret):
                         break
                 parent.clear()
 
@@ -191,14 +191,14 @@ class ScarfToHash:
                 if  "CallbackData" in callback :
                     ret = callback["MetricCallback"](metric, callback["CallbackData"])
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret, callback["CallbackData"])
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret, callback["CallbackData"])
                         break
                 else:
                     ret = callback["MetricCallback"](metric)
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret)
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret)
                         break
                 parent.clear()
         
@@ -219,14 +219,14 @@ class ScarfToHash:
                 if "CallbackData" in callback:
                     ret = callback["MetricSummaryCallback"](summary, callback["CallbackData"])
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret, callback["CallbackData"])
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret, callback["CallbackData"])
                         break
                 else:
                     ret = callback["MetricSummaryCallback"](summary)
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret)
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret)
                         break
                 parent.clear()
 
@@ -244,25 +244,25 @@ class ScarfToHash:
                 if "CallbackData" in callback:
                     ret = callback["BugSummaryCallback"](summary, callback["CallbackData"])
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret, callback["CallbackData"])
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret, callback["CallbackData"])
                         break
                 else:
                     ret = callback["BugSummaryCallback"](summary)
 		    if ret is not None:
-			if "FinishCallback" in callback:
-				ret = callback["FinishCallback"](ret)
+			if "FinalCallback" in callback:
+				ret = callback["FinalCallback"](ret)
                         break
                 parent.clear()
 
             elif elem.tag == "AnalyzerReport" and event == "end":
-                if "FinishCallback" in callback:
+                if "FinalCallback" in callback:
                     if "CallbackData" in callback:
-                        ret = callback["FinishCallback"](ret, callback["CallbackData"])
+                        ret = callback["FinalCallback"](ret, callback["CallbackData"])
 			if ret is not None:
                             break
                     else:
-                        ret = callback["FinishCallback"](ret)
+                        ret = callback["FinalCallback"](ret)
 			if ret is not None:
                             break
         if not self.validBody:

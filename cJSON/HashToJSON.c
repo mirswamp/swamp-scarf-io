@@ -9,53 +9,96 @@
 
 ////////////////////structs///////////////////////////
 
-typedef struct Writer {
+typedef struct HashToJSON {
     int bugId;
     int metricId;
     int errorLevel;
     int openBody;
     int start;
+    int filetype;
 //    char * filename;
     FILE * file;
     char curr[20];
     struct BugSummaries * bugSums;
     struct MetricSummary * metricSum;
     yajl_gen writer;
-} Writer;
+} HashToJSON;
 
 
 //////////////constructor////////////////////
-Writer * newWriter(FILE * file)
+HashToJSON * newHashToJSONForFile(FILE * file)
 {
-    Writer * writerInfo = calloc(1, sizeof(Writer));
+    HashToJSON * writerInfo = calloc(1, sizeof(HashToJSON));
     writerInfo->writer = yajl_gen_alloc(NULL);
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
 //    writerInfo->filename = malloc(strlen(filename) + 1);
     writerInfo->file = file;//fopen(filename, "w");
+    writerInfo->filetype = 0;
     writerInfo->bugId = 1;
     writerInfo->metricId = 1;
     writerInfo->errorLevel = 1;
 //    strcpy(writerInfo->filename, filename);
     return writerInfo;
 }
+HashToJSON * newHashToJSONForFilename(char * filename)
+{
+    HashToJSON * writerInfo = calloc(1, sizeof(HashToJSON));
+    writerInfo->writer = yajl_gen_alloc(NULL);
+    yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
+//    writerInfo->filename = malloc(strlen(filename) + 1);
+    writerInfo->file = fopen(filename, 'w');
+    if (writerInfo->file == NULL){
+        printf("File could not open\n");
+        free(writerInfo);
+        return NULL;
+    }
+    writerInfo->bugId = 1;
+    writerInfo->metricId = 1;
+    writerInfo->errorLevel = 1;
+//    strcpy(writerInfo->filename, filename);
+    writerInfo->filetype = 1;
+    return writerInfo;
+}
+HashToJSON * newHashToJSONForString(char * str)
+{
+    HashToJSON * writerInfo = calloc(1, sizeof(HashToJSON));
+    writerInfo->writer = yajl_gen_alloc(NULL);
+    yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
+//    writerInfo->filename = malloc(strlen(filename) + 1);
+    writerInfo->file = open_memstream (&str, &size);
+    if (writerInfo->file == NULL){
+        printf("File could not open\n");
+        free(writerInfo);
+        return NULL;
+    }
+    writerInfo->bugId = 1;
+    writerInfo->metricId = 1;
+    writerInfo->errorLevel = 1;
+//    strcpy(writerInfo->filename, filename);
+    writerInfo->filetype = 2;
+    return writerInfo;
+}
 
 
-void closeWriter (Writer * writerInfo)
+void closeHashToJSON (HashToJSON * writerInfo)
 {
     yajl_gen_free(writerInfo->writer);
     free(writerInfo->bugSums);
     free(writerInfo->metricSum);
+    if (writerInfo->filetype == 1 || writerInfo->filetype == 2) {
+	fclose(writerInfo->file);
+    }
 //    free(writerInfo->filename);
     free(writerInfo);
 }
 
 ////////////////////////change options////////////////////////////////
-int setPretty ( Writer * writerInfo, int pretty_level ) {
+int setPretty ( HashToJSON * writerInfo, int pretty_level ) {
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level); 
 }
 
 
-yajl_gen  getWriter (Writer * writerInfo)
+yajl_gen  getHashToJSON (HashToJSON * writerInfo)
 {
     if (writerInfo != NULL){
 	return writerInfo->writer;
@@ -63,7 +106,7 @@ yajl_gen  getWriter (Writer * writerInfo)
 }
 
 
-int getErrorLevel(Writer * writerInfo)
+int getErrorLevel(HashToJSON * writerInfo)
 {
     if (writerInfo != NULL){
 	return writerInfo->errorLevel;
@@ -71,7 +114,7 @@ int getErrorLevel(Writer * writerInfo)
 }
 
 
-int setErrorLevel(Writer * writerInfo, int errorLevel)
+int setErrorLevel(HashToJSON * writerInfo, int errorLevel)
 {
     if (writerInfo != NULL){
 	if ( errorLevel == 0 || errorLevel == 1 || errorLevel == 2 ) { 
@@ -187,7 +230,7 @@ char * checkBug(BugInstance * bug , int bugID)
 }
 
 
-int addBug(Writer * writerInfo, BugInstance * bug)
+int addBug(HashToJSON * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
         if (strcmp(writerInfo->curr, "summary") == 0) {
@@ -507,7 +550,7 @@ char * checkMetric(Metric * metric, int metricID)
 }
 
 
-int addMetric(Writer *  writerInfo, Metric * metric)
+int addMetric(HashToJSON *  writerInfo, Metric * metric)
 {
     if (writerInfo->errorLevel != 0) {
         if (strcmp(writerInfo->curr, "summary") == 0) {
@@ -659,7 +702,7 @@ char * checkStart(Initial * initial){
     return errors;
 }
 
-int addStartTag(Writer * writerInfo, Initial * initial)
+int addStartTag(HashToJSON * writerInfo, Initial * initial)
 {
     strcpy(writerInfo->curr, "Init");
     if (writerInfo->errorLevel != 0) {
@@ -747,7 +790,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 
 
 //////////////////////End initialtag/////////////////////////////////////////////
-int addEndTag(Writer * writerInfo)
+int addEndTag(HashToJSON * writerInfo)
 {
     strcpy(writerInfo->curr, "end");
     if (writerInfo->errorLevel != 0) {
@@ -774,7 +817,7 @@ int addEndTag(Writer * writerInfo)
 }
 
 //////////////Add summary generated from instances//////////////////////////////////
-int addSummary(Writer * writerInfo)
+int addSummary(HashToJSON * writerInfo)
 {
     strcpy(writerInfo->curr, "summary");
     yajl_gen writer = writerInfo->writer;

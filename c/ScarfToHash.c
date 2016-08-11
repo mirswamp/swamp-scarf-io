@@ -27,7 +27,7 @@ typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
 typedef void * (*MetricCallback)(Metric * metr, void * reference);
 typedef void * (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
 typedef void * (*InitialCallback)(Initial * initial, void * reference);
-typedef void * (*FinishCallback)(void * killValue, void * reference);
+typedef void * (*FinalCallback)(void * killValue, void * reference);
 
 typedef struct Callback {
     BugCallback bugCall;
@@ -35,13 +35,12 @@ typedef struct Callback {
     InitialCallback initialCall;
     BugSummaryCallback bugSumCall;
     MetricSummaryCallback metricSumCall;
-    FinishCallback finishCallback;
+    FinalCallback finishCallback;
     void * CallbackData;
 } Callback;
 
 
 typedef struct ScarfToHash{
-    char * filename;
     xmlTextReaderPtr reader;
     Callback * callback;
 } ScarfToHash;
@@ -412,16 +411,40 @@ int processBug(xmlTextReaderPtr reader, BugInstance * bug)
 
 //////////////////////change filename/reset parser////////////////////////////////////////
 
-ScarfToHash * newScarfToHash(char * filename)
+ScarfToHash * newScarfToHashFilename(char * filename)
 {
     struct Callback * calls= calloc(1, sizeof(struct Callback));
     ScarfToHash * reader = malloc(sizeof(ScarfToHash));
-    reader->filename = malloc(strlen(filename) + 1 ) ;
-    strcpy(reader->filename, filename);
-    reader->reader = NULL;
+    reader->reader = xmlNewTextReaderFilename(filename);
     reader->callback = calls;
     return reader;
 }
+ScarfToHash * newScarfToHashForString(char * str)
+{
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    ScarfToHash * reader = malloc(sizeof(ScarfToHash));
+    reader->reader = xmlNewTextReaderForDoc(str, NULL, NULL, 0);
+    reader->callback = calls;
+    return reader;
+}
+ScarfToHash * newScarfToHashForFd(int fd)
+{
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    ScarfToHash * reader = malloc(sizeof(ScarfToHash));
+    reader->reader = xmlNewTextReaderForFd(fd, NULL, NULL, 0);
+    reader->callback = calls;
+    return reader;
+}
+ScarfToHash * newScarfToHashForMemory(char * loc, int size)
+{
+    struct Callback * calls= calloc(1, sizeof(struct Callback));
+    ScarfToHash * reader = malloc(sizeof(ScarfToHash));
+    reader->reader = xmlNewTextReaderForMemory(loc, size, NULL, NULL, 0);
+    reader->callback = calls;
+    return reader;
+}
+
+
 
 void setBugCallback(ScarfToHash * reader, BugCallback callback) {
     reader->callback->bugCall = callback;
@@ -435,7 +458,7 @@ void setBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) {
 void setMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
     reader->callback->metricSumCall = callback;
 }
-void setFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+void setFinalCallback(ScarfToHash * reader, FinalCallback callback) {
     reader->callback->finishCall = callback;
 }
 void setInitialCallback(ScarfToHash * reader, InitialCallback callback) {
@@ -458,7 +481,7 @@ BugSummaryCallback getBugSummaryCallback(ScarfToHash * reader, BugSummaryCallbac
 MetricSummaryCallback getMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) {
     return reader->callback->metricSumCall;
 }
-FinishCallback getFinishCallback(ScarfToHash * reader, FinishCallback callback) {
+FinalCallback getFinalCallback(ScarfToHash * reader, FinalCallback callback) {
     return reader->callback->finishCall;
 }
 InitialCallback getInitialCallback(ScarfToHash * reader, InitialCallback callback) {
@@ -471,7 +494,6 @@ void * getCallbackData(ScarfToHash * reader, void * callbackData) {
 
 int parse(ScarfToHash * hand)
 {
-    hand->reader = xmlNewTextReaderFilename(hand->filename);
     xmlTextReaderPtr reader = hand->reader;
     if (reader != NULL) {
 	char * name;

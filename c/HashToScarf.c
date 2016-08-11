@@ -24,7 +24,7 @@
 ////////////////////Writer operation structs/////////////////////////////////////
 
 
-typedef struct Writer {
+typedef struct HashToScarf {
     int bugId;
     int metricId;
     int errorLevel;
@@ -35,16 +35,17 @@ typedef struct Writer {
     struct BugSummaries * bugSums;
     struct MetricSummary * metricSum;
     xmlTextWriterPtr writer;
-} Writer;
+    int fileType;
+} HashToScarf;
 
 
 ////////////////////////////Initializer/Closer////////////////////////////////////////
 
 
-Writer * newWriter(FILE * handle)
+HashToScarf * newHashToScarfForFile(FILE * handle)
 {
     int rc;
-    Writer * writerInfo = malloc(sizeof(Writer));
+    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
 //    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
     writerInfo->buf = xmlBufferCreate();
     if (writerInfo->buf == NULL) {
@@ -74,31 +75,108 @@ Writer * newWriter(FILE * handle)
     writerInfo->metricId = 1;
     writerInfo->metricSum = NULL;
     writerInfo->bugSums = NULL;
-    return writerInfo;
-    
+    writerInfo->fileType = 0;
+    return writerInfo; 
+}
+HashToScarf * newHashToScarfForFilename(char * filename)
+{
+    int rc;
+    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
+//    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
+    writerInfo->buf = xmlBufferCreate();
+    if (writerInfo->buf == NULL) {
+	printf("testXmlwriterMemory: Error creating the xml buffer\n");
+	return NULL;
+    }
+    writerInfo->writer = xmlNewTextWriterMemory(writerInfo->buf, 0);
+    xmlTextWriterSetIndent(writerInfo->writer, 2);
+    if (writerInfo->writer == NULL) {
+        printf("testXmlwriterFilename: Error creating the xml writer\n");
+	return NULL;
+    }
+    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, "UTF-8", NULL);
+    if (rc < 0) {
+	printf("Error at xmlTextWriterStartDocument\n");
+	return NULL;
+    }
+    writerInfo->file = fopen(filename, 'w');
+    if (writerInfo->file == NULL){
+	printf("File could not open\n");
+	free(writerInfo);
+	return NULL;
+    }
+    writerInfo->curr = NULL;
+    writerInfo->start = 0;
+    writerInfo->errorLevel = 2;
+    writerInfo->bugId = 1;
+    writerInfo->metricId = 1;
+    writerInfo->metricSum = NULL;
+    writerInfo->bugSums = NULL;
+    writerInfo->fileType = 1;
+    return writerInfo; 
+}
+HashToScarf * newHashToScarfForString(char * str, int * size)
+{
+    int rc;
+    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
+//    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
+    writerInfo->buf = xmlBufferCreate();
+    if (writerInfo->buf == NULL) {
+	printf("testXmlwriterMemory: Error creating the xml buffer\n");
+	return NULL;
+    }
+    writerInfo->writer = xmlNewTextWriterMemory(writerInfo->buf, 0);
+    xmlTextWriterSetIndent(writerInfo->writer, 2);
+    if (writerInfo->writer == NULL) {
+        printf("testXmlwriterFilename: Error creating the xml writer\n");
+	return NULL;
+    }
+    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, "UTF-8", NULL);
+    if (rc < 0) {
+	printf("Error at xmlTextWriterStartDocument\n");
+	return NULL;
+    }
+    writerInfo->file = open_memstream (&str, &size);
+    if (writerInfo->file == NULL){
+	printf("File could not open\n");
+	free(writerInfo);
+	return NULL;
+    }
+    writerInfo->curr = NULL;
+    writerInfo->start = 0;
+    writerInfo->errorLevel = 2;
+    writerInfo->bugId = 1;
+    writerInfo->metricId = 1;
+    writerInfo->metricSum = NULL;
+    writerInfo->bugSums = NULL;
+    writerInfo->fileType = 2;
+    return writerInfo; 
 }
 
 
-void closeWriter (Writer * writerInfo) 
+void CloseHashToScarf (HashToScarf * writerInfo) 
 {
     xmlTextWriterEndDocument(writerInfo->writer);
     fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
     xmlBufferFree(writerInfo->buf);
+    if(writerInfo->fileType = 1 || writerInfo->fileType == 2){
+	fclose (writerInfo->file);
+    }
     free(writerInfo);
 }
 
 
 ///////////////////Accessors/Mutators///////////////////////////////////////////
-int setPretty ( Writer * writerInfo, int pretty_level ) {
+int SetPretty ( HashToScarf * writerInfo, int pretty_level ) {
     if (writerInfo != NULL && pretty_level >= 0) {
-	xmlTextWriterSetIndent(writerInfo->writer, pretty_level);
+	xmlTextWriterSetIndent(writerInfo->writer, 2);
 	return 0;
     } else {
 	return 1;
     }
 }
 
-xmlTextWriterPtr getWriter (Writer * writerInfo) 
+xmlTextWriterPtr GetWriter (HashToScarf * writerInfo) 
 {
     if (writerInfo != NULL) {
 	return writerInfo->writer;
@@ -107,7 +185,7 @@ xmlTextWriterPtr getWriter (Writer * writerInfo)
     }
 }
 
-int getErrorLevel(Writer * writerInfo) 
+int GetErrorLevel(HashToScarf * writerInfo) 
 {
     if (writerInfo != NULL) {
 	return writerInfo->errorLevel;
@@ -116,7 +194,7 @@ int getErrorLevel(Writer * writerInfo)
     }
 }
 
-int setErrorLevel(Writer * writerInfo, int errorLevel) 
+int SetErrorLevel(HashToScarf * writerInfo, int errorLevel) 
 {
     if (writerInfo != NULL) {
 	if (errorLevel == 0 || errorLevel == 1 || errorLevel == 2) {
@@ -131,35 +209,35 @@ int setErrorLevel(Writer * writerInfo, int errorLevel)
 }
 
 
-void setIndent(Writer * writerInfo, int tabSpace) {
+void SetIndent(HashToScarf * writerInfo, int tabSpace) {
     xmlTextWriterSetIndent(writerInfo->writer, tabSpace);
 }
 
 
 ////////////////////Write a bug/////////////////////////////////////////////
-char * checkBug(BugInstance * bug , int bugID)
+char * CheckBug(BugInstance * bug)
 {
     char * errors = malloc(strlen("\0"));
     errors[0] = '\0';
     char * temp = malloc(140);    
 
     if (bug->bugLocations == NULL) {	
-	sprintf(temp, "Required element: BugLocations could not be found in BugInstance: %d\n", bugID);
+	sprintf(temp, "Required element: BugLocations could not be found in BugInstance\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     } 
     if (bug->bugMessage == NULL) {	
-	sprintf(temp, "Required element: BugMessage could not be found in BugInstance: %d\n", bugID);
+	sprintf(temp, "Required element: BugMessage could not be found in BugInstance\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     } 
     if (bug->buildId == NULL) {	
-	sprintf(temp, "Required element: BuildId could not be found in BugInstance: %d\n", bugID);
+	sprintf(temp, "Required element: BuildId could not be found in BugInstance\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     } 
     if (bug->assessmentReportFile == NULL) {	
-	sprintf(temp, "Required element: AssessmentReportFile could not be found in BugInstance: %d\n", bugID);
+	sprintf(temp, "Required element: AssessmentReportFile could not be found in BugInstance\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     } 
@@ -169,12 +247,12 @@ char * checkBug(BugInstance * bug , int bugID)
 	Method * method = bug->methods;
 	while (method != NULL) {
 	    if (method->primary != 0 && method->primary != 1) {		
-		sprintf(temp, "Invalid primary attribute for Method:%d in BugInstance: %d\n", methodID, bugID);
+		sprintf(temp, "Invalid primary attribute for Method:%d in BugInstance\n", methodID);
 		errors = realloc(errors, strlen(errors) + strlen(temp));
 		errors = strcat(errors, temp);
 	    } else if (method->primary) {
 	        if (methodPrimary) {		    
-		    sprintf(temp, "Multiple primary methods in BugInstance: %d\n", bugID);
+		    sprintf(temp, "Multiple primary methods in BugInstance\n");
 		    errors = realloc(errors, strlen(errors) + strlen(temp));
 		    errors = strcat(errors, temp);
 		} else {
@@ -182,7 +260,7 @@ char * checkBug(BugInstance * bug , int bugID)
 		}
 	    }
 	    if (method->name == NULL) {		
-		sprintf(temp, "Required text not found: name of Method: %d in BugInstance %d\n", methodID, bugID);
+		sprintf(temp, "Required text not found: name of Method: %d in BugInstance\n", methodID);
 		errors = realloc(errors, strlen(errors) + strlen(temp));
 		errors = strcat(errors, temp);
 	    }
@@ -190,7 +268,7 @@ char * checkBug(BugInstance * bug , int bugID)
 	    methodID++;
 	}
 	if (methodPrimary == 0) {	    
-	    sprintf(temp, "Misformed Element: No primary Method found in  BugInstance: %d\n", bugID);
+	    sprintf(temp, "Misformed Element: No primary Method found in  BugInstance\n");
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
 	    errors = strcat(errors, temp);
 	}
@@ -201,7 +279,7 @@ char * checkBug(BugInstance * bug , int bugID)
     int locPrimary = 0;
     while (loc != NULL) {
         if (loc->primary != 0 && loc->primary != 1) {	    
-	    sprintf(temp, "Invalid primary attribute for a Location:%d in BugInstance: %d\n", locID, bugID);
+	    sprintf(temp, "Invalid primary attribute for a Location:%d in BugInstance\n", locID);
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
 	    errors = strcat(errors, temp);
         } else if (loc->primary) {
@@ -214,7 +292,7 @@ char * checkBug(BugInstance * bug , int bugID)
 	   // }
 	}
         if (loc->sourceFile == NULL) {	    
-	    sprintf(temp, "Required Element: SourceFile of Location:%d in BugInstance: %d\n", locID, bugID);
+	    sprintf(temp, "Required Element: SourceFile of Location:%d in BugInstance\n", locID);
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
 	    errors = strcat(errors, temp);
         }
@@ -222,14 +300,14 @@ char * checkBug(BugInstance * bug , int bugID)
         loc = loc->next;
     }
     if (locPrimary == 0) {	    
-        sprintf(temp, "Misformed Element: No primary Location found in  BugInstance: %d\n", bugID);
+        sprintf(temp, "Misformed Element: No primary Location found in  BugInstance\n");
         errors = realloc(errors, strlen(errors) + strlen(temp));
         errors = strcat(errors, temp);
     }
 
     if (bug->instanceLocation != NULL) {
 	if (bug->instanceLocation->lineNum.start == 0 && bug->instanceLocation->lineNum.end == 0 && bug->instanceLocation->xPath == NULL) {
-    	    sprintf(temp, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: %d", bugID);
+    	    sprintf(temp, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance");
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
 	    errors = strcat(errors, temp);
 	}
@@ -239,7 +317,7 @@ char * checkBug(BugInstance * bug , int bugID)
 }
 
 
-int addBug(Writer * writerInfo, BugInstance * bug)
+int AddBug(HashToScarf * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
 	if (strcmp(writerInfo->curr, "summary") == 0) {
@@ -255,7 +333,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 	    }
 	}
 	char * errors = NULL;
-        errors = checkBug(bug, writerInfo->bugId);
+        errors = CheckBug(bug);
         if ( strcmp(errors,"") != 0 ) {
             printf("%s", errors);
             if ( writerInfo->errorLevel == 2 ) {
@@ -271,7 +349,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "BugInstance");
     if (rc < 0) {
-        printf("Error at addBug adding BugInstance tag\n");
+        printf("Error at AddBug adding BugInstance tag\n");
         return 1;
     }
     bytes += rc;
@@ -281,7 +359,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     rc = xmlTextWriterWriteAttribute(writer, (xmlChar *) "id", (xmlChar *) temp);
     
     if (rc < 0) {
-        printf("Error adding BugInstance attribute id\n");
+        printf("Error Adding BugInstance attribute id\n");
         return 1;
     }
     
@@ -299,7 +377,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
         bytes += rc;
         rc = xmlTextWriterStartElement(writer, (xmlChar *) "Methods");
         if (rc < 0) {
-            printf("Error at addBug adding Methods tag\n");
+            printf("Error at AddBug adding Methods tag\n");
             return 1;
         }
         Method * cur = bug->methods;
@@ -307,7 +385,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
             bytes += rc;
             rc = xmlTextWriterStartElement(writer, (xmlChar *) "Method");
             if (rc < 0) {
-                printf("Error at addBug adding Method tag\n");
+                printf("Error at AddBug adding Method tag\n");
                 return 1;
             }
             bytes += rc;
@@ -359,7 +437,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
     bytes += rc;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "BugLocations");
     if (rc < 0) {
-        printf("Error at addBug adding BugLocations tag\n");
+        printf("Error at AddBug adding BugLocations tag\n");
         return 1;
     }
     Location * curLoc = bug->bugLocations;
@@ -368,7 +446,7 @@ int addBug(Writer * writerInfo, BugInstance * bug)
         bytes += rc;
         rc = xmlTextWriterStartElement(writer, (xmlChar *) "Location");
         if (rc < 0) {
-            printf("Error at addBug adding Location tag\n");
+            printf("Error at AddBug adding Location tag\n");
             return 1;
         }
         bytes += rc;
@@ -681,23 +759,23 @@ int addBug(Writer * writerInfo, BugInstance * bug)
 
 
 ////////////////////////Add a metric/////////////////////////////////////////////////////////////
-char * checkMetric(Metric * metric, int metricID)
+char * CheckMetric(Metric * metric)
 {
     char * errors = malloc(strlen("\0"));
     errors[0] = '\0';
     char * temp = malloc(140);
     if (metric->value == NULL){
-	sprintf(temp, "Required Element: Value not found in Metric: %d\n", metricID);
+	sprintf(temp, "Required Element: Value not found in Metric\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     }
     if ( metric->type == NULL ) {
-	sprintf(temp, "Required Element: Type not found in Metric: %d\n", metricID);
+	sprintf(temp, "Required Element: Type not found in Metric\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     }
     if ( metric->sourceFile == NULL ) {
-	sprintf(temp, "Required Element: SourceFile not found in Metric: %d\n", metricID);
+	sprintf(temp, "Required Element: SourceFile not found in Metric\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     }
@@ -707,7 +785,7 @@ char * checkMetric(Metric * metric, int metricID)
 }
 
 
-int addMetric(Writer *  writerInfo, Metric * metric)
+int AddMetric(HashToScarf *  writerInfo, Metric * metric)
 {
     if (writerInfo->errorLevel != 0) {
 	char * errors = NULL;
@@ -723,7 +801,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 		exit(1);
 	    }
 	}
-	errors = checkMetric(metric, writerInfo->metricId);
+	errors = CheckMetric(metric);
         if ( strcmp(errors,"") != 0) {
             printf("%s", errors);
             if ( writerInfo->errorLevel == 2 ) {
@@ -738,18 +816,18 @@ int addMetric(Writer *  writerInfo, Metric * metric)
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "Metric");
     if (rc < 0) {
-        printf("Error at addMetric adding Metric tag\n");
+        printf("Error at AddMetric adding Metric tag\n");
         return 1;
     }
     sprintf(temp, "%d", writerInfo->metricId);
     rc = xmlTextWriterWriteAttribute(writer,  (xmlChar *) "id", (xmlChar *) temp);
     if (rc < 0) {
-        printf("Error adding metric attribute id\n");
+        printf("Error Adding metric attribute id\n");
         return 1;
     }
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "Location");
     if (rc < 0) {
-        printf("Error at adding Location start tag to metric\n");
+        printf("Error at Adding Location start tag to metric\n");
         return 1;
     }
     rc = xmlTextWriterWriteElement(writer, (xmlChar *) "SourceFile", (xmlChar *) metric->sourceFile);
@@ -853,7 +931,7 @@ int addMetric(Writer *  writerInfo, Metric * metric)
 
 //////////////////////////////////////////////////////////////////////////////
 
-char * checkStart(Initial * initial){
+char * CheckStart(Initial * initial){
     char * errors = malloc(strlen("\0"));
     errors[0] = '\0'; 
     if (initial->tool_name == NULL){
@@ -874,7 +952,7 @@ char * checkStart(Initial * initial){
     return errors;
 }
 
-int addStartTag(Writer * writerInfo, Initial * initial)
+int AddStartTag(HashToScarf * writerInfo, Initial * initial)
 {
     printf("test\n");
     if (writerInfo->errorLevel != 0) {
@@ -886,7 +964,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 	    }
 	}
 	char * errors = NULL;
-	errors = checkStart(initial);
+	errors = CheckStart(initial);
 	if ( strcmp(errors,"") != 0) {
 	    printf("%s", errors);
 	    if ( writerInfo->errorLevel == 2 ) {
@@ -906,7 +984,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
     xmlTextWriterPtr writer = writerInfo->writer;
     rc = xmlTextWriterStartElement(writer, (xmlChar *) "AnalyzerReport");
     if (rc < 0) {
-	printf("Error at addStartTag\n");
+	printf("Error at AddStartTag\n");
 	return 1;
     }
 
@@ -964,7 +1042,7 @@ int addStartTag(Writer * writerInfo, Initial * initial)
 
 
 //////////////////////End initialtag/////////////////////////////////////////////
-int addEndTag(Writer * writerInfo)
+int AddEndTag(HashToScarf * writerInfo)
 {
     if (writerInfo->errorLevel != 0) {
 	if ( writerInfo->start == 0 ) {
@@ -993,7 +1071,7 @@ int addEndTag(Writer * writerInfo)
 
 
 //////////////Add summary generated from instances//////////////////////////////////
-int addSummary(Writer * writerInfo)
+int AddSummary(HashToScarf * writerInfo)
 {
     if (writerInfo->errorLevel != 0) {
 	if ( writerInfo->start == 0 ) {
@@ -1017,7 +1095,7 @@ int addSummary(Writer * writerInfo)
 	strcpy(writerInfo->curr, "summary");
 	rc = xmlTextWriterStartElement(writer, (xmlChar *) "BugSummary");
 	if (rc < 0) {
-	    printf("Error adding BugSummary start tag\n");
+	    printf("Error Adding BugSummary start tag\n");
 	    return 1;
 	}
     }

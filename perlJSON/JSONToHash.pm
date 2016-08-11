@@ -81,10 +81,10 @@ sub SetMetricSummaryCallback
     $self->{callbacks}->{MetricSummaryCallback} = $callback;
 }
 
-sub SetFinishCallback
+sub SetFinalCallback
 {
     my ($self, $callback) = @_;
-    $self->{callbacks}->{FinishCallback} = $callback;
+    $self->{callbacks}->{FinalCallback} = $callback;
 }
 
 sub SetCallbackData
@@ -124,10 +124,10 @@ sub GetMetricSummaryCallback
     return $self->{callbacks}->{MetricSummaryCallback};
 }
 
-sub GetFinishCallback
+sub GetFinalCallback
 {
     my ($self) = @_;
-    return $self->{callbacks}->{FinishCallback};
+    return $self->{callbacks}->{FinalCallback};
 }
 
 sub GetCallbackData
@@ -266,8 +266,8 @@ sub Parse
         }
     }
 
-    if ( defined $self->{callbacks}->{FinishCallback} ) {
-	$return = $self->{callbacks}->{FinishCallback}->($ret, $self->{callbacks}->{CallbackData});
+    if ( defined $self->{callbacks}->{FinalCallback} ) {
+	$return = $self->{callbacks}->{FinalCallback}->($ret, $self->{callbacks}->{CallbackData});
     }
     if ( $validBody == 0 ) {
 	print (" No BugInstances or Metrics found in file \n" );

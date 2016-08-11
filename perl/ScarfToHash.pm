@@ -72,10 +72,10 @@ sub SetMetricSummaryCallback
     $self->{callbacks}->{MetricSummaryCallback} = $callback;
 }
 
-sub SetFinishCallback
+sub SetFinalCallback
 {
     my ($self, $callback) = @_;
-    $self->{callbacks}->{FinishCallback} = $callback;
+    $self->{callbacks}->{FinalCallback} = $callback;
 }
 
 sub SetCallbackData
@@ -115,10 +115,10 @@ sub GetMetricSummaryCallback
     return $self->{callbacks}->{MetricSummaryCallback};
 }
 
-sub GetFinishCallback
+sub GetFinalCallback
 {
     my ($self) = @_;
-    return $self->{callbacks}->{FinishCallback};
+    return $self->{callbacks}->{FinalCallback};
 }
 
 sub GetCallbackData
@@ -142,7 +142,7 @@ sub Parse
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
 					    $self->{callbacks}->{BugSummaryCallback}, $self->{callbacks}->{MetricSummaryCallback},
-					    \$self->{validBody}, $self->{callbacks}->{FinishCallback}, $self->{callbacks}->{CallbackData}, \$self->{return} @_ ) },
+					    \$self->{validBody}, $self->{callbacks}->{FinalCallback}, $self->{callbacks}->{CallbackData}, \$self->{return} @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
@@ -158,7 +158,7 @@ sub Parse
     if ( $lastElt eq "FINISHED" ) {
 	return $self->{return};
     } else {
-	return $self->{callbacks}->{FinishCallback}->($self->{return}, $self->{callbacks}->{CallbackData});
+	return $self->{callbacks}->{FinalCallback}->($self->{return}, $self->{callbacks}->{CallbackData});
     }
 }
 

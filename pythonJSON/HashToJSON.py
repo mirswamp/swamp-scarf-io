@@ -9,77 +9,77 @@ def checkStart(initial_details):
     return errors
 
 
-def checkMetric(metricHash, metricID):
+def checkMetric(metricHash):
     errors = []
     for reqElt in ["Value", "Type", "SourceFile"]:
         if reqElt not in metricHash:
-            error(self.error_level, "Required element: %s could not be found for Metric: %s" % (reqElt, metricID))
+            error(self.error_level, "Required element: %s could not be found for Metric" % (reqElt))
     return errors
 
 
-def checkBug(bugHash, bugID):
+def checkBug(bugHash):
     errors = []
     for reqElt in ["BugLocations", "BugMessage", "BuildId", "AssessmentReportFile"]:
         if reqElt not in bugHash:
-           errors.append("Required element: %s could not be found in BugInstance: %s" % (reqElt, bugID))
+           errors.append("Required element: %s could not be found in BugInstance" % (reqElt))
     
     if "Methods" in bugHash:
         methodID = 1
         methodPrimary = 0
         for method in bugHash["Methods"]:
             if "primary" not in method:
-                errors.append("Required attribute: primary not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+                errors.append("Required attribute: primary not found for Method: %s in BugInstance" % (methodID))
             elif (method["primary"]) :
                 if (methodPrimary) :
-                    errors.append("Misformed Element: More than one primary Method found in BugInstance: %s" % (bugID));
+                    errors.append("Misformed Element: More than one primary Method found in BugInstance");
                 else :
                     methodPrimary = 1;
             if "name" not in method:
-                error.append("Required text: name not found for Method: %s in BugInstance: %s" % (methodID, bugID))
+                error.append("Required text: name not found for Method: %s in BugInstance" % (methodID))
             methodID = methodID + 1
 #       if not methodPrimary :
-#               errors.append("Misformed Element: No primary Method found in  BugInstance: %s." % (bugID));
+#               errors.append("Misformed Element: No primary Method found in  BugInstance");
 
     if "BugLocations" in bugHash:
         locPrimary = 0
         locID = 1
         for location in bugHash["BugLocations"]:
             if "primary" not in location:
-                errors.append("Required attribute: primary not found for Location: %s in BugInstance: %s" % (locID, bugID))
+                errors.append("Required attribute: primary not found for Location: %s in BugInstance" % (locID))
             elif (location["primary"]) :
                 if (locPrimary) :
-                   errors.append("Misformed Element: More than one primary Location found in BugInstance: %s" % (bugID));
+                   errors.append("Misformed Element: More than one primary Location found in BugInstance");
                 else :
                     methodPrimary = 1;
             for reqLocElt in ["SourceFile"]:
                 if reqLocElt not in location:
-                    errors.append("Required Element: %s could not be found for Location: %s in BugInstance %s" % (reqLocElt, locID, bugID))
+                    errors.append("Required Element: %s could not be found for Location: %s in BugInstance" % (reqLocElt, locID))
             for optNum in ["StartLine", "EndLine", "StartColumn", "EndColumn"]:
                 if optNum in location:
                     if not location[optNum].isdigit():
-                        errors.append("Wrong value type: $optLocElt child of BugLocation in BugInstance %s requires a positive integer." % (bugID))
+                        errors.append("Wrong value type: $optLocElt child of BugLocation in BugInstance requires a positive integer.")
 #       if not locPrimary :
-#           errors.append("Misformed Element: No primary Location found in  BugInstance: %s." % (bugID));
+#           errors.append("Misformed Element: No primary Location found in  BugInstance");
         locID = locID + 1
 
     if "CweIds" in bugHash:
         for cweid in bugHash["CweIds"]:
             if not cweid.isdigit():
-                errors.append("Wrong value type: CweID expected to be a positive integer in BugInstance %s." % (bugID))
+                errors.append("Wrong value type: CweID expected to be a positive integer in BugInstance")
 
     if "InstanceLocation" in bugHash:
         if "LineNum" in bugHash["InstanceLocation"]:
             line_num = bugHash["InstanceLocation"]["LineNum"]
             if "Start" not in line_num :
-                errors.append("Required element missing: Could not find Start child of a LineNum in BugInstance: %s." % (bugID))
+                errors.append("Required element missing: Could not find Start child of a LineNum in BugInstance")
             elif not line_num["Start"].isdigit() :
-                errors.append("Wrong value type: Start child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+                errors.append("Wrong value type: Start child of LineNum requires a positive integer BugInstance")
             if "End" not in line_num:
-                errors.append("Required element missing: Could not find End child of a LineNum BugInstance: %s." % (bugID))
+                errors.append("Required element missing: Could not find End child of a LineNum BugInstance")
             elif not line_num["End"].isdigit() :
-                errors.append("Wrong value type: End child of LineNum requires a positive integer BugInstance: %s." % (bugID))
+                errors.append("Wrong value type: End child of LineNum requires a positive integer BugInstance")
         elif "Xpath" not in bugHash["InstanceLocation"]:
-            errors.append("Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance: %s" % (bugID));
+            errors.append("Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance");
         return errors;
 
 
@@ -94,10 +94,12 @@ class HashToJSON:
 #	    sys.exit(1)
         self.output = output
 
+	self.filetype = 0
         try:
             output.write()
         except AttributeError:
             self.output =  open(output, 'w')
+	    self.filetype = 1
 
 	if error_level == 1 or error_level == 0:
             self.error_level = error_level
@@ -114,6 +116,11 @@ class HashToJSON:
         self.metricSummaries = {}
         self.bugSummaries = {}
 
+def close(self)
+    if self.filetype:
+	close(self.output)
+    self = None
+    return self
 
 #########################Returns file#######################################################
     def getFile(self):
