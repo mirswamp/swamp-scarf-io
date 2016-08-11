@@ -1,30 +1,32 @@
 ### NAME
-ScarfToHash - A python module for parsing SCARF
+JSONToHash - A perl module for parsing JSON-SCARF
 ### SYNOPSIS
-```python
-from ScarfToHash import ScarfToHash
+```perl
+use JSONToHash;
 
-inputFile = "/path/to/file"
+my $input = "/path/to/file";
+my $reader = new JSONToHash($input);
 
-reader = ScarfToHash(inputFile)
-reader.SetInitialCallback(initialFunction)
-reader.SetBugCallback(bugFunction)
-reader.SetMetricCallback(metricFunction)
-reader.SetBugSummaryCallback(bugSummaryFunction)
-reader.SetMetricSummaryCallback(metricSummaryFunction)
-reader.SetFinalCallback(finalFunction)
-reader.SetCallbackData(data)
+$reader->SetInitialCallback(\&initialFunction);
+$reader->SetBugCallback(\&bugFunction);
+$reader->SetMetricCallback(\&metricFunction);
+$reader->SetBugSummaryCallback(\&bugSummaryFunction);
+$reader->SetMetricSummaryCallback(\&metricSummaryFunction);
+$reader->SetFinalCallback(\&finalFunction);
 
-reader.parse()
+$data = DATA;
+$reader->SetCallbackData(\$data);
+
+$reader->Parse;
 ```
 ### DESCRIPTION
-This module provides the ability to convert SCARF files into python data structures. It is dependent on xml.etree.ElementTree library for parsing of the XML document.
+This module provides the ability to convert JSON-SCARF files into Perl data structures. It is dependent on JSON::SL library for parsing of the JSON document.
 
 The parser is controlled primarily by the callbacks the user sets prior to calling the parse method. A callback will be called once the parser is finished parsing a section of the document. These sections are the beginning AnalyzerReport tag, an entire BugInstance or Metric, a complete BugSummary or MetricSummary, and the end AnalyzerReport tag.  
 
-All Callbacks except the FinalCallback receive as parameters a reference to a dict containing information on their section of parsed data and the data stored in the CallbackData key of the callback dict. Upon reaching the end of an Analyzer Report the FinalCallback  will be called with the error value returned from the previous call and the CallbackData.
+All Callbacks except the FinalCallback receive as parameters a reference to a hash containing information on their section of parsed data and the data stored in the CallbackData key of the callback hash. Upon reaching the end of an Analyzer Report the FinalCallback  will be called with the error value returned from the previous call and the CallbackData.
 
-While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined.
+While the parser does do minor checks to ensure the input file is a JSON-SCARF file, if an invalid JSON-SCARF file is passed in, the behavior is undefined.
 ### METHODS
 #### new(FILE)
 This is a class method used to instantiate the parser. FILE can be an open handle, a string containing the filename of a file, or a reference to a string containing the entire file.
@@ -32,26 +34,26 @@ This is a class method used to instantiate the parser. FILE can be an open handl
 #### Parse
 This method initiates the parsing of the set file. If parsing fails an exception is thrown with an error message detailing where in the file it failed. The return value of parse will be the return value of the FinalCallback if it is defined. Otherwise the return value will be the same as the last callback executed, or undef if there are no failures.
 
-#### SetInitialCallback(INITIALCALLBACK)
+#### SetInitialCallback(INITIALFUNCTION)
 Sets the InitialCallback to be called after each start AnalyzerReport start tag is parsed.
 
-#### SetBugCallback(BUGCALLBACK)
+#### SetBugCallback(BUGFUNCTION)
 Sets the BugCallback to be called after each full BugInstance is parsed.
 
-#### SetMetricCallback(METRICCALLBACK)
+#### SetMetricCallback(METRICFUNCTION)
 Sets the BugCallback to be called after each full BugInstance is parsed.
 
-#### SetMetricSummaryCallback(METRICSUMMARYCALLBACK)
+#### SetMetricSummaryCallback(METRICSUMMARYFUNCTION)
 Sets the MetricSummaryCallback to be called after all metric summaries are parsed.
 
-#### SetBugSummaryCallback(BUGSUMMARYCALLBACK)
+#### SetBugSummaryCallback(BUGSUMMARYFUNCTION)
 Sets the BugSummaryCallback to be called after all metric summaries are parsed.
 
-#### SetFinalCallback(FinalCALLBACK)
+#### SetFinalCallback(FINALFUNCTION)
 Sets the FinalCallback to be called after each AnalyzerReport end tag is parsed.
 
 #### SetCallbackData(CALLBACKDATA)
-Sets the data to be used as an additional parameter to callbacks. CALLBACKDATA can be any valid python scalar value, with the most useful being a reference to a dict.  This data is passed to all callbacks and can be used to avoid global variables.
+Sets the data to be used as an additional parameter to callbacks. CALLBACKDATA can be any valid perl scalar value, with the most useful being a reference to a hash.  This data is passed to all callbacks and can be used to avoid global variables.
 
 #### GetInitialCallback
 Access current value set to InitialCallback.
@@ -75,7 +77,7 @@ Access current value set to FinalCallback.
 Access current value of CallbackData.
 
 ### CALLBACKS
-The main purpose of this module is to interpret the events generated from xml.etree.ElementTree and assemble them into a usable python data structures. When parsing, the module will call the pre-defined callbacks upon completion of parsing an object of their respective type. If defined, all callbacks will  receive the data contained in the optional key "CallbackData" as a parameter. For details on the structure of each individual python data structure see below. 
+The main purpose of this module is to interpret the events generated from JSON::SL and assemble them into a usable Perl data structures. When parsing, the module will call the pre-defined callbacks upon completion of parsing an object of their respective type. If defined, all callbacks will  receive the data contained in the optional key "CallbackData" as a parameter. For details on the structure of each individual Perl data structure see below. 
 
 #### InitialCallback(INITIALDATA[, CALLBACKDATA])
 This is called just after the opening AnalyzerReport tag is parsed. Any defined return value will terminate parsing and skip to FinalCallback.
@@ -97,7 +99,7 @@ This is called after reaching an AnalayzerReport end tag. If one of the above ca
 
 
 ### DATA STRUCTURES
-The following are the data structures used in the callbacks listed above. If a keys value is not defined in the SCARF file, then the corresponding key will not exist in the data structures.
+The following are the data structures used in the callbacks listed above. If a keys value is not defined in the JSON-SCARF file, then the corresponding key will not exist in the data structures.
 
 #### INITIALDATA
 InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements in the AnalyzerReport start tag therefore they should always be present.
@@ -110,7 +112,7 @@ InitialData contains information regarding the tool used to test the package. Al
 ```
 
 #### BUGDATA
-BugData contains information on one BugInstance from the SCARF file. All items listed as required should always be present in the data structure. Items listed as optional will only be present if they exist in the SCARF file.
+BugData contains information on one BugInstance from the JSON-SCARF file. All items listed as required should always be present in the data structure. Items listed as optional will only be present if they exist in the JSON-SCARF file.
 ```
 {                                                    
     BugId => BUGIDVALUE,                           # REQUIRED
@@ -161,7 +163,7 @@ BugData contains information on one BugInstance from the SCARF file. All items l
 ```
 
 #### METRICDATA
-MetricData contains information on one Metric from the SCARF file. All items listed as required should always be present in the data structure. Items listed as optional will only be present if they exist in the SCARF file.
+MetricData contains information on one Metric from the JSON-SCARF file. All items listed as required should always be present in the data structure. Items listed as optional will only be present if they exist in the JSON-SCARF file.
 ```
 {
     Value => VALUE,              # REQUIRED       
@@ -174,7 +176,7 @@ MetricData contains information on one Metric from the SCARF file. All items lis
 ```
 
 #### BUGSUMMARYDATA
-BugSummaryData contains information on all of the BugSummaries listed in the SCARF file. All elements in this data structure are required therefore all tags will always be present. If a bug was missing either a BugGroup or BugCode, the bug is categorized as undefined for that grouping key.
+BugSummaryData contains information on all of the BugSummaries listed in the JSON-SCARF file. All elements in this data structure are required therefore all tags will always be present. If a bug was missing either a BugGroup or BugCode, the bug is categorized as undefined for that grouping key.
 ```
 {
 BugGroup => {
@@ -197,7 +199,7 @@ BugGroup => {
 ```
 
 #### METRICSUMMARYDATA
-MetricSummaryData contains information on all of the MetricSummaries listed in the SCARF file. All elements in this data structure are required therefore should always be present in the data structure. The only exceptions to this is if the Type of the metric is "language" or if a value of a metric in the Type was not a number, in which case only the Type and Count will be present in the summary. 
+MetricSummaryData contains information on all of the MetricSummaries listed in the JSON-SCARF file. All elements in this data structure are required therefore should always be present in the data structure. The only exceptions to this is if the Type of the metric is "language" or if a value of a metric in the Type was not a number, in which case only the Type and Count will be present in the summary. 
 ```
 {
 MetricSummaries => [{

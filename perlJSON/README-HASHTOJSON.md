@@ -1,47 +1,42 @@
 
 ### NAME
-HashToScarf - A python module for writing Scarf
+HashToJSON - A perl module for writing JSON-SCARF
 ### SYNOPSIS
-```python
-from HashToScarf import HashToScarf
-from HashToScarf import CheckStart
-from HashToScarf import CheckBug
-from HashToScarf import CheckMetric
+```perl
+use HashToJSON;
+use HashToJSON qw/CheckStart CheckBug CheckMetric/;
 
-output = "/path/to/file";
+my $output = "/path/to/file";
 
-writer = HashToScarf(output, 1, 1);
-defaultPretty = writer.GetPretty;
-defaultErrorLevel = writer.GetErrorLevel;
-writer.setPretty(0);
-writer.setErrorLevel(0);
+my $writer = new HashToJSON($output, 2, 1);
+my $defaultPretty = $writer->GetPretty;
+my $defaultErrorLevel = $writer->GetErrorLevel;
+$writer->setPretty(0);
+$writer->setErrorLevel(0);
 
-errors = [];
-errors.append(CheckStart(INITIALDETAILS));
-errors.append(CheckBug(BUG));
-errors.append(CheckMetric(METRIC));
+my @errors = ();
+push @errors, CheckStart($initial_details);
+push @errors, CheckBug($bug);
+push @errors, CheckMetric($metric);
 
-writer.AddStartTag(INITIALDETAILS);
-writer.AddBugInstance(BUG);
-writer.AddMetric(METRIC);
-writer.AddSummary;
-writer.AddEndTag;
+$writer->AddStartTag($initial_details);
+$writer->AddBugInstance($bug);
+$writer->AddMetric($metric);
+$writer->AddSummary;
+$writer->AddEndTag;
 
-writer->Close;
+$writer->Close;
 ```
 ### DESCRIPTION
-This module provides the ability to convert python data structures into Scarf formatted documents. It is dependant on the lxml library for writing.
+This module provides the ability to convert Perl data structures into JSON-SCARF formatted documents. It is dependant on JSON::MaybeXS library for writing.
 
-The writer is controlled primarily by the user through method calls which feed data in to be written. This data is to be structured as a dict containing all fields for a specific section. For details on how the data structures are formatted see below.
+The writer is controlled primarily by the user through method calls which feed data in to be written. This data is to be structured as a hash containing all fields for a specific section. For details on how the data structures are formatted see below.
 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 ### METHODS
 #### new(FILE [, ERRORLEVEL, PRETTYENABLE])
 This is a class method used to instantiate the writer. FILE is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. ERRORLEVEL is 0, 1, or 2 and sets the error level of the writer (default 2). PRETTYENABLE will enable or disable pretty printing of output with a true or false value respectively (default true).
-
-#### GetWriter
-Returns the  used for writing.
 
 #### GetHandle
 Returns the set handle.
@@ -55,15 +50,15 @@ Allows changing the error level of the writer to 0 (none), 1 (print warnings), o
 #### GetPretty 
 Returns the current value set to pretty print.
 
-#### CheckStart(INITIALDATA)
-Check for any errors in INITIALDATA structure. Returns all error messages in an array or an empty array if there are none. For details on valid data structures see below.
-#### CheckBug(BUGDATA)
-Check for any errors in BUGDATA structure. Returns all error messages in an array or an empty array if there are none. For details on valid data structures see below.
-#### CheckMetric(METRICDATA)
-Check for any errors in METRICDATA structure. Returns all error messages in an array or an empty array if there are none. For details on valid data structures see below.
-
 #### SetPretty(PRETTYENABLE)
 If PRETTYENABLE is a true value then enable pretty printing, else disable pretty printing.
+
+#### CheckStart(INITIALDATA)
+Checks INITIALDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
+#### CheckBug(BUGDATA)
+Checks BUGDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
+#### CheckMetric(METRICDATA)
+Checks METRICDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
 
 #### AddStartTag(INITIALDATA)
 Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
@@ -97,7 +92,7 @@ InitialData contains information regarding the tool used to test the package. Al
 ```
 
 #### BUGDATA
-BugData contains information on one BugInstance from the SCARF file. All items listed as required should always be present in the data structure. Other items listed are not required, but can be included and written to SCARF.
+BugData contains information on one BugInstance from the JSON-SCARF file. All items listed as required should always be present in the data structure. Other items listed are not required, but can be included and written to JSON-SCARF.
 ```
 {                          
     BugGroup => GROUPVALUE,
@@ -144,7 +139,7 @@ BugData contains information on one BugInstance from the SCARF file. All items l
 ```
 
 #### METRICDATA
-MetricData contains information on one Metric from the SCARF file. All items listed as required should always be present in the data structure. Other items listed as are not required, but can be written to SCARF.
+MetricData contains information on one Metric from the JSON-SCARF file. All items listed as required should always be present in the data structure. Other items listed as are not required, but can be written to JSON-SCARF.
 ```
 {
     Value => VALUE,              # REQUIRED       

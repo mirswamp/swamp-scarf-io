@@ -1,16 +1,16 @@
 
 ### NAME
-HashToScarf - A python module for writing Scarf
+HashToJSON - A python module for writing JSON-SCARF
 ### SYNOPSIS
 ```python
-from HashToScarf import HashToScarf
-from HashToScarf import CheckStart
-from HashToScarf import CheckBug
-from HashToScarf import CheckMetric
+from HashToJSON import HashToJSON
+from HashToJSON import CheckStart
+from HashToJSON import CheckBug
+from HashToJSON import CheckMetric
 
 output = "/path/to/file";
 
-writer = HashToScarf(output, 1, 1);
+writer = HashToJSON(output, 1, 1);
 defaultPretty = writer.GetPretty;
 defaultErrorLevel = writer.GetErrorLevel;
 writer.setPretty(0);
@@ -30,7 +30,7 @@ writer.AddEndTag;
 writer->Close;
 ```
 ### DESCRIPTION
-This module provides the ability to convert python data structures into Scarf formatted documents. It is dependant on the lxml library for writing.
+This module provides the ability to convert python data structures into JSON-SCARF formatted documents. It is dependant on the lxml library for writing.
 
 The writer is controlled primarily by the user through method calls which feed data in to be written. This data is to be structured as a dict containing all fields for a specific section. For details on how the data structures are formatted see below.
 
@@ -97,7 +97,7 @@ InitialData contains information regarding the tool used to test the package. Al
 ```
 
 #### BUGDATA
-BugData contains information on one BugInstance from the SCARF file. All items listed as required should always be present in the data structure. Other items listed are not required, but can be included and written to SCARF.
+BugData contains information on one BugInstance from the JSON-SCARF file. All items listed as required should always be present in the data structure. Other items listed are not required, but can be included and written to JSON-SCARF.
 ```
 {                          
     BugGroup => GROUPVALUE,
@@ -144,7 +144,7 @@ BugData contains information on one BugInstance from the SCARF file. All items l
 ```
 
 #### METRICDATA
-MetricData contains information on one Metric from the SCARF file. All items listed as required should always be present in the data structure. Other items listed as are not required, but can be written to SCARF.
+MetricData contains information on one Metric from the JSON-SCARF file. All items listed as required should always be present in the data structure. Other items listed as are not required, but can be written to JSON-SCARF.
 ```
 {
     Value => VALUE,              # REQUIRED       
