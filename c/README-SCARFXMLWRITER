@@ -1,19 +1,23 @@
 ### NAME
-HashToScarf - A C tool for writing SCARF
+ScarfXmlWriter - A C tool for writing SCARF
 ### SYNOPSIS
 ```c
 #include <stdio.h>
-#include "HashToScarf.c"
+#include "ScarfXmlWriter.c"
 
 int main(int argc, char **argv) {
-   HashToScarf *  writer = newHashToScarfForFilename("/path/to/file/");
+    ScarfXmlWriter * writer = newScarfXmlWriterForFilename("/path/to/file/");
     if(writer == NULL){
         printf("failed to create writer\n");
         return 1;
     }
     
     SetErrorLevel(writer, 1);
-    SetPretty(1);
+    SetPretty(writer, 1);
+    
+    char * bugErrors = CheckBug(bugInformation);
+    char * metricErrors = CheckMetric(metricInformation);
+    char * initalErrors = CheckStart(initialInformation);
 
     AddStartTag(writer, initialInformation);
     AddBug(writer, bugInformation);
@@ -21,7 +25,7 @@ int main(int argc, char **argv) {
     AddSummary(writer);
     AddEndTag(writer);
 
-    CloseHashToScarf(writer);
+    CloseScarfXmlWriter(writer);
      
     return 0;
 }
@@ -34,50 +38,50 @@ The writer is controlled primarily by the user through method calls which feed d
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 ### METHODS
-#### HashToScarf * newHashToScarfFilename(char * filename)
-Initializes a HashToScarf struct. Opens a file stream from the file represented by the filename to be written to.
+#### ScarfXmlWriter * newScarfXmlWriterFilename(char * filename)
+Initializes a ScarfXmlWriter struct. Opens a file stream from the file represented by the filename to be written to.
 
-#### HashToScarf * newHashToScarfForFile(FILE * file)
-Initializes a HashToScarf struct with the given file.
+#### ScarfXmlWriter * newScarfXmlWriterForFile(FILE * file)
+Initializes a ScarfXmlWriter struct with the given file.
 
-#### HashToScarf * newHashToScarfForString(char * str, int * size)
-Initializes a HashToScarf struct to write to a specified address in memory. str is a initial char pointer and size contains the total amount of memory occupied by the string.
+#### ScarfXmlWriter * newScarfXmlWriterForString(char * str, int * size)
+Initializes a ScarfXmlWriter struct to write to a specified address in memory. str is a initial char pointer and size contains the total amount of memory occupied by the string.
 
-#### int SetPretty ( HashToScarf * writerInfo, int pretty_en ) 
+#### int SetPretty ( ScarfXmlWriter * writerInfo, int pretty_en ) 
 Either enable or disable pretty printing with a true or false value (default true). Returns 0 or 1 if error changing settings.
 
-#### int SetErrorLevel(HashToScarf * writerInfo, int errorLevel)
+#### int SetErrorLevel(ScarfXmlWriter * writerInfo, int errorLevel)
 Allows changing the errorlevel of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and exit). If ERRORLEVEL does not equal one of these value returns 1 and does nothing.
 
-#### xmlTextWriterPtr GetWriter (HashToScarf * writerInfo)
+#### xmlTextWriterPtr GetWriter (ScarfXmlWriter * writerInfo)
 Returns the xmlTextWriter used for writing.
 
-#### int GetErrorLevel(HashToScarf * writerInfo)
+#### int GetErrorLevel(ScarfXmlWriter * writerInfo)
 Returns the current error level.
 
 #### char * CheckStart (Initial * INITIALDATA)
-Checks a Initial to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string.
+Checks a Initial to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string. The return  value must be freed by the user.
 #### char * CheckBug (BugInstance * BUGDATA)
-Checks a BugInstance to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string.
+Checks a BugInstance to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string. The return value must be freed by the user.
 #### char * CheckMetric (Metric * METRICDATA)
-Checks a Metric to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string.
+Checks a Metric to see if there are any errors. Returns a string containing all errors found seperated by newlines, otherwise returns an empty string. The return value must be free by the user.
 
-#### AddStartTag(HashToScarf * writerInfo, Initial * INITIALDATA)
+#### AddStartTag(ScarfXmlWriter * writerInfo, Initial * INITIALDATA)
 Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
 
-#### AddBugInstance(HashToScarf * writerInfo, BugInstance * BUGDATA)
+#### AddBugInstance(ScarfXmlWriter * writerInfo, BugInstance * BUGDATA)
 Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more time and inter-layered with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-#### AddMetric(HashToScarf * writerInfo, Metric * METRICDATA)
+#### AddMetric(ScarfXmlWriter * writerInfo, Metric * METRICDATA)
 Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more time and inter-layered with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-#### AddSummary(HashToScarf * writerInfo)
+#### AddSummary(ScarfXmlWriter * writerInfo)
 Writes a summary to the file based on all bugs and metrics already written with this writer. May be called 0 or more times before 'AddEndTag'.
 
-#### AddEndTag(HashToScarf * writerInfo)
+#### AddEndTag(ScarfXmlWriter * writerInfo)
 Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
 
-#### void closeHashToScarf(HashToScarf * writerInfo)
+#### void closeScarfXmlWriter(ScarfXmlWriter * writerInfo)
 Closes writer and any opened files opened by the writer.
 
 
@@ -88,9 +92,9 @@ The following are the data structures used in the methods listed above. Elements
 #### InitialData
 ```
 {
-    char * tool_name       #REQUIRED
-    char * tool_version    #REQUIRED 
-    char * uuid            #REQUIRED
+    char * tool_name                 #REQUIRED
+    char * tool_version              #REQUIRED 
+    char * uuid                      #REQUIRED
 } 
 ```
 #### BugInstance
@@ -114,7 +118,7 @@ The following are the data structures used in the methods listed above. Elements
 ##### CweIds
 ```
 {
-    int cweid        #REQUIRED
+    int cweid                        #REQUIRED
     CweIds * next
 }
 ```
@@ -128,39 +132,39 @@ The following are the data structures used in the methods listed above. Elements
 ###### LineNum
 ```
 {
-    int start      #REQUIRED
-    int end        #REQUIRED
+    int start                       #REQUIRED
+    int end                         #REQUIRED
 }
 ```
 ##### Method
 ```
 {
-    int primary    #REQUIRED
-    char * name    #REQUIRED
+    int primary                     #REQUIRED
+    char * name                     #REQUIRED
     Method * next
 }
 ```
 ##### Location
 ```
 {
-    int primary        #REQUIRED
+    int primary                    #REQUIRED
     int startLine
     int endLine
     int startColumn
     int endColumn
     char * explanation
-    char * sourceFile  #REQUIRED
+    char * sourceFile              #REQUIRED
     Location * next
 }
 ```
 #### Metric
 ```
 {
-    char * value        #REQUIRED
+    char * value                   #REQUIRED
     char * clas
     char * method
-    char * sourceFile   #REQUIRED
-    char * type         #REQUIRED
+    char * sourceFile              #REQUIRED
+    char * type                    #REQUIRED
 }
 ```
 

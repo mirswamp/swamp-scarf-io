@@ -15,7 +15,7 @@
 #  limitations under the License.
 #  
 
-package ScarfToHash;
+package ScarfXmlReader;
 use strict;
 use XML::Parser;
 use Scalar::Util qw[openhandle];
@@ -28,8 +28,7 @@ sub new
     my $self->{hashref} = $hashref;
     $self->{lastElt} = "";
     $self->{source} = $source;
-    die "no callbacks detected" if !(defined $callbacks);
-    $self->{callbacks} = {}
+    $self->{callbacks} = {};
     $self->{parser} = new XML::Parser ();
     $self->{validStart} = 0;
     $self->{validBody} = 0;
@@ -138,11 +137,11 @@ sub Parse
     $self->{parser}->setHandlers(
 				    "Start", sub { $hash = startHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{InitialCallback}, \$self->{validStart}, 
-					    \$self->{validBody}, $self->{callbacks}->{CallbackData}, \$self->{return}  @_ ) },
+					    \$self->{validBody}, $self->{callbacks}->{CallbackData}, \$self->{return},  @_ ) },
 				    "End", sub { $hash = endHandler( \$hash, \$lastElt, 
 					    $self->{callbacks}->{BugCallback},  $self->{callbacks}->{MetricCallback},
 					    $self->{callbacks}->{BugSummaryCallback}, $self->{callbacks}->{MetricSummaryCallback},
-					    \$self->{validBody}, $self->{callbacks}->{FinalCallback}, $self->{callbacks}->{CallbackData}, \$self->{return} @_ ) },
+					    \$self->{validBody}, $self->{callbacks}->{FinalCallback}, $self->{callbacks}->{CallbackData}, \$self->{return}, @_ ) },
 				    "Char", sub { $hash = charHandler( \$hash, \$lastElt, @_ ) },
 				    "Default" ,\&defaultHandler
 				);
@@ -158,7 +157,11 @@ sub Parse
     if ( $lastElt eq "FINISHED" ) {
 	return $self->{return};
     } else {
-	return $self->{callbacks}->{FinalCallback}->($self->{return}, $self->{callbacks}->{CallbackData});
+	if (exists $self->{callbacks}->{FinalCallback}){
+	    return $self->{callbacks}->{FinalCallback}->($self->{return}, $self->{callbacks}->{CallbackData});
+	} else {
+	    return $self->{return};
+	}
     }
 }
 
@@ -180,6 +183,8 @@ sub startHandler
 		$parser->finish;
 	    }
 	    $$hash = {};
+	} else { 
+	    $$validStart = 1;
 	}
 
     } else {
@@ -296,7 +301,7 @@ sub endHandler
 	if ( defined $finishcallback ) {
 	    $$ret = $finishcallback->($$ret, $data);
 	    if (defined $$ret) {
-		$$lastElt = "FINISHED"
+		$$lastElt = "FINISHED";
 		$parser->finish;
 		return $$hash;
 	    }

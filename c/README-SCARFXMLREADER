@@ -1,15 +1,15 @@
 ### NAME
-ScarfToHash - A C tool for parsing SCARF
+ScarfXmlReader - A C tool for parsing SCARF
 ### SYNOPSIS
 ```c
 #include <stdio.h>
-#include "ScarfToHash.c"
+#include "ScarfXmlReader.c"
 
 int main(int argc, char **argv) {
-    ScarfToHash * reader = newScarfToHashFilename("/path/to/file");
+    ScarfXmlReader * reader = newScarfXmlReaderFilename("/path/to/file");
     if(reader == NULL){
-	printf("reader failed\n");
-	return 1;
+        printf("reader failed\n");
+        return 1;
     }
 
     SetInitialCallback(reader, initialFunction);
@@ -19,101 +19,112 @@ int main(int argc, char **argv) {
     SetMetricSummaryCallback(reader, metricSummaryFunction);
     SetFinishCallback(reader, finishFunction);
     
-    void * context = DATA
+    void * context = DATA;
     SetCallbackData(reader, context);
 
     Parse(reader);
-    CloseScarfToHash(reader);
+    CloseScarfXmlReader(reader);
     return 0;
 }
 ```
 ### DESCRIPTION
-This module provides the ability to convert SCARF files into C data structures. It is dependent on libxml, which is used to handle parsing of the XML document.
+This library provides the ability to convert SCARF files into C data structures. It is dependent on libxml, which is used to handle parsing of the XML document.
 
 The parser is controlled primarily by the callbacks the user sets prior to calling the parse method. A callback will be called once the parser is finished parsing a section of the document. These sections are the beginning AnalyzerReport tag, an entire BugInstance or Metric, a complete BugSummary or MetricSummary, and the end AnalyzerReport tag.
 
 All Callbacks except the FinishCallback receive as parameters a reference to a struct containing information on their section of parsed data and the context reference provided as CallbackData. Upon reaching the end of an Analyzer Report the FinishCallback  will be called with the error value returned by the previous call and the context reference.
 
-While the parser does do minor checks to ensure the inputted file is a SCARF file, if an invalid SCARF file is passed in, most behavior is undefined.
+While the parser does do minor checks to ensure the inputted file is a SCARF file, if an invalid SCARF file is passed in, most behavior is undefined. Additional validation routines can be found in the ScarfXmlWriter library.
 ### METHODS
-#### ScarfToHash * newScarfToHashFilename(char * filename)
-Initializes a ScarfToHash struct. Opens a file stream from the file represented by the filename to be parsed.
+#### ScarfXmlReader * newScarfXmlReaderFilename(char * filename)
+Initializes a ScarfXmlReader struct. Opens a file stream from the file represented by the filename to be parsed. The file stream is closed upon completion of the parse.
 
-#### ScarfToHash * newScarfToHashForString(char * str)
-Initializes a ScarfToHash struct with the string representing the entire file to be parsed from memory.
+#### ScarfXmlReader * newScarfXmlReaderForString(char * str)
+Initializes a ScarfXmlReader struct with the string representing the SCARF data to be parsed from memory.
 
-#### ScarfToHash * newScarfToHashForFd(int fd)
-Initializes a ScarfToHash struct with the given file descriptor.
+#### ScarfXmlReader * newScarfXmlReaderForFd(int fd)
+Initializes a ScarfXmlReader struct with the given file descriptor.
 
-#### ScarfToHash * newScarfToHashForMemory(char * str, int size)
-Initializes a ScarfToHash struct to parse from memory. str is a initial char pointer and size represents the size of the document in memory.
+#### ScarfXmlReader * newScarfXmlReaderForMemory(char * str, int size)
+Initializes a ScarfXmlReader struct to parse from memory. str is a initial char pointer and size represents the size of the document in memory.
 
-#### void setInitialCallback(ScarfToHash * reader, InitialCallback startFunction)
+#### void SetInitialCallback(ScarfXmlReader * reader, InitialCallback startFunction)
 Sets the InitialCallback to be called after each AnalyzerReport start tag is parsed. For details on callbacks see below.
 
-#### void setBugCallback(ScarfToHash * reader, BugCallback callback)
+#### void SetBugCallback(ScarfXmlReader * reader, BugCallback callback)
 Sets the BugCallback to be called after each full BugInstance is parsed. For details on callbacks see below.    
  
-#### void setMetricCallback(ScarfToHash * reader, MetricCallback callback)
+#### void SetMetricCallback(ScarfXmlReader * reader, MetricCallback callback)
 Sets the MetricCallback to be called after each full Metric is parsed. For details on callbacks see below.
 
-#### void setBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback)
+#### void SetBugSummaryCallback(ScarfXmlReader * reader, BugSummaryCallback callback)
 Sets the BugSummaryCallback to be called after all metric summaries are parsed. For details on callbacks see below.
 
-#### void setMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback)
+#### void SetMetricSummaryCallback(ScarfXmlReader * reader, MetricSummaryCallback callback)
 Sets the MetricSummaryCallback to be called after all metric summaries are parsed. For details on callbacks see below. 
 
-#### void setFinalCallback(ScarfToHash * reader, FinalCallback callback) 
+#### void SetFinalCallback(ScarfXmlReader * reader, FinalCallback callback) 
 Sets the FinalCallback to be called after each AnalyzerReport end tag is parsed. For details on callbacks see below.
 
-#### void setCallbackData(ScarfToHash * reader, void * callbackData) 
+#### void SetCallbackData(ScarfXmlReader * reader, void * callbackData) 
 Sets the data to be used as an additional parameter to callbacks. CALLBACKDATA can be data stored in a reference.  This data is passed to all callbacks and can be used to avoid global variables.
 
-#### InitialCallback getInitialCallback(ScarfToHash * reader, InitialCallback callback) 
+#### InitialCallback GetInitialCallback(ScarfXmlReader * reader) 
 Access the current value of InitialCallback. For details on callbacks see below.
 
-#### BugCallback getBugCallback(ScarfToHash * reader, BugCallback callback) 
+#### BugCallback GetBugCallback(ScarfXmlReader * reader) 
 Access the current value of BugCallback. For details on callbacks see below.
 
-#### MetricCallback getMetricCallback(ScarfToHash * reader, MetricCallback callback) 
+#### MetricCallback GetMetricCallback(ScarfXmlReader * reader) 
 Access the current value of MetricCallback. For details on callbacks see below.
 
-#### BugSummaryCallback getBugSummaryCallback(ScarfToHash * reader, BugSummaryCallback callback) 
+#### BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader * reader) 
 Access the current value of BugSummaryCallback. For details on callbacks see below.
 
-#### MetricSummaryCallback getMetricSummaryCallback(ScarfToHash * reader, MetricSummaryCallback callback) 
+#### MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader * reader) 
 Access the current value of MetricCallback. For details on callbacks see below.
 
-#### FinalCallback getFinalCallback(ScarfToHash * reader, FinalCallback callback) 
+#### FinalCallback GetFinalCallback(ScarfXmlReader * reader) 
 Access the current value of FinalCallback. For details on callbacks see below.
 
-#### void * getCallbackData(ScarfToHash * reader, void * callbackData) 
+#### void * GetCallbackData(ScarfXmlReader * reader) 
 Access the current value of CallbackData.
 
-#### void * parse()
-This method initiates the parsing of the set file. If parsing fails an exit(1) call will be thrown. The return value of parse will be the return value of FinalCallback if it is defined. Otherwise the reutrn value will be the same as the last callback executed or NULL if there are no errors.
+#### void * Parse()
+This method initiates the parsing of the set file. If parsing fails an exit(1) call will be thrown. The return value of parse will be the return value of FinalCallback if it is defined. Otherwise the return value will be the same as the last callback executed or NULL if there are no errors.  
 
-#### int closeScarfToHash(ScarfToHash * reader)
+#### int FreeInitial(Initial * initial)
+Frees an Initial struct.
+#### int FreeMetric(Metric * metric)
+Frees a Metric struct.
+#### int FreeBug(BugInstance * bug()
+Free a BugInstance struct.
+#### int FreeBugSummary(BugSummary * bugSummary)
+Frees a BugSummary struct.
+#### int FreeMetricSummary(MetricSummary * metricSummary)
+Frees a MetricSummary struct.
+
+#### int CloseScarfXmlReader(ScarfXmlReader * reader)
 Closes parser. Returns 0 or -1 in case of error.
 
 
 ### CALLBACKS
-The main purpose of this module is to interpret data from libxml and assemble them into usable C data structures. When parsing, the module will call the pre-defined callbacks upon completion of parsing an object of their respective type. All callbacks receive CallbackData as an additional parameter as a context variable. For details on the structure of each individual C struct see below.
+The main purpose of this library is to interpret data from libxml and assemble them into usable C data structures. When parsing, the library will call the pre-defined callbacks upon completion of parsing an object of their respective type. Any data fed to a callback must be freed by the user using their respective free methods listed above. All callbacks receive CallbackData as an additional parameter as a context variable. For details on the structure of each individual C struct see below.
 
 #### void * InitialCallback(Initial * intitial-data, void * context)
-This is called just after the AnalyzerReport start tag is parsed. Any non-NULL return value will terminate parsing and skip to FinishCallback.
+This is called just after the AnalyzerReport start tag is parsed. Initial must be freed by the user using the FreeInitial method.  Any non-NULL return value will terminate parsing and skip to FinishCallback.
 
 #### void * MetricCallback(Metric * metric-data, void * context)
-This is called every time a single Metric completes parsing. Any non-NULL return value will terminate parsing and skip to FinishCallback.
+This is called every time a single Metric completes parsing. Metric must be freed by the user using the FreeMetric method. Any non-NULL return value will terminate parsing and skip to FinishCallback.
 
 #### void * BugCallback(BugInstance * bug-data, void * context)
-This is called every time a single BugInstance completes parsing. Any non-NULL return value will terminate parsing and skip to FinishCallback.
+This is called every time a single BugInstance completes parsing. BugInstance must be freed by the user using the FreeBug method. Any non-NULL return value will terminate parsing and skip to FinishCallback.
 
 #### void * BugSummaryCallback(BugSummary * bug-summary-data, void * context)
-This is called after all BugSummaries have been parsed. Any non-NULL return value will terminate parsing and skip to FinishCallback.
+This is called after all BugSummaries have been parsed. BugSummary must be freed by the user using the FreeBugSummary method. Any non-NULL return value will terminate parsing and skip to FinishCallback.
 
 #### void * MetricSummaryCallback(MetricSummary * metric-summary-data, void * context)
-This is called once all MetricSummaries have been parsed. Any non-NULL return value will terminate parsing and skip to FinishCallback.
+This is called once all MetricSummaries have been parsed. MetricSummary must be freed by the user using the FreeMetricSummary method. Any non-NULL return value will terminate parsing and skip to FinishCallback.
 
 #### void * FinishCallback(void * ret, void * context)
 This is called after reaching an AnalayzerReport end tag. If one of the above callbacks terminates parsing with a defined return value, ret will equal that value, otherwise ret will be NULL.

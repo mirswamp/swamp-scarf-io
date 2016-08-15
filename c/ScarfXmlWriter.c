@@ -24,7 +24,7 @@
 ////////////////////Writer operation structs/////////////////////////////////////
 
 
-typedef struct HashToScarf {
+typedef struct ScarfXmlWriter {
     int bugId;
     int metricId;
     int errorLevel;
@@ -36,16 +36,16 @@ typedef struct HashToScarf {
     struct MetricSummary * metricSum;
     xmlTextWriterPtr writer;
     int fileType;
-} HashToScarf;
+} ScarfXmlWriter;
 
 
 ////////////////////////////Initializer/Closer////////////////////////////////////////
 
 
-HashToScarf * newHashToScarfForFile(FILE * handle)
+ScarfXmlWriter * newScarfXmlWriterForFile(FILE * handle)
 {
     int rc;
-    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
+    ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
 //    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
     writerInfo->buf = xmlBufferCreate();
     if (writerInfo->buf == NULL) {
@@ -78,10 +78,10 @@ HashToScarf * newHashToScarfForFile(FILE * handle)
     writerInfo->fileType = 0;
     return writerInfo; 
 }
-HashToScarf * newHashToScarfForFilename(char * filename)
+ScarfXmlWriter * newScarfXmlWriterForFilename(char * filename)
 {
     int rc;
-    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
+    ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
 //    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
     writerInfo->buf = xmlBufferCreate();
     if (writerInfo->buf == NULL) {
@@ -115,10 +115,10 @@ HashToScarf * newHashToScarfForFilename(char * filename)
     writerInfo->fileType = 1;
     return writerInfo; 
 }
-HashToScarf * newHashToScarfForString(char * str, int * size)
+ScarfXmlWriter * newScarfXmlWriterForString(char * str, int * size)
 {
     int rc;
-    HashToScarf * writerInfo = malloc(sizeof(HashToScarf));
+    ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
 //    writerInfo->writer = xmlNewTextWriterFilename(filename, 0);
     writerInfo->buf = xmlBufferCreate();
     if (writerInfo->buf == NULL) {
@@ -154,7 +154,7 @@ HashToScarf * newHashToScarfForString(char * str, int * size)
 }
 
 
-void CloseHashToScarf (HashToScarf * writerInfo) 
+void CloseScarfXmlWriter (ScarfXmlWriter * writerInfo) 
 {
     xmlTextWriterEndDocument(writerInfo->writer);
     fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
@@ -167,7 +167,7 @@ void CloseHashToScarf (HashToScarf * writerInfo)
 
 
 ///////////////////Accessors/Mutators///////////////////////////////////////////
-int SetPretty ( HashToScarf * writerInfo, int pretty_level ) {
+int SetPretty ( ScarfXmlWriter * writerInfo, int pretty_level ) {
     if (writerInfo != NULL && pretty_level >= 0) {
 	xmlTextWriterSetIndent(writerInfo->writer, 2);
 	return 0;
@@ -176,7 +176,7 @@ int SetPretty ( HashToScarf * writerInfo, int pretty_level ) {
     }
 }
 
-xmlTextWriterPtr GetWriter (HashToScarf * writerInfo) 
+xmlTextWriterPtr GetWriter (ScarfXmlWriter * writerInfo) 
 {
     if (writerInfo != NULL) {
 	return writerInfo->writer;
@@ -185,7 +185,7 @@ xmlTextWriterPtr GetWriter (HashToScarf * writerInfo)
     }
 }
 
-int GetErrorLevel(HashToScarf * writerInfo) 
+int GetErrorLevel(ScarfXmlWriter * writerInfo) 
 {
     if (writerInfo != NULL) {
 	return writerInfo->errorLevel;
@@ -194,7 +194,7 @@ int GetErrorLevel(HashToScarf * writerInfo)
     }
 }
 
-int SetErrorLevel(HashToScarf * writerInfo, int errorLevel) 
+int SetErrorLevel(ScarfXmlWriter * writerInfo, int errorLevel) 
 {
     if (writerInfo != NULL) {
 	if (errorLevel == 0 || errorLevel == 1 || errorLevel == 2) {
@@ -209,7 +209,7 @@ int SetErrorLevel(HashToScarf * writerInfo, int errorLevel)
 }
 
 
-void SetIndent(HashToScarf * writerInfo, int tabSpace) {
+void SetIndent(ScarfXmlWriter * writerInfo, int tabSpace) {
     xmlTextWriterSetIndent(writerInfo->writer, tabSpace);
 }
 
@@ -317,7 +317,7 @@ char * CheckBug(BugInstance * bug)
 }
 
 
-int AddBug(HashToScarf * writerInfo, BugInstance * bug)
+int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
 	if (strcmp(writerInfo->curr, "summary") == 0) {
@@ -785,7 +785,7 @@ char * CheckMetric(Metric * metric)
 }
 
 
-int AddMetric(HashToScarf *  writerInfo, Metric * metric)
+int AddMetric(ScarfXmlWriter *  writerInfo, Metric * metric)
 {
     if (writerInfo->errorLevel != 0) {
 	char * errors = NULL;
@@ -952,7 +952,7 @@ char * CheckStart(Initial * initial){
     return errors;
 }
 
-int AddStartTag(HashToScarf * writerInfo, Initial * initial)
+int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial)
 {
     printf("test\n");
     if (writerInfo->errorLevel != 0) {
@@ -1042,7 +1042,7 @@ int AddStartTag(HashToScarf * writerInfo, Initial * initial)
 
 
 //////////////////////End initialtag/////////////////////////////////////////////
-int AddEndTag(HashToScarf * writerInfo)
+int AddEndTag(ScarfXmlWriter * writerInfo)
 {
     if (writerInfo->errorLevel != 0) {
 	if ( writerInfo->start == 0 ) {
@@ -1071,7 +1071,7 @@ int AddEndTag(HashToScarf * writerInfo)
 
 
 //////////////Add summary generated from instances//////////////////////////////////
-int AddSummary(HashToScarf * writerInfo)
+int AddSummary(ScarfXmlWriter * writerInfo)
 {
     if (writerInfo->errorLevel != 0) {
 	if ( writerInfo->start == 0 ) {

@@ -15,7 +15,7 @@
 #  limitations under the License.
 #
 
-package HashToScarf;
+package ScarfXmlWriter;
 use XML::Writer;
 use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];

@@ -1,11 +1,11 @@
 ### NAME
-ScarfToHash - A perl module for parsing SCARF
+ScarfXmlReader - A perl module for parsing SCARF
 ### SYNOPSIS
 ```perl
-use ScarfToHash;
+use ScarfXmlReader;
 
 my $input = "/path/to/file";
-my $reader = new ScarfToHash($input);
+my $reader = new ScarfXmlReader($input);
 
 $reader->SetInitialCallback(\&initialFunction);
 $reader->SetBugCallback(\&bugFunction);
@@ -20,16 +20,17 @@ $reader->SetCallbackData(\$data);
 $reader->Parse;
 ```
 ### DESCRIPTION
-This module provides the ability to convert SCARF files into Perl data structures. It is dependent on XML::Parser library for parsing of the XML document.
+This module provides the ability to convert SWAMP Common Assessment Results Format (SCARF) files into Perl data structures. It is dependent on XML::Parser library for parsing of the XML document.
 
 The parser is controlled primarily by the callbacks the user sets prior to calling the parse method. A callback will be called once the parser is finished parsing a section of the document. These sections are the beginning AnalyzerReport tag, an entire BugInstance or Metric, a complete BugSummary or MetricSummary, and the end AnalyzerReport tag.  
 
 All Callbacks except the FinalCallback receive as parameters a reference to a hash containing information on their section of parsed data and the data stored in the CallbackData key of the callback hash. Upon reaching the end of an Analyzer Report the FinalCallback  will be called with the error value returned from the previous call and the CallbackData.
 
-While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined.
+While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined. 
+Additional validation routines can be found in the ScarfXmlWriter module.
 ### METHODS
 #### new(FILE)
-This is a class method used to instantiate the parser. FILE can be an open handle, a string containing the filename of a file, or a reference to a string containing the entire file.
+This is a class method used to instantiate the parser. FILE can be an open handle, a string containing the filename of a file, or a reference to a string containing SCARF data.
 
 #### Parse
 This method initiates the parsing of the set file. If parsing fails an exception is thrown with an error message detailing where in the file it failed. The return value of parse will be the return value of the FinalCallback if it is defined. Otherwise the return value will be the same as the last callback executed, or undef if there are no failures.
@@ -106,8 +107,8 @@ InitialData contains information regarding the tool used to test the package. Al
 ```
 {
     tool_name => TOOLNAMEVALUE,            # REQUIRED
-    tool_verison => TOOLVERSIONVALUE,       # REQUIRED
-    uuid => UUIDVALUE                    # REQUIRED
+    tool_verison => TOOLVERSIONVALUE,      # REQUIRED
+    uuid => UUIDVALUE                       # REQUIRED
 } 
 ```
 
@@ -122,12 +123,12 @@ BugData contains information on one BugInstance from the SCARF file. All items l
     BugRank => BUGRANKVALUE,
     BugSeverity => SEVERITYVALUE,
     ResolutionSuggestion => RESOLUTIONSUGGESTIONVALUE,
-    AssessmentReportFile => ASSESSREPORTVALUE,      # REQUIRED
+    AssessmentReportFile => ASSESSREPORTVALUE,    # REQUIRED
     BuildId => BUILDIDVALUE,                       # REQUIRED
     InstanceLocation => {
         Xpath => XPATHVALUE,
         LineNum => { 
-            Start = STARTVALUE,                    # REQUIRED
+            Start = STARTVALUE,                   # REQUIRED
             End = ENDVALUE                         # REQUIRED
         }
     },
@@ -138,7 +139,7 @@ BugData contains information on one BugInstance from the SCARF file. All items l
     Methods => [
         {
             MethodId => METHODIDVALUE,             # REQUIRED
-	    name => METHODNAMEVALUE,               # REQUIRED
+            name => METHODNAMEVALUE,               # REQUIRED
             primary => PRIMARYVALUE                # REQUIRED
         },
         { 
@@ -147,17 +148,17 @@ BugData contains information on one BugInstance from the SCARF file. All items l
             primary => PRIMARYVALUE
 	    } 
     ],
-    BugLocations => [                              # REQUIRED
+    BugLocations => [                             # REQUIRED
         {
-            LocationId => LOCIDVALUE,              # REQUIRED
-	    SourceFile => SOURCEVALUE,             # REQUIRED
+            LocationId => LOCIDVALUE,             # REQUIRED
+            SourceFile => SOURCEVALUE,            # REQUIRED
             StartLine => STARTLINEVALUE,
             EndLine => ENDLINEVALUE,
             StartColumn => STARTCOLVALUE,
             EndColumn => ENDCOLVALUE,
             primary => PRIMARYVALUE,
             Explanation => EXPLANVALUE
-		} 
+        } 
     ], 
 }
 ```
@@ -171,7 +172,7 @@ MetricData contains information on one Metric from the SCARF file. All items lis
     Method => METHODVALUE,
     Class => CLASSVALUE,
     SourceFile => SOURCEVALUE,   # REQUIRED
-    MetricId => METRICIDVALUE   # REQUIRED
+    MetricId => METRICIDVALUE     # REQUIRED
 }
 ```
 

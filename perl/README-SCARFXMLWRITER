@@ -1,14 +1,14 @@
 
 ### NAME
-HashToScarf - A perl module for writing Scarf
+ScarfXmlWriter - A perl module for writing Scarf
 ### SYNOPSIS
 ```perl
-use HashToScarf;
-use HashToScarf qw/CheckStart CheckBug CheckMetric/;
+use ScarfXmlWriter;
+use ScarfXmlWriter qw/CheckStart CheckBug CheckMetric/;
 
 my $output = "/path/to/file";
 
-my $writer = new HashToScarf($output, 2, 1);
+my $writer = new ScarfXmlWriter($output);
 my $defaultPretty = $writer->GetPretty;
 my $defaultErrorLevel = $writer->GetErrorLevel;
 $writer->setPretty(0);
@@ -28,7 +28,7 @@ $writer->AddEndTag;
 $writer->Close;
 ```
 ### DESCRIPTION
-This module provides the ability to convert Perl data structures into Scarf formatted documents. It is dependant on XML::Writer library for writing.
+This module provides the ability to convert Perl data structures into SWAMP Common Assessment Results Format (SCARF) formatted documents. It is dependant on XML::Writer library for writing.
 
 The writer is controlled primarily by the user through method calls which feed data in to be written. This data is to be structured as a hash containing all fields for a specific section. For details on how the data structures are formatted see below.
 
@@ -64,13 +64,13 @@ Checks METRICDATA for any errors. Returns an array of all found errors or an emp
 Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
 
 #### AddBugInstance(BUGDATA) 
-Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more time and inter-layered with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
 #### AddMetric(METRICDATA)
-Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more time and inter-layered with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
 #### AddSummary
-Writes a summary to the file based on all bugs and metrics already written with this writer. May be called 0 or more times before 'AddEndTag'.
+Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most 1 time before 'AddEndTag'.
 
 #### AddEndTag
 Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
@@ -87,7 +87,7 @@ InitialData contains information regarding the tool used to test the package. Al
 {
     tool_name => TOOLNAMEVALUE,            #REQUIRED
     tool_verison => TOOLVERSIONVALUE,      #REQUIRED
-    uuid => UUIDVALUE                     #REQUIRED
+    uuid => UUIDVALUE                       #REQUIRED
 }
 ```
 
@@ -139,13 +139,13 @@ BugData contains information on one BugInstance from the SCARF file. All items l
 ```
 
 #### METRICDATA
-MetricData contains information on one Metric from the SCARF file. All items listed as required should always be present in the data structure. Other items listed as are not required, but can be written to SCARF.
+MetricData contains information on one Metric from the SCARF file. All items listed as required should always be present in the data structure. Other items listed are not required, but can be written to SCARF.
 ```
 {
     Value => VALUE,              # REQUIRED       
     Type => TYPEVALUE,           # REQUIRED
-    Method => METHODVALUE,       # OPTIONAL
-    Class => CLASSVALUE,         # OPTIONAL
+    Method => METHODVALUE,
+    Class => CLASSVALUE,
     SourceFile => SOURCEVALUE,   # REQUIRED
 }
 ```
