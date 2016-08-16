@@ -307,6 +307,7 @@ sub addBugInstance
 
     $self->{bodyType} = "bug";
     $bugInstance->{BugId} = $self->{bugID};
+    int $locID = 0;
     foreach my $location (@{$bugInstance->{BugLocations}}) {
         my $primary;
         if ($location->{primary}) {
@@ -314,7 +315,10 @@ sub addBugInstance
         } else {
             $location->{primary} = $false;
         }
+	$location->{LocationId} = $locID;
+	$locID = $locID + 1;
     }
+    int $methodID = 0;
     if (defined $bugInstance->{Methods}) {
         foreach my $method (@{$bugInstance->{Methods}}) {
             my $primary;
@@ -323,6 +327,8 @@ sub addBugInstance
             } else {
                 $method->{primary} = $false;
             }
+	    $method->{MethodId} = $methodID;
+	    $methodID = $methodID + 1;
 	}
     }
     my $json = $self->{writer}->encode($bugInstance);
