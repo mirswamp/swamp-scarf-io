@@ -362,7 +362,7 @@ sub charHandler
         return $$hash;
     }
 
-    if ( $elt eq "CweID" ) {
+    if ( $elt eq "CweId" ) {
 	if ( exists $$hash->{CweIds} ) {
 	    push @{$$hash->{CweIds}}, $chars;
 	} else {
