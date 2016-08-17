@@ -15,7 +15,7 @@
 #  limitations under the License.
 #  
 
-package JSONToHash;
+package ScarfJSONReader;
 use strict;
 use JSON::SL;
 use Scalar::Util qw[openhandle];
@@ -29,7 +29,6 @@ sub new
     my $hashref = {};
     my $self->{hashref} = $hashref;
     $self->{source} = $source;
-    die "no callbacks detected" if !(defined $callbacks);
     $self->{callbacks} = {};
     $self->{parser} = JSON::SL->new();
     $self->{readSize} = 4096;
@@ -267,7 +266,7 @@ sub Parse
     }
 
     if ( defined $self->{callbacks}->{FinalCallback} ) {
-	$return = $self->{callbacks}->{FinalCallback}->($ret, $self->{callbacks}->{CallbackData});
+	$return = $self->{callbacks}->{FinalCallback}->($return, $self->{callbacks}->{CallbackData});
     }
     if ( $validBody == 0 ) {
 	print (" No BugInstances or Metrics found in file \n" );

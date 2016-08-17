@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-package HashToJSON;
+package ScarfJSONWriter;
 use JSON::MaybeXS;
 use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];
@@ -115,7 +115,7 @@ sub checkStart
 
 
 #start analyzer report
-sub addStartTag
+sub AddStartTag
 {
     my ($self, $initial_details) = @_;
 
@@ -147,7 +147,7 @@ sub addStartTag
 }
 
 
-sub addEndTag
+sub AddEndTag
 {
     my ($self) = @_;
     if ($self->{error_level} == 0) {
@@ -268,8 +268,8 @@ sub checkBug
 }
 
 
-#add a single bug instance to file
-sub addBugInstance
+#Add a single bug instance to file
+sub AddBugInstance
 {
     my($self, $bugInstance) = @_;
     if ($self->{error_level} != 0) {
@@ -307,7 +307,7 @@ sub addBugInstance
 
     $self->{bodyType} = "bug";
     $bugInstance->{BugId} = $self->{bugID};
-    int $locID = 0;
+    my $locID = 0;
     foreach my $location (@{$bugInstance->{BugLocations}}) {
         my $primary;
         if ($location->{primary}) {
@@ -318,7 +318,7 @@ sub addBugInstance
 	$location->{LocationId} = $locID;
 	$locID = $locID + 1;
     }
-    int $methodID = 0;
+    my $methodID = 0;
     if (defined $bugInstance->{Methods}) {
         foreach my $method (@{$bugInstance->{Methods}}) {
             my $primary;
@@ -381,7 +381,7 @@ sub checkMetric
 
 
 #write a single metric
-sub addMetric
+sub AddMetric
 {
     my($self, $metric) = @_;
     if ($self->{error_level} != 0) {
@@ -458,7 +458,7 @@ sub addMetric
 
 
 #Add Summary to file
-sub addSummary
+sub AddSummary
 {
     my ($self) = @_ ;
     my $out = $self->{output};

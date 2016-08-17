@@ -22,7 +22,7 @@ use IO qw[Handle Seekable File Pipe];
 use strict;
 
 use Exporter qw(import);
-@EXPORT_OK = qw(CheckStart CheckBug CheckMetric);
+my @EXPORT_OK = qw(CheckStart CheckBug CheckMetric);
 
 
 my $byteCountHash;
@@ -154,7 +154,7 @@ sub CheckStart
 
 
 #start analyzer report
-sub addStartTag
+sub AddStartTag
 {   
     my ($self, $initial_details) = @_;
     if ($self->{error_level} != 0) {
@@ -182,7 +182,7 @@ sub addStartTag
 
 
 #close	analyzer report
-sub addEndTag
+sub AddEndTag
 {
     my ($self) = @_;
     if ($self->{error_level} == 0) {
@@ -297,8 +297,8 @@ sub CheckBug
 
 
 
-#add a single bug instance to file
-sub addBugInstance
+#Add a single bug instance to file
+sub AddBugInstance
 {
     my($self, $bugInstance) = @_;
 
@@ -325,8 +325,8 @@ sub addBugInstance
     my $final_byte_count = tell($self->{output});
     $initial_byte_count = $final_byte_count;
     
-    #add bug
-    $writer->startTag('BugInstance', id => "$bugID");
+    #Add bug
+    $writer->startTag('BugInstance', id => "$self->{bugID}");
     
     if (defined $bugInstance->{ClassName}) {
 	$writer->startTag('ClassName');
@@ -444,7 +444,7 @@ sub addBugInstance
     }	
     $writer->endTag();
 
-    $bugID++;		
+    $self->{bugID}++;		
     $writer->endTag();
 
     #byte count info
@@ -478,11 +478,11 @@ sub addBugInstance
 #Check for metrics required elements
 sub CheckMetric
 {
-    my ($metric) = @_;
+    my ($metric, $metricId) = @_;
     my @errors = ();
     for my $reqMetrElt (qw/SourceFile Type Value/) {
 	if (!(defined $metric->{$reqMetrElt})) {
-	   push @errors, "Required element: $reqMetrElt could not be found for Metric $metricID";	    
+	   push @errors, "Required element: $reqMetrElt could not be found for Metric $metricId";	    
 	}
     }
     return \@errors;
@@ -490,7 +490,7 @@ sub CheckMetric
 
 
 #write a single metric
-sub addMetric
+sub AddMetric
 {
     my($self, $metric) = @_;
  
@@ -509,7 +509,7 @@ sub addMetric
     }
 
     my $writer = $self->{writer};
-    $writer->startTag('Metric', id => $metricID);   
+    $writer->startTag('Metric', id => $self->{metricID});   
 
     $writer->startTag('Location');
     $writer->startTag('SourceFile');
@@ -531,7 +531,7 @@ sub addMetric
 	$writer->endTag();
     }	
 
-    $metricID++;
+    $self->{metricID}++;
     my $value = $metric->{Value};
     my $type = $metric->{Type};
     if (!(defined $type) ) {
@@ -572,7 +572,7 @@ sub addMetric
 }
 
 #Add Summary to file
-sub addSummary
+sub AddSummary
 {
     my ($self) = @_ ;
     my $writer = $self->{writer};
