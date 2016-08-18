@@ -53,6 +53,139 @@ typedef struct ScarfJSONReader {
     int filetype;
 } ScarfJSONReader;
 
+
+////////////////////////COPY DATA//////////////////////////////////////////////
+BugInstance *CopyBug(BugInstance *bug) {
+    BugInstance *ret = calloc(1, sizeof(BugInstance));
+    ret->bugId = bug->bugId;
+    if (bug->cweIds != NULL) {
+        ret->cweIds = malloc(sizeof(CweIds));
+        ret->cweIds->size = bug->cweIds->size;
+        ret->cweIds->count = bug->cweIds->count;
+        ret->cweIds->cweids = malloc(ret->cweIds->size * sizeof(int));
+        memcpy(ret->cweIds->cweids, bug->cweIds->cweids, bug->cweIds->size * sizeof(int));
+    }
+
+    ret->instanceLocation = bug->instanceLocation;
+    if (bug->className != NULL) {
+        ret->className =  malloc(strlen(bug->className) + 1);
+        strcpy(ret->className, bug->className);
+    }
+    if (bug->cweIds != NULL) {
+        ret->bugSeverity = malloc(strlen(bug->bugSeverity) + 1);
+        strcpy(ret->bugSeverity, bug->bugSeverity);
+    }
+    if (bug->bugRank != NULL) {
+        ret->bugRank = malloc(strlen(bug->bugRank) + 1);
+        strcpy(ret->bugRank, bug->bugRank);
+    }
+    if (bug->resolutionSuggestion != NULL) {
+        ret->resolutionSuggestion = malloc(strlen(bug->resolutionSuggestion) + 1);
+        strcpy(ret->resolutionSuggestion, bug->resolutionSuggestion);
+    }
+    if (bug->cweIds != NULL) {
+        ret->bugMessage = malloc(strlen(bug->bugMessage) + 1);
+        strcpy(ret->bugMessage, bug->bugMessage);
+    }
+    if (bug->cweIds != NULL) {
+        ret->bugCode = malloc(strlen(bug->bugCode) + 1);
+        strcpy(ret->bugCode, bug->bugCode);
+    }
+    if (bug->cweIds != NULL) {
+        ret->bugGroup =  malloc(strlen(bug->bugGroup) + 1 );
+        strcpy(ret->bugGroup, bug->bugGroup);
+    }
+    if (bug->cweIds != NULL) {
+        ret->assessmentReportFile = malloc(strlen(bug->assessmentReportFile) + 1);
+        strcpy(ret->assessmentReportFile, bug->assessmentReportFile);
+    }
+    if (bug->cweIds != NULL) {
+        ret->buildId = malloc(strlen(bug->buildId) + 1);
+        strcpy(ret->buildId, bug->buildId);
+    }
+    if (bug->cweIds != NULL) {
+        ret->methods = malloc(sizeof(Methods));
+        ret->methods->size = bug->methods->size;
+        ret->methods->count = bug->methods->count;
+        ret->methods->methods =  malloc(ret->methods->size * sizeof(Method));
+        int i;
+        for ( i = 0; i < ret->methods->count; i++ ) {
+            ret->methods->methods[i].methodId = bug->methods->methods[i].methodId;
+            ret->methods->methods[i].primary = bug->methods->methods[i].primary;
+            ret->methods->methods[i].name =  malloc(strlen(bug->methods->methods[i].name) + 1);
+            strcpy(ret->methods->methods[i].name, bug->methods->methods[i].name);
+        }
+    }
+    if (bug->cweIds != NULL) {
+        ret->bugLocations =  malloc(sizeof(BugLocations));
+        ret->bugLocations->size = bug->bugLocations->size;
+        ret->bugLocations->count = bug->bugLocations->count;
+        ret->bugLocations->locations =  malloc(ret->bugLocations->size * sizeof(Location));
+        for ( i = 0; i < ret->bugLocations->count; i++ ) {
+            Location * retloc = &ret->bugLocations->locations[i];
+            Location * bugloc = &bug->bugLocations->locations[i];
+            retloc->locationId = bugloc->locationId;
+            retloc->primary =  bugloc->primary;
+            retloc->startLine = bugloc->startLine;
+            retloc->endLine = bugloc->endLine;
+            retloc->startColumn = bugloc->startColumn;
+            retloc->endColumn = bugloc->endColumn;
+            retloc->explanation =  malloc(strlen(bugloc->explanation) + 1);
+            strcpy(retloc->explanation, bugloc->explanation);
+            retloc->sourceFile =  malloc(strlen(bugloc->sourceFile) + 1);
+            strcpy(retloc->sourceFile, bugloc->sourceFile);
+        }
+    }
+    return ret;
+}
+
+
+Metric *CopyMetric(Metric *metr) {
+    Metric *ret = calloc(1, sizeof(Metric));
+    ret->id = metr->id;
+    if ( metr->value != NULL) {
+        ret->value = malloc(strlen(metr->value) + 1);
+        strcpy(ret->value, metr->value);
+    }
+    if ( metr->className != NULL) {
+        ret->className = malloc(strlen(metr->className) + 1);
+        strcpy(ret->className, metr->className);
+    }
+    if (metr->methodName != NULL) {
+        ret->methodName = malloc(strlen(metr->methodName) + 1);
+        strcpy(ret->methodName, metr->methodName);
+    }
+    if ( metr->sourceFile != NULL) {
+    ret->sourceFile = malloc(strlen(metr->sourceFile) + 1);
+    strcpy(ret->sourceFile, metr->sourceFile);
+    }
+    if (metr->type != NULL){
+        ret->type = malloc(strlen(metr->type) + 1);
+        strcpy(ret->type, metr->type);
+    }
+    return ret;
+}
+
+Initial *CopyInitial(Initial *init) {
+    Initial *ret = calloc(1, sizeof(Initial));
+    if (init->tool_version != NULL) {
+        ret->tool_version =  malloc(strlen(init->tool_version) + 1);
+        strcpy(ret->tool_version, init->tool_version);
+    }
+    if ( init->tool_name != NULL ) {
+        ret->tool_name =  malloc(strlen(init->tool_name) + 1);
+        strcpy(ret->tool_name, init->tool_name);
+    }
+    if (init->uuid != NULL) {
+        ret->uuid = malloc(strlen(init->uuid) + 1);
+        strcpy(ret->uuid, init->uuid);
+    }
+    return ret;
+}
+
+
+
+
 ///////////////////////////////Delete initial struct//////////////////////////////////
 int DeleteInitial( Initial * initial ){
     free( initial->tool_name );
