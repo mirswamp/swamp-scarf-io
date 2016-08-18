@@ -16,6 +16,8 @@ typedef struct ScarfJSONWriter {
     int openBody;
     int start;
     int filetype;
+    int pretty;
+    int utf8;
 //    char * filename;
     FILE * file;
     char curr[20];
@@ -31,6 +33,9 @@ ScarfJSONWriter * NewScarfJSONWriterFromFile(FILE * file)
     ScarfJSONWriter * writerInfo = calloc(1, sizeof(ScarfJSONWriter));
     writerInfo->writer = yajl_gen_alloc(NULL);
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
+    yajl_gen_config(writerInfo->writer, yajl_gen_validate_utf8 , 1);
+    writerInfo->pretty = 1;
+    writerInfo->utf8 = 1;
 //    writerInfo->filename = malloc(strlen(filename) + 1);
     writerInfo->file = file;//fopen(filename, "w");
     writerInfo->filetype = 0;
@@ -45,6 +50,7 @@ ScarfJSONWriter * NewScarfJSONWriterFromFilename(char * filename)
     ScarfJSONWriter * writerInfo = calloc(1, sizeof(ScarfJSONWriter));
     writerInfo->writer = yajl_gen_alloc(NULL);
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
+    yajl_gen_config(writerInfo->writer, yajl_gen_validate_utf8 , 1);
 //    writerInfo->filename = malloc(strlen(filename) + 1);
     writerInfo->file = fopen(filename, "w");
     if (writerInfo->file == NULL){
@@ -64,6 +70,7 @@ ScarfJSONWriter * NewScarfJSONWriterFromString(char * str, size_t *size)
     ScarfJSONWriter * writerInfo = calloc(1, sizeof(ScarfJSONWriter));
     writerInfo->writer = yajl_gen_alloc(NULL);
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, 1);
+    yajl_gen_config(writerInfo->writer, yajl_gen_validate_utf8 , 1);
 //    writerInfo->filename = malloc(strlen(filename) + 1);
     writerInfo->file = open_memstream (&str, size);
     if (writerInfo->file == NULL){
@@ -93,10 +100,23 @@ void DeleteScarfJSONWriter (ScarfJSONWriter * writerInfo)
 }
 
 ////////////////////////change options////////////////////////////////
-int SetPretty ( ScarfJSONWriter * writerInfo, int pretty_level ) {
+void SetPretty ( ScarfJSONWriter * writerInfo, int pretty_level ) {
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level); 
+    writerInfo->pretty = pretty_level;   
 }
 
+void SetUTF8 (ScarfJSONWriter * writerInfo, int utf8){
+    yajl_gen_config(writerInfo->writer, yajl_gen_validate_utf8 , 1);
+    writerInfo->utf8 = utf8;
+}
+
+int GetPretty (ScarfJSONWriter * writerInfo) {
+    return writerInfo->pretty;
+}
+
+int GetUTF8 (ScarfJSONWriter * writerInfo) {
+    return writerInfo->utf8;
+}
 
 yajl_gen  getScarfJSONWriter (ScarfJSONWriter * writerInfo)
 {
@@ -475,32 +495,20 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
     }
 
     if (cur == NULL) {
-	printf("nocode\n");
         BugSummaries * summaries = malloc(sizeof(BugSummaries));
         summaries->code = malloc(strlen(code) + 1);
         strcpy(summaries->code, code);
 
-	printf("1\n");
         BugSummary * summary = malloc(sizeof(BugSummary));
-	printf("2\n");
         summary->count = 1;
-	printf("3\n");
         summary->bytes = bytes;
-	printf("4\n");
         summary->next = NULL;
-	printf("5\n");
         summary->code = malloc(strlen(code) + 1);
-	printf("6\n");
         strcpy(summary->code, code);
-	printf("7\n");
         summary->group = malloc(strlen(group) + 1);
-	printf("8\n");
         strcpy(summary->group, group);
-	printf("9\n");
         summaries->codeSummary = summary;
-	printf("10\n");
         summaries->next = NULL;
-	printf("11\n");
 
         if (prev == NULL) {
             writerInfo->bugSums = summaries;
@@ -530,7 +538,6 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
             }
 
         } else {
-	    printf("group\n");
             curGroup->count++;
             curGroup->bytes += bytes;
         }

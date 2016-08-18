@@ -892,6 +892,7 @@ ScarfJSONReader * NewScarfJSONReaderFromFilename(char * filename)
         return NULL;
     }
     reader->filetype = 0;
+    reader->utf8 = 1;
     status->bug = calloc(1, sizeof(BugInstance));
     status->metric = calloc(1, sizeof(Metric));
     reader->state = status;
@@ -904,6 +905,7 @@ ScarfJSONReader * NewScarfJSONReaderFromFile(FILE * file)
     status->callbacks = calls;
     ScarfJSONReader * reader = calloc(1, sizeof(ScarfJSONReader));
     reader->filetype = 1;
+    reader->utf8 = 1;
     reader->file = file;
     status->bug = calloc(1, sizeof(BugInstance));
     status->metric = calloc(1, sizeof(Metric));
@@ -922,6 +924,7 @@ ScarfJSONReader * NewScarfJSONReaderFromString(char * str, size_t * size)
         return NULL;
     }
     reader->filetype = 2;
+    reader->utf8 = 1;
     status->bug = calloc(1, sizeof(BugInstance));
     status->metric = calloc(1, sizeof(Metric));
     reader->state = status;
@@ -938,6 +941,10 @@ void DeleteScarfJSONReader(ScarfJSONReader * reader) {
 	fclose(reader->file);
     }
     free(reader);
+}
+
+void SetUTF8(ScarfJSONReader * reader, int value){
+    reader->utf8 = value
 }
 
 void SetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
@@ -963,22 +970,26 @@ void SetCallbackData(ScarfJSONReader * reader, void * callbackData) {
 }
 
 
-BugCallback GetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
+int GetUTF8(ScarfJSONReader * reader) {
+    return reader->utf8;
+}
+
+BugCallback GetBugCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->bugCall;
 }
-MetricCallback GetMetricCallback(ScarfJSONReader * reader, MetricCallback callback) {
+MetricCallback GetMetricCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->metricCall;
 }
-BugSummaryCallback GetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback) {
+BugSummaryCallback GetBugSummaryCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->bugSumCall;
 }
-MetricSummaryCallback GetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback) {
+MetricSummaryCallback GetMetricSummaryCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->metricSumCall;
 }
-FinalCallback GetFinalCallback(ScarfJSONReader * reader, FinalCallback callback) {
+FinalCallback GetFinalCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->finalCallback;
 }
-InitialCallback GetInitialCallback(ScarfJSONReader * reader, InitialCallback callback) {
+InitialCallback GetInitialCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->initialCall;
 }
 void * GetCallbackData(ScarfJSONReader * reader, void * callbackData) {
@@ -989,6 +1000,7 @@ void * GetCallbackData(ScarfJSONReader * reader, void * callbackData) {
 void * Parse(ScarfJSONReader * hand)
 {
     hand->reader =  yajl_alloc(&callbacks, NULL, hand->state);
+    yajl_config(hand->reader, yajl_dont_validate_strings, hand->utf8);
     int retval = 0;
 //    yajl_handle hand;
     static unsigned char fileData[65536];
