@@ -42,7 +42,7 @@ typedef struct ScarfXmlWriter {
 ////////////////////////////Initializer/Closer////////////////////////////////////////
 
 
-ScarfXmlWriter * newScarfXmlWriterForFile(FILE * handle)
+ScarfXmlWriter * NewScarfXmlWriterFromFile(FILE * handle, char *encoding)
 {
     int rc;
     ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
@@ -58,7 +58,7 @@ ScarfXmlWriter * newScarfXmlWriterForFile(FILE * handle)
         printf("testXmlwriterFilename: Error creating the xml writer\n");
 	return NULL;
     }
-    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, "UTF-8", NULL);
+    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, encoding, NULL);
     if (rc < 0) {
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
@@ -78,7 +78,7 @@ ScarfXmlWriter * newScarfXmlWriterForFile(FILE * handle)
     writerInfo->fileType = 0;
     return writerInfo; 
 }
-ScarfXmlWriter * newScarfXmlWriterForFilename(char * filename)
+ScarfXmlWriter * NewScarfXmlWriterFromFilename(char * filename, char *encoding)
 {
     int rc;
     ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
@@ -94,12 +94,12 @@ ScarfXmlWriter * newScarfXmlWriterForFilename(char * filename)
         printf("testXmlwriterFilename: Error creating the xml writer\n");
 	return NULL;
     }
-    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, "UTF-8", NULL);
+    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, encoding, NULL);
     if (rc < 0) {
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
     }
-    writerInfo->file = fopen(filename, 'w');
+    writerInfo->file = fopen(filename, "w");
     if (writerInfo->file == NULL){
 	printf("File could not open\n");
 	free(writerInfo);
@@ -115,7 +115,7 @@ ScarfXmlWriter * newScarfXmlWriterForFilename(char * filename)
     writerInfo->fileType = 1;
     return writerInfo; 
 }
-ScarfXmlWriter * newScarfXmlWriterForString(char * str, int * size)
+ScarfXmlWriter * NewScarfXmlWriterFromString(char * str, size_t * size, char *encoding)
 {
     int rc;
     ScarfXmlWriter * writerInfo = malloc(sizeof(ScarfXmlWriter));
@@ -131,12 +131,12 @@ ScarfXmlWriter * newScarfXmlWriterForString(char * str, int * size)
         printf("testXmlwriterFilename: Error creating the xml writer\n");
 	return NULL;
     }
-    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, "UTF-8", NULL);
+    rc = xmlTextWriterStartDocument(writerInfo->writer, NULL, encoding, NULL);
     if (rc < 0) {
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
     }
-    writerInfo->file = open_memstream (&str, &size);
+    writerInfo->file = open_memstream (&str, size);
     if (writerInfo->file == NULL){
 	printf("File could not open\n");
 	free(writerInfo);
@@ -159,7 +159,7 @@ void CloseScarfXmlWriter (ScarfXmlWriter * writerInfo)
     xmlTextWriterEndDocument(writerInfo->writer);
     fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
     xmlBufferFree(writerInfo->buf);
-    if(writerInfo->fileType = 1 || writerInfo->fileType == 2){
+    if((writerInfo->fileType == 1) || (writerInfo->fileType == 2)){
 	fclose (writerInfo->file);
     }
     free(writerInfo);
@@ -244,8 +244,10 @@ char * CheckBug(BugInstance * bug)
     if (bug->methods != NULL) {
 	int methodID = 1;
 	int methodPrimary = 0;
-	Method * method = bug->methods;
-	while (method != NULL) {
+	Methods * methods = bug->methods;
+	int j;
+	for ( j = 0 ; j < methods->count; j++) {
+	    Method *method = &methods->methods[j];
 	    if (method->primary != 0 && method->primary != 1) {		
 		sprintf(temp, "Invalid primary attribute for Method:%d in BugInstance\n", methodID);
 		errors = realloc(errors, strlen(errors) + strlen(temp));
@@ -264,7 +266,6 @@ char * CheckBug(BugInstance * bug)
 		errors = realloc(errors, strlen(errors) + strlen(temp));
 		errors = strcat(errors, temp);
 	    }
-	    method = method->next;
 	    methodID++;
 	}
 	if (methodPrimary == 0) {	    
@@ -274,10 +275,14 @@ char * CheckBug(BugInstance * bug)
 	}
     }
 
-    Location * loc = bug->bugLocations;
+    BugLocations *bugLocs = bug->bugLocations;
     int locID = 1;
     int locPrimary = 0;
-    while (loc != NULL) {
+    int k;
+    for ( k = 0; k < bugLocs->count; k++){
+	//printf("found loc\n");
+	Location * loc = &bugLocs->locations[k];
+	//printf("%d\n", loc->primary);
         if (loc->primary != 0 && loc->primary != 1) {	    
 	    sprintf(temp, "Invalid primary attribute for a Location:%d in BugInstance\n", locID);
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
@@ -296,8 +301,8 @@ char * CheckBug(BugInstance * bug)
 	    errors = realloc(errors, strlen(errors) + strlen(temp));
 	    errors = strcat(errors, temp);
         }
+	locID++;
 
-        loc = loc->next;
     }
     if (locPrimary == 0) {	    
         sprintf(temp, "Misformed Element: No primary Location found in  BugInstance\n");
@@ -305,14 +310,15 @@ char * CheckBug(BugInstance * bug)
         errors = strcat(errors, temp);
     }
 
-    if (bug->instanceLocation != NULL) {
-	if (bug->instanceLocation->lineNum.start == 0 && bug->instanceLocation->lineNum.end == 0 && bug->instanceLocation->xPath == NULL) {
-    	    sprintf(temp, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance");
-	    errors = realloc(errors, strlen(errors) + strlen(temp));
-	    errors = strcat(errors, temp);
-	}
+    if (bug->instanceLocation.lineNum.start == 0 && bug->instanceLocation.lineNum.end == 0 && bug->instanceLocation.xPath == NULL) {
+        sprintf(temp, "Misformed Element: Neither LineNum or Xpath children were present in InstanceLocation BugInstance");
+        errors = realloc(errors, strlen(errors) + strlen(temp));
+        errors = strcat(errors, temp);
     }
     free(temp);
+    if (strcmp("", errors) == 0) {
+	return NULL;
+    }
     return errors;
 }
 
@@ -334,7 +340,7 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
 	}
 	char * errors = NULL;
         errors = CheckBug(bug);
-        if ( strcmp(errors,"") != 0 ) {
+        if ( errors != NULL ) {
             printf("%s", errors);
             if ( writerInfo->errorLevel == 2 ) {
                 exit(1);
@@ -380,9 +386,11 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
             printf("Error at AddBug adding Methods tag\n");
             return 1;
         }
-        Method * cur = bug->methods;
-        while (cur != NULL) {
-            bytes += rc;
+        Methods * methods = bug->methods;
+	int i;
+	for ( i = 0; i < methods->count; i++) {
+            Method *cur = &methods->methods[i];
+	    bytes += rc;
             rc = xmlTextWriterStartElement(writer, (xmlChar *) "Method");
             if (rc < 0) {
                 printf("Error at AddBug adding Method tag\n");
@@ -422,7 +430,6 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
                 printf("Error closing Method\n");
                 return 1;
             }
-            cur = cur->next;
             methodId++;
         }
         bytes += rc;
@@ -440,9 +447,13 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
         printf("Error at AddBug adding BugLocations tag\n");
         return 1;
     }
-    Location * curLoc = bug->bugLocations;
+
+    int k;
+    BugLocations *bugLocs = bug->bugLocations;
     int locId = 1;
-    while (curLoc != NULL) {    
+
+    for ( k = 0; k < bugLocs->count; k++){
+	Location * curLoc = &bugLocs->locations[k];
         bytes += rc;
         rc = xmlTextWriterStartElement(writer, (xmlChar *) "Location");
         if (rc < 0) {
@@ -515,6 +526,7 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
             }
         }
         if (curLoc->explanation != NULL) {
+	    printf("%p\n", curLoc->explanation);
             bytes += rc;
             rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Explanation", (xmlChar *) curLoc->explanation);
             if (rc < 0) {
@@ -528,7 +540,6 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
             printf("Error closing Location\n");
             return 1;
         }
-        curLoc = curLoc->next;
         locId++;
     }
     bytes += rc;
@@ -537,18 +548,31 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
         printf("Error closing BugLocations\n");
         return 1;
     }
- 
+     
     CweIds * cwe = bug->cweIds;
-    while (cwe != NULL) {
-        bytes += rc;
-        sprintf(temp, "%d", cwe->cweid);
-        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "CweId", (xmlChar *) temp);
-        if (rc < 0) {
-            printf("Error writing CweID Element of BugInstance\n");
-            return 1;
-        }
-        cwe = cwe->next;
+    int l;
+
+    if (cwe != NULL){
+	for ( l = 0 ; l < cwe->count; l++ ) {
+	    bytes += rc;
+	    sprintf(temp, "%d", cwe->cweids[l]);
+	    rc = xmlTextWriterWriteElement(writer, (xmlChar *) "CweId", (xmlChar *) temp);
+	    if (rc < 0) {
+		printf("Error writing CweID Element of BugInstance\n");
+		return 1;
+	    }
+	}
     }
+//    while (cwe != NULL) {
+//        bytes += rc;
+//        sprintf(temp, "%d", cwe->cweid);
+//        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "CweId", (xmlChar *) temp);
+//        if (rc < 0) {
+//            printf("Error writing CweID Element of BugInstance\n");
+//            return 1;
+//        }
+//        cwe = cwe->next;
+//    }
 
     if (bug->bugGroup != NULL) {
         bytes += rc;
@@ -615,30 +639,30 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
         printf("Error writing AssessmentReportFile Element of BugTrace\n");
         return 1;
     }
-    InstanceLocation * inst = bug->instanceLocation;
-    if (inst != NULL){
+    InstanceLocation  inst = bug->instanceLocation;
+    if (inst.lineNum.start != 0 || inst.lineNum.end != 0 || inst.xPath != NULL){
         bytes += rc;
         rc = xmlTextWriterStartElement(writer, (xmlChar *) "InstanceLocation");
         if (rc < 0) {
             printf("Error adding InstanceLocation start tag in BugTrace\n");
             return 1;
         }
-        if (inst->xPath != NULL) {
+        if (inst.xPath != NULL) {
             bytes += rc;
-            rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Xpath", (xmlChar *) inst->xPath);
+            rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Xpath", (xmlChar *) inst.xPath);
             if (rc < 0) {
                 printf("Error writing BugMessage Element of InstanceLocation\n");
                 return 1;
             }
         }
-        if (inst->lineNum.start != 0 || inst->lineNum.end != 0){
+        if (inst.lineNum.start != 0 || inst.lineNum.end != 0){
             bytes += rc;
             rc = xmlTextWriterStartElement(writer, (xmlChar *) "LineNum");
             if (rc < 0) {
                 printf("Error adding LineNum start tag in InstanceLocation\n");
                 return 1;
             }
-             LineNum lineNum = inst->lineNum;
+            LineNum lineNum = inst.lineNum;
             bytes += rc;
             sprintf(temp, "%d", lineNum.start);
             rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Start", (xmlChar *) temp);
@@ -779,6 +803,9 @@ char * CheckMetric(Metric * metric)
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     }
+    if (strcmp("", errors) == 0) {
+	return NULL;
+    }
     return errors;
 
 
@@ -802,7 +829,7 @@ int AddMetric(ScarfXmlWriter *  writerInfo, Metric * metric)
 	    }
 	}
 	errors = CheckMetric(metric);
-        if ( strcmp(errors,"") != 0) {
+        if ( errors != NULL) {
             printf("%s", errors);
             if ( writerInfo->errorLevel == 2 ) {
                 exit(1);
@@ -840,15 +867,15 @@ int AddMetric(ScarfXmlWriter *  writerInfo, Metric * metric)
         printf("Error closing Location\n");
         return 1;
     }
-    if (metric->clas != NULL) {
-        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Class", (xmlChar *) metric->clas);
+    if (metric->className != NULL) {
+        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Class", (xmlChar *) metric->className);
         if (rc < 0) {
             printf("Error writing Class Element of metric\n");
             return 1;
         }
     }
-    if(metric->method != NULL) {
-        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Method", (xmlChar *) metric->method);
+    if(metric->methodName != NULL) {
+        rc = xmlTextWriterWriteElement(writer, (xmlChar *) "Method", (xmlChar *) metric->methodName);
         if (rc < 0) {
             printf("Error writing Method Element of metric\n");
             return 1;
@@ -949,14 +976,15 @@ char * CheckStart(Initial * initial){
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
     }
+    if (strcmp("", errors) == 0) {
+	return NULL;
+    }
     return errors;
 }
 
 int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial)
 {
-    printf("test\n");
     if (writerInfo->errorLevel != 0) {
-    printf("test\n");
 	if ( writerInfo->start == 1 ) {
 	    printf("Scarf file already open\n");
 	    if (writerInfo->errorLevel == 2) {
@@ -965,7 +993,7 @@ int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial)
 	}
 	char * errors = NULL;
 	errors = CheckStart(initial);
-	if ( strcmp(errors,"") != 0) {
+	if ( errors != NULL) {
 	    printf("%s", errors);
 	    if ( writerInfo->errorLevel == 2 ) {
 		exit(1);
@@ -973,8 +1001,6 @@ int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial)
 	}
 	free(errors);
     }
-    printf("test\n");
-    
     writerInfo->start = 1;
     free(writerInfo->curr);
     writerInfo->curr = malloc(strlen("start") + 1);

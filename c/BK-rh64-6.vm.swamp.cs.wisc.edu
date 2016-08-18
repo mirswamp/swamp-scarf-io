@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <libxml/xmlreader.h>
 #include "filestructure.h"
 
@@ -64,27 +63,15 @@ BugInstance *initializeBug()
 
 ///////////////////////////////free summaries///////////////////////////////////
 int DeleteBugSummary(BugSummary *bugSummary){
-    BugSummary *cur = bugSummary;
-    BugSummary *prev = NULL;
-    while (cur != NULL) {
-	prev = cur;
-	cur = cur->next;
-	xmlFree((xmlChar *) prev->code);
-	xmlFree((xmlChar *) prev->group);
-	free(prev);
-    }
+    xmlFree((xmlChar *) bugSummary->code);
+    xmlFree((xmlChar *) bugSummary->group);
+    free(bugSummary);
     return 0;
 }
 
 int DeleteMetricSummary(MetricSummary *metricSummary){
-    MetricSummary *cur = metricSummary;
-    MetricSummary *prev = NULL;
-    while (cur != NULL) {
-	prev = cur;
-	cur = cur->next;
-	xmlFree((xmlChar *) prev->type);
-	free(prev);
-    }
+    xmlFree((xmlChar *) metricSummary->type);
+    free(metricSummary);
     return 0;
 }
 
@@ -124,7 +111,7 @@ int DeleteBug(BugInstance *bug)
     free(bug->bugGroup);
     free(bug->bugMessage);
     free(bug->resolutionSuggestion);
-    free(bug->instanceLocation.xPath);
+    free(bug->instanceLocation->xPath);
 
 //    CweIds *cwe = bug->cweIds;
 //    CweIds *prevCwe;
@@ -133,29 +120,24 @@ int DeleteBug(BugInstance *bug)
 //	cwe = cwe->next;
 //	free(prevCwe);
 //    }
-    if (bug->cweIds != NULL){
-	free(bug->cweIds->cweids);
-	free(bug->cweIds);
-    }
+    free(bug->cweIds->cweids);
+    free(bug->cweIds);
     
-    if (bug->cweIds != NULL){
-	int i;
-	for ( i = 0; i < bug->methods->count; i++ ) {
-	    free(bug->methods->methods[i].name);
-	}
-	free(bug->methods->methods);
-	free(bug->methods);
+    int i;
+    for ( i = 0; i < bug->methods->count; i++ ) {
+	free(bug->methods->methods[i]->name);
     }
+    free(bug->methods->methods);
+    free(bug->methods);
 
-    if ( bug->bugLocations != NULL) {
-	int i;
-	for ( i = 0; i < bug->bugLocations->count; i++ ) {
-	    free(bug->bugLocations->locations[i].explanation);
-	    free(bug->bugLocations->locations[i].sourceFile);
-	}
-	free(bug->bugLocations->locations);
-	free(bug->bugLocations);
+
+    for ( i = 0; i < bug->bugLocations->count; i++ ) {
+	free(bug->bugLocations->locations[i]->explanation);
+	free(bug->bugLocations->locations[i]->sourceFile);
     }
+    free(bug->bugLocations->locations);
+    free(bug->bugLocations);
+
 //    Method *method = bug->methods;
 //    Method *prevMethod;
 //    while (method != NULL) {
@@ -182,130 +164,81 @@ int DeleteBug(BugInstance *bug)
 
 ////////////////////////COPY DATA//////////////////////////////////////////////
 BugInstance *CopyBug(BugInstance *bug) {
-    BugInstance *ret = calloc(1, sizeof(BugInstance));
+    BugInstance *ret = malloc(sizeof(BugInstance));
     ret->bugId = bug->bugId;
-    if (bug->cweIds != NULL) {
-	ret->cweIds = malloc(sizeof(CweIds));
-	ret->cweIds->size = bug->cweIds->size;
-	ret->cweIds->count = bug->cweIds->count;
-	ret->cweIds->cweids = malloc(ret->cweIds->size * sizeof(int));
-	memcpy(ret->cweIds->cweids, bug->cweIds->cweids, bug->cweIds->size * sizeof(int));
-    }
-
+    ret->cweIds = malloc(sizeof(CweIds));
+    ret->cweIds->size = bug->cweIds->size;
+    ret->cweIds->count = bug->cweIds->count;
+    ret->cweIds->cweids = malloc(ret->cweIds->size * sizeof(int));
+    memcpy(ret->cweIds->cweids, bug->cweIds->cweids, bug->cweIds->size * sizeof(int));
     ret->instanceLocation = bug->instanceLocation;
-    if (bug->className != NULL) {
-	ret->className =  malloc(strlen(bug->className) + 1);
-	strcpy(ret->className, bug->className);
+    strcpy(ret->className, bug->className);
+    strcpy(ret->bugSeverity, bug->bugSeverity);
+    strcpy(ret->bugRank, bug->bugSeverity);
+    strcpy(ret->resolutionSuggestion, bug->ResolutionSuggestion);
+    strcpy(ret->bugMessage, bug->bugMessage);
+    strcpy(ret->bugCode, bug->bugCode);
+    strcpy(ret->bugGroup, bug->bugGroup);
+    strcpy(ret->assessmentReportFile, bug->assessmentReportFile);
+    strcpy(ret->buildId, bug->buildId);
+    ret->methods = malloc(sizeof(Methods));
+    ret->methods->size = bug->methods->size;
+    ret->methods->count = bug->methods->count;
+    ret->methods->methods =  malloc(ret->methods->size * sizeof(Method));
+    int i;
+    for ( i = 0; i < count; i++ ) {
+	ret->methods->methods[i]->methodId = bug->methods->methods[i]->methodId;
+	ret->methods->methods[i]->primary = bug->methods->methods[i]->primary;
+	ret->methods->methods[i]->name =  malloc(strlen(bug->methods->methods[i]->name) + 1);
+	strcpy(ret->methods->methods[i]->name, bug->methods->methods[i]->name);
     }
-    if (bug->cweIds != NULL) {
-	ret->bugSeverity = malloc(strlen(bug->bugSeverity) + 1);
-	strcpy(ret->bugSeverity, bug->bugSeverity);
-    }
-    if (bug->bugRank != NULL) {
-	ret->bugRank = malloc(strlen(bug->bugRank) + 1);
-	strcpy(ret->bugRank, bug->bugRank);
-    }
-    if (bug->resolutionSuggestion != NULL) {
-	ret->resolutionSuggestion = malloc(strlen(bug->resolutionSuggestion) + 1);
-	strcpy(ret->resolutionSuggestion, bug->resolutionSuggestion);
-    }
-    if (bug->cweIds != NULL) {
-	ret->bugMessage = malloc(strlen(bug->bugMessage) + 1);
-	strcpy(ret->bugMessage, bug->bugMessage);
-    }
-    if (bug->cweIds != NULL) {
-	ret->bugCode = malloc(strlen(bug->bugCode) + 1);
-	strcpy(ret->bugCode, bug->bugCode);
-    }
-    if (bug->cweIds != NULL) {
-	ret->bugGroup =  malloc(strlen(bug->bugGroup) + 1 );
-	strcpy(ret->bugGroup, bug->bugGroup);
-    }
-    if (bug->cweIds != NULL) {
-	ret->assessmentReportFile = malloc(strlen(bug->assessmentReportFile) + 1);
-	strcpy(ret->assessmentReportFile, bug->assessmentReportFile);
-    }
-    if (bug->cweIds != NULL) {
-	ret->buildId = malloc(strlen(bug->buildId) + 1);
-	strcpy(ret->buildId, bug->buildId);
-    }
-    if (bug->cweIds != NULL) {
-	ret->methods = malloc(sizeof(Methods));
-	ret->methods->size = bug->methods->size;
-	ret->methods->count = bug->methods->count;
-	ret->methods->methods =  malloc(ret->methods->size * sizeof(Method));
-	int i;
-	for ( i = 0; i < ret->methods->count; i++ ) {
-	    ret->methods->methods[i].methodId = bug->methods->methods[i].methodId;
-	    ret->methods->methods[i].primary = bug->methods->methods[i].primary;
-	    ret->methods->methods[i].name =  malloc(strlen(bug->methods->methods[i].name) + 1);
-	    strcpy(ret->methods->methods[i].name, bug->methods->methods[i].name);
-	}
-    }
-    if (bug->cweIds != NULL) {
-	ret->bugLocations =  malloc(sizeof(BugLocations));
-	ret->bugLocations->size = bug->bugLocations->size;
-	ret->bugLocations->count = bug->bugLocations->count;
-	ret->bugLocations->locations =  malloc(ret->bugLocations->size * sizeof(Location));
-	for ( i = 0; i < ret->bugLocations->count; i++ ) {
-	    Location * retloc = &ret->bugLocations->locations[i];
-	    Location * bugloc = &bug->bugLocations->locations[i];
-	    retloc->locationId = bugloc->locationId;
-	    retloc->primary =  bugloc->primary;
-	    retloc->startLine = bugloc->startLine;
-	    retloc->endLine = bugloc->endLine;
-	    retloc->startColumn = bugloc->startColumn;
-	    retloc->endColumn = bugloc->endColumn;
-	    retloc->explanation =  malloc(strlen(bugloc->explanation) + 1);
-	    strcpy(retloc->explanation, bugloc->explanation);
-	    retloc->sourceFile =  malloc(strlen(bugloc->sourceFile) + 1);
-	    strcpy(retloc->sourceFile, bugloc->sourceFile);
-	}
+    ret->bugLocations =  malloc(sizeof(BugLocations));
+    ret->bugLocations->size = bug->bugLocations->size;
+    ret->bugLocations->count = bug->bugLocations->count;
+    ret->bugLocations->locations =  malloc(ret->bugLocations->size * sizeof(Location));
+    int i;
+    for ( i = 0; i < count; i++ ) {
+	Location * retloc = ret->bugLocations->locations[i];
+	Location * bugloc = bug->bugLocations->locations[i];
+        retloc->locationId = bugloc->locationId;
+        retloc->primary =  bugloc->primary;
+	retloc->startLine = bugloc->startLine;
+	retloc->endLine = bugloc->endLine;
+	retloc->startColumn = bugloc->startColumn;
+	retloc->endColumn = bugloc->endColumn;
+	retloc->explanation =  malloc(strlen(bugloc->explanation) + 1);
+        strcpy(retloc->explanation, bugloc->explanation);
+	retloc->sourceFile =  malloc(strlen(bugloc->sourceFile) + 1);
+        strcpy(retloc->sourceFile, bugloc->sourceFile);
     }
     return ret;
 }
 
 
 Metric *CopyMetric(Metric *metr) {
-    Metric *ret = calloc(1, sizeof(Metric));
+    Metric *ret = malloc(sizeof(Metric));
     ret->id = metr->id;
-    if ( metr->value != NULL) {
-	ret->value = malloc(strlen(metr->value) + 1);
-	strcpy(ret->value, metr->value);
-    }
-    if ( metr->className != NULL) {
-	ret->className = malloc(strlen(metr->className) + 1);
-	strcpy(ret->className, metr->className);
-    }
-    if (metr->methodName != NULL) {
-	ret->methodName = malloc(strlen(metr->methodName) + 1);
-	strcpy(ret->methodName, metr->methodName);
-    }
-    if ( metr->sourceFile != NULL) {
+    ret->value = malloc(strlen(metr->value) + 1);
+    strcpy(ret->value, metr->value);
+    ret->className = malloc(strlen(metr->className) + 1);
+    strcpy(ret->className, metr->className);
+    ret->methodName = malloc(strlen(metr->methodName) + 1);
+    strcpy(ret->methodName, metr->methodName);
     ret->sourceFile = malloc(strlen(metr->sourceFile) + 1);
     strcpy(ret->sourceFile, metr->sourceFile);
-    }
-    if (metr->type != NULL){
-	ret->type = malloc(strlen(metr->type) + 1);
-	strcpy(ret->type, metr->type);
-    }
+    ret->type = malloc(strlen(metr->type) + 1);
+    strcpy(ret->type, metr->type);
     return ret;   
 }
 
 Initial *CopyInitial(Initial *init) {
-    Initial *ret = calloc(1, sizeof(Initial)); 
-    if (init->tool_version != NULL) {
-	ret->tool_version =  malloc(strlen(init->tool_version) + 1);
-	strcpy(ret->tool_version, init->tool_version);
-    }
-    if ( init->tool_name != NULL ) {
-	ret->tool_name =  malloc(strlen(init->tool_name) + 1);
-	strcpy(ret->tool_name, init->tool_name);
-    }
-    if (init->uuid != NULL) {
-	ret->uuid = malloc(strlen(init->uuid) + 1);
-	strcpy(ret->uuid, init->uuid);
-    }
+    Initial *ret = malloc(sizeof(Initial)) 
+    ret->tool_version =  malloc(strlen(init->tool_version) + 1);
+    strcpy(ret->tool_version, init->tool_version);
+    ret->tool_name =  malloc(strlen(init->tool_name) + 1);
+    strcpy(ret->tool_name, init->tool_name);
+    ret->uuid = malloc(strlen(init->uuid) + 1);
+    strcpy(ret->uuid, init->uuid);
     return ret;
 }
 
@@ -325,7 +258,7 @@ char *trim(char *str)
 	end--;
     }
     *(end+1) = '\0';
-    char *newStr = malloc(strlen(str) + 1);
+    char *newStr = malloc(strLen(str) + 1);
     strcpy(newStr, str);
     return newStr;
 }
@@ -396,7 +329,7 @@ int processBug(xmlTextReaderPtr reader, BugInstance *bug)
 
 	} else if (strcmp(name, "Xpath") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader); 
-	    bug->instanceLocation.xPath = trim(temp);
+	    bug->instanceLocation->xPath = trim(temp);
 	    xmlFree((xmlChar *) temp);
 
 //	} else if (strcmp(name, "LineNum") == 0) {
@@ -405,18 +338,18 @@ int processBug(xmlTextReaderPtr reader, BugInstance *bug)
 
 	} else if (strcmp(name, "Start") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    bug->instanceLocation.lineNum.start = strtol(temp, NULL, 10);
+	    bug->instanceLocation->lineNum.start = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 
 	} else if (strcmp(name, "End") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    bug->instanceLocation.lineNum.end = strtol(temp, NULL, 10);
+	    bug->instanceLocation->lineNum.end = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 
 	}  else if (strcmp(name, "CweId") == 0) {
 
 	    if ( bug->cweIds == NULL ) {
-		bug->cweIds = malloc(sizeof(CweIds));
+		bug->cweIds = malloc(sizeof(CweIds);
 		bug->cweIds->size = 5;
 		bug->cweIds->count = 0;
 		bug->cweIds->cweids = malloc(bug->cweIds->size * sizeof(int));
@@ -433,13 +366,13 @@ int processBug(xmlTextReaderPtr reader, BugInstance *bug)
 	    } 
 //	    CweIds *cweid = calloc(1, sizeof(CweIds));
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    bug->cweIds->cweids[bug->cweIds->count] = strtol(temp, NULL, 10);
+	    bug->cweIds->cweids[count] = strtol(temp, NULL, 10);
 	    bug->cweIds->count++;
 	    xmlFree((xmlChar *) temp);
 	    
 //	    if (bug->cweIds == NULL) {
 //		bug->cweIds = cweid;
-///	    } else {
+//	    } else {
 //		CweIds * cur = bug->cweIds;
 //		while (cur->next != NULL) {
 //		    cur = cur->next;
@@ -449,23 +382,22 @@ int processBug(xmlTextReaderPtr reader, BugInstance *bug)
 
     	} else if (strcmp(name, "Method") == 0){
 	    if ( bug->methods == NULL ) {
-		bug->methods = malloc(sizeof(Methods));
+		bug->methods = malloc(sizeof(Methods);
 		bug->methods->size = 5;
 		bug->methods->count = 0;
-		bug->methods->methods = calloc(1, bug->methods->size * sizeof(Method));
+		bug->methods->methods = malloc(bug->methods->size * sizeof(Method));
 	    }
 	    if ( bug->methods->count >= bug->methods->size ) {
 		bug->methods->size = bug->methods->size * 2;
 		int *tempArray = realloc(bug->methods->methods, bug->methods->size * sizeof(Methods));
 		if (tempArray) {
-		     bug->methods->methods = (Method *)tempArray;
-		     memset(&bug->methods->methods[bug->methods->count], 0, (bug->methods->size/2) * sizeof(Method));
+		     bug->methods->methods = tempArray;
 		} else {
 		    printf("Could not expand Methods array. Exiting parsing");
 		    exit(1);
 		}	
 	    } 
-	    Method *method = &bug->methods->methods[bug->methods->count];
+	    method = bug->methods->methods[bug->methods->count];
 	    char *temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 	    method->methodId = strtol(temp, NULL, 10);  
 	    xmlFree((xmlChar *) temp);
@@ -483,64 +415,70 @@ int processBug(xmlTextReaderPtr reader, BugInstance *bug)
 
 	} else if (strcmp(name, "Location") == 0) {
 	    if ( bug->bugLocations == NULL ) {
-		bug->bugLocations = malloc(sizeof(BugLocations));
+		bug->bugLocations = malloc(sizeof(BugLocations);
 		bug->bugLocations->size = 5;
 		bug->bugLocations->count = 0;
-		bug->bugLocations->locations = calloc(1, bug->bugLocations->size * sizeof(Location));
+		bug->bugLocations->locations = malloc(bug->bugLocations->size * sizeof(Location));
 	    }
 	    if ( bug->bugLocations->count >= bug->bugLocations->size ) {
 		bug->bugLocations->size = bug->bugLocations->size * 2;
-		int *tempArray = realloc(bug->bugLocations->locations, bug->bugLocations->size * sizeof(Location));
+		int *tempArray = realloc(bug->bugLocations->locations, bug->bugLocations->locations * sizeof(Location));
 		if (tempArray) {
-		     bug->bugLocations->locations = (Location *)tempArray;
-		     memset(&bug->bugLocations->locations[bug->bugLocations->count], 0, (bug->bugLocations->size/2) * sizeof(Location));
+		     bug->bugLocations->locations = tempArray;
 		} else {
 		    printf("Could not expand Locations  array. Exiting parsing");
 		    exit(1);
 		}	
 	    } 
-	    //Location *loc = calloc(1, sizeof(Location));
-	    Location *loc = &bug->bugLocations->locations[bug->bugLocations->count];
+	    Location *loc = calloc(1, sizeof(Location));
 	    char *temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "id");
 	    loc->locationId = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	    temp = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "primary");
-	    printf("%s\n", temp);
 	    if (strcmp(temp, "true") == 0) {
 		loc->primary = 1;
     	    } else {
 		loc->primary = 0;
 	    }
 	    xmlFree((xmlChar *) temp);
+	    if (bug->bugLocations == NULL) {
+		bug->bugLocations = loc;
+	    } else {
+		Location * cur = bug->bugLocations;
+		while (cur->next != NULL) {
+		    cur = cur->next;
+		}
+		cur->next = loc;
+	    }
 	    bug->bugLocations->count++;
 
 	} else if (strcmp(name,"StartLine") == 0) {   
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    cur->startLine = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"EndLine") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    cur->endLine = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"StartColumn") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    cur->startColumn = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"EndColumn") == 0) {
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader);
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    cur->endColumn = strtol(temp, NULL, 10);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"Explanation") == 0) {
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader); 
 	    cur->explanation = trim(temp);
 	    xmlFree((xmlChar *) temp);
 	} else if (strcmp(name,"SourceFile") == 0) {
-	    Location * cur = &bug->bugLocations->locations[bug->bugLocations->count-1];
+	    Location * cur = bug->bugLocations->locations[bug->bugLocations->count-1];
 	    char *temp = (char *) xmlTextReaderReadInnerXml(reader); 
 	    cur->sourceFile = trim(temp);
 	    xmlFree((xmlChar *) temp);
@@ -602,7 +540,7 @@ ScarfXmlReader *NewScarfXmlReaderFromFile(char *filename, char *encoding)
 {
     struct Callback *calls= calloc(1, sizeof(struct Callback));
     ScarfXmlReader *reader = malloc(sizeof(ScarfXmlReader));
-    reader->reader = xmlReaderForFile(filename, encoding, 0);
+    reader->reader = xmlNewTextReaderForFile(filename, encoding, 0);
     reader->callback = calls;
     return reader;
 }
@@ -610,7 +548,7 @@ ScarfXmlReader *NewScarfXmlReaderFromString(char *str, char *encoding)
 {
     struct Callback *calls= calloc(1, sizeof(struct Callback));
     ScarfXmlReader *reader = malloc(sizeof(ScarfXmlReader));
-    reader->reader = xmlReaderForDoc((xmlChar *)str, NULL, encoding, 0);
+    reader->reader = xmlNewTextReaderForDoc(str, NULL, encoding, 0);
     reader->callback = calls;
     return reader;
 }
@@ -618,7 +556,7 @@ ScarfXmlReader *NewScarfXmlReaderFromFd(int fd, char *encoding)
 {
     struct Callback *calls= calloc(1, sizeof(struct Callback));
     ScarfXmlReader *reader = malloc(sizeof(ScarfXmlReader));
-    reader->reader = xmlReaderForFd(fd, NULL, encoding, 0);
+    reader->reader = xmlNewTextReaderForFd(fd, NULL, encoding, 0);
     reader->callback = calls;
     return reader;
 }
@@ -626,7 +564,7 @@ ScarfXmlReader *NewScarfXmlReaderFromMemory(char *loc, int size, char *encoding)
 {
     struct Callback *calls= calloc(1, sizeof(struct Callback));
     ScarfXmlReader *reader = malloc(sizeof(ScarfXmlReader));
-    reader->reader = xmlReaderForMemory(loc, size, NULL, encoding, 0);
+    reader->reader = xmlNewTextReaderForMemory(loc, size, NULL, encoding, 0);
     reader->callback = calls;
     return reader;
 }
@@ -646,7 +584,7 @@ void SetMetricSummaryCallback(ScarfXmlReader *reader, MetricSummaryCallback call
     reader->callback->metricSumCall = callback;
 }
 void SetFinalCallback(ScarfXmlReader *reader, FinalCallback callback) {
-    reader->callback->finishCallback = callback;
+    reader->callback->finishCall = callback;
 }
 void SetInitialCallback(ScarfXmlReader *reader, InitialCallback callback) {
     reader->callback->initialCall = callback;
@@ -663,13 +601,13 @@ MetricCallback GetMetricCallback(ScarfXmlReader *reader, MetricCallback callback
     return reader->callback->metricCall;
 }
 BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader *reader, BugSummaryCallback callback) {
-    return reader->callback->bugSumCall;
+    returnreader->callback->bugSumCall;
 }
 MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader *reader, MetricSummaryCallback callback) {
     return reader->callback->metricSumCall;
 }
 FinalCallback GetFinalCallback(ScarfXmlReader *reader, FinalCallback callback) {
-    return reader->callback->finishCallback;
+    return reader->callback->finishCall;
 }
 InitialCallback GetInitialCallback(ScarfXmlReader *reader, InitialCallback callback) {
     return reader->callback->initialCall;
@@ -678,7 +616,7 @@ void *GetCallbackData(ScarfXmlReader *reader, void *callbackData) {
     return reader->callback->CallbackData;
 }
 
-int _clearBug(BugInstance * bug) {
+void _clearBug(BugInstance * bug) {
     free(bug->assessmentReportFile);
     free(bug->buildId);
     free(bug->bugCode);
@@ -688,55 +626,43 @@ int _clearBug(BugInstance * bug) {
     free(bug->bugGroup);
     free(bug->bugMessage);
     free(bug->resolutionSuggestion);
-    free(bug->instanceLocation.xPath);
-    if (bug->cweIds != NULL){
-	free(bug->cweIds->cweids);
-    }
+    free(bug->instanceLocation->xPath);
+    free(bug->cweIds->cweids);
     free(bug->cweIds);
-    
-
     int i;
-    if ( bug->methods != NULL ) {
-	for ( i = 0; i < bug->methods->count; i++ ) {
-	    free(bug->methods->methods[i].name);
-	}
-    
-	free(bug->methods->methods);
-	bug->methods->count = 0;
-	free(bug->methods);
+    for ( i = 0; i < bug->methods->count; i++ ) {
+        free(bug->methods->methods[i]->name);
     }
+    free(bug->methods->methods);
+    free(bug->methods);
     for ( i = 0; i < bug->bugLocations->count; i++ ) {
-        free(bug->bugLocations->locations[i].explanation);
-        free(bug->bugLocations->locations[i].sourceFile);
-
+        free(bug->bugLocations->locations[i]->explanation);
+        free(bug->bugLocations->locations[i]->sourceFile);
     }
-    bug->bugLocations->count = 0;
-
     free(bug->bugLocations->locations);
     free(bug->bugLocations);
 
-    memset(bug, 0, sizeof(BugInstance));
-    return 0;
+    memset(bug, 0, sizeof(bug));
+
 }
 
-int  _clearMetric(Metric * metric) {
+void _clearMetric(Metric * metric) {
     free(metric->type);
     free(metric->className);
-    free(metric->methodName);
+    free(metric->method);
     free(metric->sourceFile);
     free(metric->value);
     memset(metric, 0, sizeof(Metric));
-    return 0;
 }
 
-void * Parse(ScarfXmlReader *hand)
+int Parse(ScarfXmlReader *hand)
 {
-    void *kill = NULL;
     xmlTextReaderPtr reader = hand->reader;
     if (reader != NULL) {
 	char *name;
 	int finished = 0;
 	int type;
+	void *kill = NULL;
 	int ret = 1;
 	BugInstance *bug = initializeBug();
 	Metric *metric = initializeMetric();
@@ -752,7 +678,7 @@ void * Parse(ScarfXmlReader *hand)
 		    initial->tool_version = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "tool_version");
 		    initial->uuid = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "uuid");
 		    kill = callback->initialCall(initial, callback->CallbackData);
-		    DeleteInitial(initial);
+		    CloseInitial(initial);
 
 	        } else if ( strcmp ( name, "BugInstance" ) == 0 && callback->bugCall != NULL ) {
 		    int foundBug = 0;
@@ -791,7 +717,7 @@ void * Parse(ScarfXmlReader *hand)
 			type = xmlTextReaderNodeType(reader); 
 			if (type == 1) {
 			    if (strcmp(name, "BugCategory") == 0) {
-				BugSummary *temp = calloc(1, sizeof(BugSummary));
+				BugSummary *temp = malloc(sizeof(BugSummary));
 				char *att = (char *) xmlTextReaderGetAttribute(reader, (xmlChar *) "count");
 				temp->count = strtol(att, NULL, 10);
 				xmlFree((xmlChar *) att);
@@ -891,7 +817,7 @@ void * Parse(ScarfXmlReader *hand)
 	if (ret != 0) {
 	    printf("Failed to parse set file\n");
 	    return NULL;
-	} else if ( kill != NULL && !finished ) {
+	} else if ( kill != NULL and !finished ) {
 	    if ( callback->finishCallback != NULL ) {
 		kill = callback->finishCallback(kill, callback->CallbackData);
 	    }

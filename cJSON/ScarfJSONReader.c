@@ -17,7 +17,7 @@ typedef struct Callback {
     InitialCallback initialCall;
     BugSummaryCallback bugSumCall;
     MetricSummaryCallback metricSumCall;
-    FinalCallback finishCallback;
+    FinalCallback finalCallback;
     void * CallbackData;
 } Callback;
 
@@ -46,15 +46,15 @@ typedef struct State {
     Callback * callbacks;
 } State;
 
-typedef struct JSONToHash {
+typedef struct ScarfJSONReader {
     FILE * file;
     yajl_handle reader;
     State * state;
     int filetype;
-} JSONToHash;
+} ScarfJSONReader;
 
-///////////////////////////////Free initial struct//////////////////////////////////
-int freeInitial( Initial * initial ){
+///////////////////////////////Delete initial struct//////////////////////////////////
+int DeleteInitial( Initial * initial ){
     free( initial->tool_name );
     free( initial->tool_version );
     free( initial->uuid );
@@ -63,22 +63,21 @@ int freeInitial( Initial * initial ){
 }
 
 
-///////////////////////////////Free a Metric///////////////////////////////////
-int freeMetric(Metric * metric)
+///////////////////////////////Delete a Metric///////////////////////////////////
+int DeleteMetric(Metric * metric)
 {
     free( metric->type);
-    free( metric->clas);
-    free( metric->method);
+    free( metric->className);
+    free( metric->methodName);
     free( metric->sourceFile);
     free( metric->value);
     free(metric);
     return 0;
 }
 
-///////////////////////////////Free a BugInstance///////////////////////////////////
-int freeBug(BugInstance * bug)
+///////////////////////////////Delete a BugInstance///////////////////////////////////
+int DeleteBug(BugInstance * bug)
 {
-    int number = 0;
     free( bug->assessmentReportFile);
     free( bug->buildId);
     free( bug->bugCode);
@@ -88,40 +87,105 @@ int freeBug(BugInstance * bug)
     free( bug->bugGroup);
     free( bug->bugMessage);
     free( bug->resolutionSuggestion);
-    free( bug->instanceLocation);
+//    free( bug->instanceLocation);
 
     CweIds * cwe = bug->cweIds;
-    CweIds * prevCwe;
-    while (cwe != NULL) {
-        prevCwe = cwe;
-        cwe = cwe->next;
-        free(prevCwe);
+    if (cwe !=  NULL){
+	free(cwe->cweids);
+	free(cwe);
     }
 
-    Method * method = bug->methods;
-    Method * prevMethod;
-    while (method != NULL) {
-        prevMethod = method;
-        method = method->next;
-        free( prevMethod->name);
-        free(prevMethod);
+    Methods * method = bug->methods;
+    if ( method != NULL ) {
+	int i;
+	for ( i < 0; i < method->count; i++){
+	    free(method->methods[i].name);
+	}
+	free(method->methods);
+	free(method);
     }
 
-    Location * loc = bug->bugLocations;
-    Location * prevLoc;
-    while (loc != NULL) {
-        prevLoc = loc;
-        loc = loc->next;
-        free( prevLoc->sourceFile);
-        free( prevLoc->explanation);
-        free(prevLoc);
+    BugLocations * bugloc = bug->bugLocations;
+    if (bugloc != NULL) {
+	int i;
+	for(i = 0; i < bugloc->count; i++) {
+	    free(bugloc->locations[i].sourceFile);
+	    free(bugloc->locations[i].explanation);
+	}
+	free(bugloc->locations);
+	free(bugloc);
     }
-    number = number + 1;
 
     free(bug);
     return 0;
 }
 
+///////////////////////////////Clear initial struct//////////////////////////////////
+int _clearInitial( Initial * initial ){
+    free( initial->tool_name );
+    free( initial->tool_version );
+    free( initial->uuid );
+    memset(initial, 0 , sizeof(Initial));
+    return 0;
+}
+
+
+///////////////////////////////Delete a Metric///////////////////////////////////
+int _clearMetric(Metric * metric)
+{
+    free( metric->type);
+    free( metric->className);
+    free( metric->methodName);
+    free( metric->sourceFile);
+    free( metric->value);
+    memset(metric, 0, sizeof(Metric));
+    return 0;
+}
+
+///////////////////////////////Delete a BugInstance///////////////////////////////////
+int _clearBug(BugInstance * bug)
+{
+    free( bug->assessmentReportFile);
+    free( bug->buildId);
+    free( bug->bugCode);
+    free( bug->bugRank);
+    free( bug->className);
+    free( bug->bugSeverity);
+    free( bug->bugGroup);
+    free( bug->bugMessage);
+    free( bug->resolutionSuggestion);
+//    free( bug->instanceLocation);
+
+    CweIds * cwe = bug->cweIds;
+    if (cwe !=  NULL){
+	free(cwe->cweids);
+	free(cwe);
+    }
+
+    Methods * method = bug->methods;
+    if ( method != NULL ) {
+	int i;
+	for ( i < 0; i < method->count; i++){
+	    free(method->methods[i].name);
+	}
+	free(method->methods);
+	free(method);
+    }
+
+    BugLocations * bugloc = bug->bugLocations;
+    if (bugloc != NULL) {
+	int i;
+	for(i = 0; i < bugloc->count; i++) {
+	    free(bugloc->locations[i].sourceFile);
+	    free(bugloc->locations[i].explanation);
+	}
+	free(bugloc->locations);
+	free(bugloc);
+    }
+
+    memset(bug, 0, sizeof(BugInstance));
+    return 0;
+}
 
 ////////////////////////handlers//////////////////////////////
 static int handle_null(void * ctx)
@@ -136,18 +200,18 @@ static int handle_boolean(void * data, int boolean)
         if ( ctx->isArray ) {
             if ( strcmp("BugLocations", ctx->arrayType) == 0 ) {
                 if ( boolean ) {
-                    ctx->loc->primary = 1;
+                    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].primary = 1;
 		}
                 else {
-                    ctx->loc->primary = 0;
+                    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].primary = 0;
                     //self->data[self->arrayType][self->arrayLoc]["primary"] = 0
 		}
 	    } else if ( strcmp("Methods",ctx->arrayType) == 0) {
                 if ( boolean ) {
-                    ctx->method->primary = 1;
+                    ctx->bug->methods->methods[ctx->bug->methods->count].primary = 1;
 		}
                 else {
-                    ctx->method->primary = 0;
+                    ctx->bug->methods->methods[ctx->bug->methods->count].primary = 0;
 		}
 	    }
 	}
@@ -157,6 +221,7 @@ static int handle_boolean(void * data, int boolean)
 
 static int handle_number(void * data, const char * s, size_t l)
 {
+    printf("handleNumber\n");
     struct State * ctx = (struct State *) data;
     char * stringNumber = malloc(l + 1);
     strncpy(stringNumber , s, l);
@@ -165,45 +230,61 @@ static int handle_number(void * data, const char * s, size_t l)
     free(stringNumber);
     if ( strcmp("bug", ctx->hashType) == 0 ) {
 	if ( strncmp(ctx->curr, "Start", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation->lineNum.start = number;
+	    ctx->bug->instanceLocation.lineNum.start = number;
 	} else if ( strncmp(ctx->curr, "BugId", ctx->currLength) == 0 ) {
 	    ctx->bug->bugId = number;
 	} else if ( strncmp(ctx->curr, "End", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation->lineNum.end = number;
+	    ctx->bug->instanceLocation.lineNum.end = number;
 	} else if ( ctx->isArray ) {
 	    if ( strncmp("BugLocations", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
 		if (strncmp("primary", ctx->curr, ctx->currLength) == 0) {
-		    ctx->loc->primary = number;
+		    //ctx->loc->primary = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].primary = number;
 		} else if (strncmp("LocationId", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->locationId = number;
+                    //ctx->loc->locationId = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].locationId = number;
 		} else if (strncmp("StartLine", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->startLine = number;
+                    //ctx->loc->startLine = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].startLine = number;
 		} else if (strncmp("EndLine", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->endLine = number;
+                    //ctx->loc->endLine = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].endLine = number;
 		} else if (strncmp("StartColumn", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->startColumn = number;
+                    //ctx->loc->startColumn = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].startColumn = number;
 		} else if (strncmp("EndColumn", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->endColumn = number;
+                    //ctx->loc->endColumn = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].endColumn = number;
 		}
     	    } else if ( strncmp("Methods", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
 		if (strncmp("primary", ctx->curr, ctx->currLength) == 0) {
-		    ctx->method->primary = number;
+		    //ctx->method->primary = number;
+		    ctx->bug->methods->methods[ctx->bug->methods->count].primary = number;
 		} else if (strncmp("MethodId", ctx->curr, ctx->currLength) == 0) {
-                    ctx->method->methodId = number;
+                    //ctx->method->methodId = number;
+		    ctx->bug->methods->methods[ctx->bug->methods->count].methodId = number;
 		}
 	    } else if ( strncmp("CweIds", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
-		CweIds * cwe = 	calloc(1, sizeof(CweIds));
-		cwe->cweid = number;
-		if (ctx->bug->cweIds == NULL) {
-		    ctx->bug->cweIds = cwe;
-		} else {
-		    CweIds *  cur = ctx->bug->cweIds;
-		    while (cur->next != NULL) {
-			cur = cur->next;
-		    }
-		    cur->next = cwe;
+		
+		if ( ctx->bug->cweIds == NULL ) {
+		    ctx->bug->cweIds = malloc(sizeof(CweIds));
+		    ctx->bug->cweIds->size = 5;
+		    ctx->bug->cweIds->count = 0;
+		    ctx->bug->cweIds->cweids = malloc(ctx->bug->cweIds->size * sizeof(int));
 		}
-	    
+		if ( ctx->bug->cweIds->count >= ctx->bug->cweIds->size ) {
+		    ctx->bug->cweIds->size = ctx->bug->cweIds->size * 2;
+		    int *tempArray = realloc(ctx->bug->cweIds->cweids, ctx->bug->cweIds->size * sizeof(int));
+		    if (tempArray) {
+			ctx->bug->cweIds->cweids = tempArray;
+		    } else {
+			printf("Could not expand CweID array. Exiting parsing");
+			exit(1);
+		    }
+		}	
+		
+		ctx->bug->cweIds->cweids[ctx->bug->cweIds->count] = number;
+		ctx->bug->cweIds->count++;
             }
 	}
     } else if ( strcmp("metric", ctx->hashType) == 0) {
@@ -241,6 +322,7 @@ static int handle_number(void * data, const char * s, size_t l)
 static int handle_string(void * data, const unsigned char * string,
                            size_t stringLen)
 {
+    printf("handlestr\n");
     char * stringVal = (char *) string;
     struct State * ctx = (struct State *) data;
     char * stringValue = malloc(stringLen + 1);
@@ -260,6 +342,7 @@ static int handle_string(void * data, const unsigned char * string,
 	    ctx->requiredStart = 1;
 	    if ( ctx->callbacks->initialCall != NULL ) {
 		ctx->returnValue = ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
+		DeleteInitial(ctx->initial);
 		if ( ctx->returnValue != NULL ) {
 		    return 0;
 		}
@@ -294,61 +377,82 @@ static int handle_string(void * data, const unsigned char * string,
 	    ctx->bug->resolutionSuggestion = stringValue; 
 
         } else if ( strncmp(ctx->curr, "Xpath", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation->xPath = stringValue; 
+	    ctx->bug->instanceLocation.xPath = stringValue; 
         } else if ( strncmp(ctx->curr, "Start", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation->lineNum.start = number;
+	    ctx->bug->instanceLocation.lineNum.start = number;
         } else if ( strncmp(ctx->curr, "End", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation->lineNum.end = number;
+	    ctx->bug->instanceLocation.lineNum.end = number;
         
 	} else if ( ctx->isArray ) {
 	    if ( strncmp("BugLocations", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
                 if (strncmp("primary", ctx->curr, ctx->currLength) == 0) {
 		    if ( strncmp(stringVal, "true", stringLen) == 0 ) {
-			ctx->loc->primary = 1;
+			//ctx->loc->primary = 1;
+			ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].primary = 1;
 		    } else {
-			ctx->loc->primary = 0;
+			//ctx->loc->primary = 0;
+			ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].primary = 0;
 		    }
                 } else if (strncmp("LocationId", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->locationId = number;
+                    //ctx->loc->locationId = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].locationId = number;
                 } else if (strncmp("StartLine", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->startLine = number;
+                    //ctx->loc->startLine = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].startLine = number;
                 } else if (strncmp("EndLine", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->endLine = number;
+                    //ctx->loc->endLine = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].endLine = number;
                 } else if (strncmp("StartColumn", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->startColumn = number;
+                    //ctx->loc->startColumn = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].startColumn = number;
                 } else if (strncmp("EndColumn", ctx->curr, ctx->currLength) == 0) {
-                    ctx->loc->endColumn = number;
+                    //ctx->loc->endColumn = number;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].endColumn = number;
                 } else if (strncmp("SourceFile", ctx->curr, ctx->currLength) == 0) {
-		    ctx->loc->sourceFile = stringValue;
+		    //ctx->loc->sourceFile = stringValue;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].sourceFile = stringValue;
 		} else if (strncmp("Explanation", ctx->curr, ctx->currLength) == 0) {
-		    ctx->loc->explanation = stringValue;
+		    //ctx->loc->explanation = stringValue;
+		    ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count].explanation = stringValue;
                 }
 
 
             } else if ( strncmp("Methods", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
                 if (strncmp("primary", ctx->curr, ctx->currLength) == 0) {
 		    if ( strncmp(stringVal, "true", stringLen) == 0 ) {
-			ctx->method->primary = 1;
+//			ctx->method->primary = 1;
+			ctx->bug->methods->methods[ctx->bug->methods->count].primary = 1;
 		    } else {
-			ctx->method->primary = 0;
+//			ctx->method->primary = 0;
+			ctx->bug->methods->methods[ctx->bug->methods->count].primary = 0;
 		    }
                 } else if (strncmp("MethodId", ctx->curr, ctx->currLength) == 0) {
-                    ctx->method->methodId = number;
+//                    ctx->method->methodId = number;
+		    ctx->bug->methods->methods[ctx->bug->methods->count].methodId = number;
                 } else if (strncmp("name", ctx->curr, ctx->currLength) == 0) {
-		    ctx->method->name = stringValue;
+//		    ctx->method->name = stringValue;
+		    ctx->bug->methods->methods[ctx->bug->methods->count].name = stringValue;
 		}
             } else if ( strncmp("CweIds", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
-                CweIds * cwe =  calloc(1, sizeof(CweIds));
-                cwe->cweid = number;
-                if (ctx->bug->cweIds == NULL) {
-                    ctx->bug->cweIds = cwe;
-                } else {
-                    CweIds *  cur = ctx->bug->cweIds;
-                    while (cur->next != NULL) {
-                        cur = cur->next;
-                    }
-                    cur->next = cwe;
-                }
+		if ( ctx->bug->cweIds == NULL ) {
+		    ctx->bug->cweIds = malloc(sizeof(CweIds));
+		    ctx->bug->cweIds->size = 5;
+		    ctx->bug->cweIds->count = 0;
+		    ctx->bug->cweIds->cweids = malloc(ctx->bug->cweIds->size * sizeof(int));
+		}
+		if ( ctx->bug->cweIds->count >= ctx->bug->cweIds->size ) {
+		    ctx->bug->cweIds->size = ctx->bug->cweIds->size * 2;
+		    int *tempArray = realloc(ctx->bug->cweIds->cweids, ctx->bug->cweIds->size * sizeof(int));
+		    if (tempArray) {
+			ctx->bug->cweIds->cweids = tempArray;
+		    } else {
+			printf("Could not expand CweID array. Exiting parsing");
+			exit(1);
+		    }
+		}	
+		
+		ctx->bug->cweIds->cweids[ctx->bug->cweIds->count] = number;
+		ctx->bug->cweIds->count++;
 	    }
 	}
 
@@ -358,9 +462,9 @@ static int handle_string(void * data, const unsigned char * string,
 	} else if ( strncmp(ctx->curr, "Value", ctx->currLength) == 0 ) {
             ctx->metric->value = stringValue; 
 	} else if ( strncmp(ctx->curr, "Class", ctx->currLength) == 0 ) {
-            ctx->metric->clas = stringValue;
+            ctx->metric->className = stringValue;
 	} else if ( strncmp(ctx->curr, "Method", ctx->currLength) == 0 ) {
-            ctx->metric->method = stringValue;
+            ctx->metric->methodName = stringValue;
 	} else if ( strncmp(ctx->curr, "SourceFile", ctx->currLength) == 0 ) {
             ctx->metric->sourceFile = stringValue; 
 	} else if ( strncmp(ctx->curr, "Type", ctx->currLength) == 0 ) {
@@ -430,9 +534,9 @@ static int handle_map_key(void * data, const  unsigned char * string,
             printf("No BugInstances or Metrics present");
         }
 	strcpy(ctx->hashType, "metrsum");
-    } else if ( strncmp(stringVal, "InstanceLocation", stringLen) == 0 && ctx->depth == 3 ) {
-        ctx->bug->instanceLocation = calloc(1, sizeof(InstanceLocation));
-    }
+    }// else if ( strncmp(stringVal, "InstanceLocation", stringLen) == 0 && ctx->depth == 3 ) {
+//        ctx->bug->instanceLocation = calloc(1, sizeof(InstanceLocation));
+//    }
     free(ctx->curr);
     ctx->curr = malloc(stringLen + 1);
     strncpy(ctx->curr, stringVal, stringLen);
@@ -444,23 +548,17 @@ static int handle_map_key(void * data, const  unsigned char * string,
 static int handle_start_map(void * data)
 {
     struct State * ctx = (struct State *) data;
-    if (ctx->isArray && ctx->depth == 3) {
+/*    if (ctx->isArray && ctx->depth == 3) {
 	if ( strncmp( ctx->arrayType, "BugLocations", ctx->arrayTypeLength-1 ) == 0 ) {
 	    ctx->loc = calloc(1, sizeof(Location)); 
 	} else if  ( strncmp( ctx->arrayType, "Methods", ctx->arrayTypeLength-1 ) == 0 ) {
 	    ctx->method = calloc(1, sizeof(Method)); 
     	} 
-    } else if (ctx->depth == 3) {
+    } else*/ if (ctx->depth == 3) {
 	if ( strcmp(ctx->hashType, "bugsum") == 0 ) {
 	    ctx->bugSum = calloc(1, sizeof(BugSummary));
 	} else if ( strcmp(ctx->hashType, "metrsum") == 0 ) {
 	    ctx->metricSum = calloc(1, sizeof(MetricSummary));
-	}
-    } else if (ctx->depth == 2) {
-	if ( strcmp(ctx->hashType, "bug") == 0 ) {
-	    ctx->bug = calloc(1, sizeof(BugInstance));
-	} else if ( strcmp(ctx->hashType, "metric") == 0 ) {
-	    ctx->metric = calloc(1, sizeof(Metric));
 	}
     }
     ctx->depth = ctx->depth + 1;
@@ -475,28 +573,32 @@ static int handle_end_map(void * data)
         if ( strcmp("bug", ctx->hashType) == 0 ) {
 	    if ( ctx->callbacks->bugCall != NULL ) {
 		ctx->returnValue = ctx->callbacks->bugCall(ctx->bug, ctx->callbacks->CallbackData);
+		_clearBug(ctx->bug);
 		if ( ctx->returnValue != NULL ) {
 		    return 0;
 		}
 	    } else {
-		freeBug(ctx->bug);
+		DeleteBug(ctx->bug);
 	    }
 	} else if ( strcmp("metric", ctx->hashType) == 0 ) {
             if ( ctx->callbacks->metricCall != NULL ) {
 		ctx->returnValue = ctx->callbacks->metricCall(ctx->metric, ctx->callbacks->CallbackData);
+		_clearMetric(ctx->metric);
 		if ( ctx->returnValue != NULL ) {
 		    return 0;
 		}
 	    } else {
-		freeMetric(ctx->metric);
+		DeleteMetric(ctx->metric);
 	    }
 	} else if ( ctx->callbacks->bugSumCall != NULL && ctx->bugSummaries != NULL) {
             ctx->returnValue = ctx->callbacks->bugSumCall(ctx->bugSummaries, ctx->callbacks->CallbackData);
+	    //DeleteBugSummary(ctx->bugSummaries);
 	    if ( ctx->returnValue != NULL ) {
 		return 0;
 	    }
 	} else if ( ctx->callbacks->metricSumCall != NULL && ctx->metricSummaries != NULL) {
             ctx->returnValue = ctx->callbacks->metricSumCall(ctx->metricSummaries, ctx->callbacks->CallbackData);
+	    //DeleteMetricSummary(ctx->metricSummaries);
 	    if ( ctx->returnValue != NULL ) {
 		return 0;
 	    }
@@ -504,26 +606,52 @@ static int handle_end_map(void * data)
     } else if (ctx->depth == 3) {
 	if (ctx->isArray) {
 	    if ( strncmp( ctx->arrayType, "BugLocations", ctx->arrayTypeLength ) == 0 ) {
-                if (ctx->bug->bugLocations == NULL) {
-                    ctx->bug->bugLocations = ctx->loc;
-                } else {
-                    Location *  cur = ctx->bug->bugLocations;
-                    while (cur->next != NULL) {
-                        cur = cur->next;
-                    }
-                    cur->next = ctx->loc;
+		ctx->bug->bugLocations->count++;
+		if ( ctx->bug->bugLocations->count >= ctx->bug->bugLocations->size ) {
+		    ctx->bug->bugLocations->size = ctx->bug->bugLocations->size * 2;
+		    int *tempArray = realloc(ctx->bug->bugLocations->locations, ctx->bug->bugLocations->size * sizeof(Location));
+		    if (tempArray) {
+			 ctx->bug->bugLocations->locations = (Location *)tempArray;
+			 memset(&ctx->bug->bugLocations->locations[ctx->bug->bugLocations->count], 0, (ctx->bug->bugLocations->size/2) * sizeof(Location));
+		    } else {
+		        printf("Could not expand Locations  array. Exiting parsing");
+	                exit(1);
+	            }
                 }
+
+//                if (ctx->bug->bugLocations == NULL) {
+//                    ctx->bug->bugLocations = ctx->loc;
+//                } else {
+//                    Location *  cur = ctx->bug->bugLocations;
+//                    while (cur->next != NULL) {
+//                        cur = cur->next;
+//                    }
+//                    cur->next = ctx->loc;
+//                }
 	        	     
 	    } else if  ( strncmp( ctx->arrayType, "Methods", ctx->arrayTypeLength ) == 0 ) {
-	        if (ctx->bug->methods == NULL) {
-		    ctx->bug->methods = ctx->method;
-	        } else {
-		    Method *  cur = ctx->bug->methods;
-		    while (cur->next != NULL) {
-			cur = cur->next;
-		    }
-		    cur->next = ctx->method;
-	        }
+		ctx->bug->methods->count++;
+		if ( ctx->bug->methods->count >= ctx->bug->methods->size ) {
+		    ctx->bug->methods->size = ctx->bug->methods->size * 2;
+		    int *tempArray = realloc(ctx->bug->methods->methods, ctx->bug->methods->size * sizeof(Methods));
+		    if (tempArray) {
+			ctx->bug->methods->methods = (Method *)tempArray;
+			memset(&ctx->bug->methods->methods[ctx->bug->methods->count], 0, (ctx->bug->methods->size/2) * sizeof(Method));
+		    } else {
+		        printf("Could not expand Methods array. Exiting parsing");
+	                exit(1);
+	            }
+                }
+
+//	        if (ctx->bug->methods == NULL) {
+//		    ctx->bug->methods = ctx->method;
+//	        } else {
+//		    Method *  cur = ctx->bug->methods;
+//		    while (cur->next != NULL) {
+//			cur = cur->next;
+//		    }
+//		    cur->next = ctx->method;
+//	        }
 	    }
 	} else {
             if ( strcmp(ctx->hashType, "bugsum") == 0 ) {
@@ -552,6 +680,7 @@ static int handle_end_map(void * data)
     } else if ( ctx->depth == 0 ) {
         if ( ctx->callbacks->initialCall != NULL && ! ctx->requiredStart ) {
             ctx->returnValue = ctx->callbacks->initialCall(ctx->initial, ctx->callbacks->CallbackData);
+	    DeleteInitial(ctx->initial);
 	    if ( ctx->returnValue != NULL ) {
 		return 0;
 	    }
@@ -571,6 +700,22 @@ static int handle_start_array(void * data)
 	ctx->arrayType = malloc(ctx->currLength);
         strcpy(ctx->arrayType, ctx->curr);
 	ctx->arrayTypeLength = ctx->currLength;
+	if ( strncmp("BugLocations", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
+	    if ( ctx->bug->bugLocations == NULL ) {
+                ctx->bug->bugLocations = malloc(sizeof(BugLocations));
+                ctx->bug->bugLocations->size = 5;
+                ctx->bug->bugLocations->count = 0;
+                ctx->bug->bugLocations->locations = calloc(1, ctx->bug->bugLocations->size * sizeof(Location));
+            }
+	}
+	if ( strncmp("Methods", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
+            if ( ctx->bug->methods == NULL ) {
+                ctx->bug->methods = malloc(sizeof(Methods));
+                ctx->bug->methods->size = 5;
+                ctx->bug->methods->count = 0;
+                ctx->bug->methods->methods = calloc(1, ctx->bug->methods->size * sizeof(Method));
+            }
+	}
     }
     return 1;
 }
@@ -602,51 +747,55 @@ static yajl_callbacks callbacks = {
 
 
 //////////////////////initializer and parser////////////////////////////////////////
-JSONToHash * newJSONToHashFilename(char * filename)
+ScarfJSONReader * NewScarfJSONReaderFromFilename(char * filename)
 {
     struct State * status = calloc(1, sizeof(struct State));
     struct Callback * calls= calloc(1, sizeof(struct Callback));
     status->callbacks = calls;
-    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
-    reader->file = fopen(filename, 'w');
+    ScarfJSONReader * reader = calloc(1, sizeof(ScarfJSONReader));
+    reader->file = fopen(filename, "r");
     if (reader->file == NULL){
         printf("File could not open\n");
-        free(writerInfo);
         return NULL;
     }
     reader->filetype = 0;
+    status->bug = calloc(1, sizeof(BugInstance));
+    status->metric = calloc(1, sizeof(Metric));
     reader->state = status;
     return reader;
 }
-JSONToHash * newJSONToHashFile(FILE * file)
+ScarfJSONReader * NewScarfJSONReaderFromFile(FILE * file)
 {
     struct State * status = calloc(1, sizeof(struct State));
     struct Callback * calls= calloc(1, sizeof(struct Callback));
     status->callbacks = calls;
-    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
+    ScarfJSONReader * reader = calloc(1, sizeof(ScarfJSONReader));
     reader->filetype = 1;
     reader->file = file;
+    status->bug = calloc(1, sizeof(BugInstance));
+    status->metric = calloc(1, sizeof(Metric));
     reader->state = status;
     return reader;
 }
-JSONToHash * newJSONToHashString(char * str)
+ScarfJSONReader * NewScarfJSONReaderFromString(char * str, size_t * size)
 {
     struct State * status = calloc(1, sizeof(struct State));
     struct Callback * calls= calloc(1, sizeof(struct Callback));
     status->callbacks = calls;
-    JSONToHash * reader = calloc(1, sizeof(JSONToHash));
-    reader->file = open_memstream (&str, &size);
+    ScarfJSONReader * reader = calloc(1, sizeof(ScarfJSONReader));
+    reader->file = open_memstream (&str, size);
     if (reader->file == NULL){
         printf("File could not open\n");
-        free(writerInfo);
         return NULL;
     }
     reader->filetype = 2;
+    status->bug = calloc(1, sizeof(BugInstance));
+    status->metric = calloc(1, sizeof(Metric));
     reader->state = status;
     return reader;
 }
 
-void closeJSONToHash(JSONToHash * reader) {
+void DeleteScarfJSONReader(ScarfJSONReader * reader) {
     yajl_free(reader->reader);
     free(reader->state->arrayType);
     free(reader->state->curr);
@@ -658,61 +807,61 @@ void closeJSONToHash(JSONToHash * reader) {
     free(reader);
 }
 
-void setBugCallback(JSONToHash * reader, BugCallback callback) {
+void SetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
     reader->state->callbacks->bugCall = callback;
 }
-void setMetricCallback(JSONToHash * reader, MetricCallback callback) {
+void SetMetricCallback(ScarfJSONReader * reader, MetricCallback callback) {
     reader->state->callbacks->metricCall = callback;
 }
-void setBugSummaryCallback(JSONToHash * reader, BugSummaryCallback callback) {
+void SetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback) {
     reader->state->callbacks->bugSumCall = callback;
 }
-void setMetricSummaryCallback(JSONToHash * reader, MetricSummaryCallback callback) {
+void SetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback) {
     reader->state->callbacks->metricSumCall = callback;
 }
-void setFinalCallback(JSONToHash * reader, FinalCallback callback) {
-    reader->state->callbacks->finishCall = callback;
+void SetFinalCallback(ScarfJSONReader * reader, FinalCallback callback) {
+    reader->state->callbacks->finalCallback = callback;
 }
-void setInitialCallback(JSONToHash * reader, InitialCallback callback) {
+void SetInitialCallback(ScarfJSONReader * reader, InitialCallback callback) {
     reader->state->callbacks->initialCall = callback;
 }
-void setCallbackData(JSONToHash * reader, void * callbackData) {
+void SetCallbackData(ScarfJSONReader * reader, void * callbackData) {
     reader->state->callbacks->CallbackData = callbackData;
 }
 
 
-BugCallback getBugCallback(JSONToHash * reader, BugCallback callback) {
+BugCallback GetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
     return reader->state->callbacks->bugCall;
 }
-MetricCallback getMetricCallback(JSONToHash * reader, MetricCallback callback) {
+MetricCallback GetMetricCallback(ScarfJSONReader * reader, MetricCallback callback) {
     return reader->state->callbacks->metricCall;
 }
-BugSummaryCallback getBugSummaryCallback(JSONToHash * reader, BugSummaryCallback callback) {
+BugSummaryCallback GetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback) {
     return reader->state->callbacks->bugSumCall;
 }
-MetricSummaryCallback getMetricSummaryCallback(JSONToHash * reader, MetricSummaryCallback callback) {
+MetricSummaryCallback GetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback) {
     return reader->state->callbacks->metricSumCall;
 }
-FinalCallback getFinalCallback(JSONToHash * reader, FinalCallback callback) {
-    return reader->state->callbacks->finishCall;
+FinalCallback GetFinalCallback(ScarfJSONReader * reader, FinalCallback callback) {
+    return reader->state->callbacks->finalCallback;
 }
-InitialCallback getInitialCallback(JSONToHash * reader, InitialCallback callback) {
+InitialCallback GetInitialCallback(ScarfJSONReader * reader, InitialCallback callback) {
     return reader->state->callbacks->initialCall;
 }
-void * getCallbackData(JSONToHash * reader, void * callbackData) {
+void * GetCallbackData(ScarfJSONReader * reader, void * callbackData) {
     return reader->state->callbacks->CallbackData;
 }
 
 
-void * parse(JSONToHash * hand)
+void * Parse(ScarfJSONReader * hand)
 {
-    hand->reader =  yajl_alloc(&reader->state->callbacks, NULL, status);
+    hand->reader =  yajl_alloc(&callbacks, NULL, hand->state);
     int retval = 0;
 //    yajl_handle hand;
     static unsigned char fileData[65536];
     size_t rd;
     yajl_status stat;
-    FILE * fh = reader->file;
+    FILE * fh = hand->file;
     for (;;) {
         rd = fread((void *) fileData, 1, sizeof(fileData) - 1, fh);
         if (rd == 0) {
@@ -727,13 +876,13 @@ void * parse(JSONToHash * hand)
         if (stat != yajl_status_ok) break;
     }
 /*    if (stat != yajl_status_ok) {
-        unsigned char * str = yajl_get_error(hand->reader, 1, fileData, rd);
+        unsigned char * str = yajl_Get_error(hand->reader, 1, fileData, rd);
         fprintf(stderr, "%s", (const char *) str);
         yajl_free_error(hand->reader, str);
         retval = 1;
     }*/
-    if ( hand->state->callbacks->finishCallback != NULL ) {
-	hand->state->returnValue = hand->state->callbacks->finishCallback(hand->state->returnValue, hand->state->callbacks->CallbackData);
+    if ( hand->state->callbacks->finalCallback != NULL ) {
+	hand->state->returnValue = hand->state->callbacks->finalCallback(hand->state->returnValue, hand->state->callbacks->CallbackData);
     }
     return hand->state->returnValue;
 }

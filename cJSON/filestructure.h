@@ -47,8 +47,8 @@ typedef struct Initial{
 typedef struct Metric{
     int id;
     char *value;
-    char *clas;
-    char *method;
+    char *className;
+    char *methodName;
     char *sourceFile;
     char *type;
 } Metric;
@@ -62,6 +62,11 @@ typedef struct Method{
     struct Method *next;
 } Method;
 
+typedef struct Methods{
+    int count;
+    int size;
+    Method *methods;
+} Methods;
 
 typedef struct Location{
     int primary;
@@ -72,9 +77,13 @@ typedef struct Location{
     int locationId;
     char *explanation;
     char *sourceFile;
-    struct Location *next;
 } Location;
 
+typedef struct BugLocations{
+    int count;
+    int size;
+    Location *locations;
+} BugLocations;
 
 typedef struct {
     int start;
@@ -89,8 +98,9 @@ typedef struct {
 
 
 typedef struct CweIds{
-    int cweid;
-    struct CweIds *next;
+    int *cweids;
+    int count;
+    int size;
 } CweIds;
 
 
@@ -106,9 +116,9 @@ typedef struct {
     char *bugGroup;
     char *assessmentReportFile;
     char *buildId;
-    InstanceLocation *instanceLocation;
-    Method *methods;
-    Location *bugLocations;
+    InstanceLocation instanceLocation;
+    Methods *methods;
+    BugLocations *bugLocations;
 } BugInstance;
 
 
