@@ -275,12 +275,13 @@ class ParseContentHandler(YajlContentHandler):
 
 
 ####################parser##############################
-class JSONToHash:
+class ScarfJSONReader:
     def __init__(self, inputFile):
         self.callbacks = {}
         self.handler = None
         self.parser = None
         self.filename = inputFile
+	self.utf8 = 1;
 
     #################Callback Accessors/Mutators##############
     def SetInitialCallback(self, callback):
@@ -304,6 +305,12 @@ class JSONToHash:
     def SetCallbackData(self, callbackData):
         self.callback["CallbackData"] = callback
 
+    def SetUTF8(self, utf8):
+	self.utf8 = utf8
+
+
+    def GetUTF8(self):
+	return self.utf8
 
     def GetInitialCallback(self):
         return self.callback["InitialCallback"]
@@ -332,6 +339,7 @@ class JSONToHash:
 	ret = None
         self.handler = ParseContentHandler(callbacks)
         self.parser = YajlParser(content_handler = self.handler)
+	self.parser.dont_validate_strings = self.utf8
         fh = self.filename
 	try:
             fh.read()
