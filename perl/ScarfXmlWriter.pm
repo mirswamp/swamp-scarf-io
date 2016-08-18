@@ -36,7 +36,7 @@ my $metric_min_hash;
 #constructer
 sub new
 {
-    my ($class, $handle, $error_level, $pretty_enable) = @_;
+    my ($class, $handle, $encoding, $error_level, $pretty_enable) = @_;
 #    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
     if (openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
@@ -46,10 +46,16 @@ sub new
         open($self->{output}, ">", $handle) or die "invalid output file\n";
 	$self->{filetype} = 1;
     }
-    if  ( $pretty_enable ) {
-	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => 'utf-8' );
+    my $enc;
+    if ($encoding) {
+	$enc = $encoding;
     } else {
-	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => 'utf-8' );
+	$enc = "utf-8";
+    }
+    if  ( $pretty_enable ) {
+	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => $enc );
+    } else {
+	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => $enc );
     }	
     $self->{writer}->xmlDecl('UTF-8' );
     

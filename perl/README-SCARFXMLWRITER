@@ -8,71 +8,71 @@ use ScarfXmlWriter qw/CheckStart CheckBug CheckMetric/;
 
 my $output = "/path/to/file";
 
-my $writer = new ScarfXmlWriter($output);
-my $defaultPretty = $writer->GetPretty;
-my $defaultErrorLevel = $writer->GetErrorLevel;
-$writer->setPretty(0);
-$writer->setErrorLevel(0);
+my $writer = new ScarfXmlWriter($output, "utf-8");
+my $defaultPretty = $writer->GetPretty();
+my $defaultErrorLevel = $writer->GetErrorLevel();
+$writer->SetPretty(0);
+$writer->SetErrorLevel(0);
 
 my @errors = ();
-push @errors, CheckStart($initial_details);
-push @errors, CheckBug($bug);
-push @errors, CheckMetric($metric);
+push @errors, CheckStart($initialData);
+push @errors, CheckBug($bugData);
+push @errors, CheckMetric($metricData);
 
-$writer->AddStartTag($initial_details);
-$writer->AddBugInstance($bug);
-$writer->AddMetric($metric);
-$writer->AddSummary;
-$writer->AddEndTag;
+$writer->AddStartTag($initialData);
+$writer->AddBugInstance($bugData);
+$writer->AddMetric($metricData);
+$writer->AddSummary();
+$writer->AddEndTag();
 
-$writer->Close;
+$writer->Close();
 ```
 ### DESCRIPTION
-This module provides the ability to convert Perl data structures into SWAMP Common Assessment Results Format (SCARF) formatted documents. It is dependant on XML::Writer library for writing.
+This module provides the ability to convert Perl data structures into SWAMP Common Assessment Results Format (SCARF) XML formatted documents. It is dependant on XML::Writer library for writing.
 
-The writer is controlled primarily by the user through method calls which feed data in to be written. This data is to be structured as a hash containing all fields for a specific section. For details on how the data structures are formatted see below.
+The writer's output is determined by the user through method calls that provide the data to be written. This data is to be structured as a hash containing all fields for a specific section. For details on how the data structures are formatted see below.
 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 ### METHODS
-#### new(FILE [, ERRORLEVEL, PRETTYENABLE])
-This is a class method used to instantiate the writer. FILE is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. ERRORLEVEL is 0, 1, or 2 and sets the error level of the writer (default 2). PRETTYENABLE will enable or disable pretty printing of output with a true or false value respectively (default true).
+#### new(\$file [, \$encoding, \$errorLevel, \$prettyEnable])
+This is a class method used to instantiate the writer. file is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. Encoding is the character encoding to be used when writing (default 'utf-8'). Currently this must be one of 'utf-8' or 'us-ascii'. errorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). prettyEnable will enable or disable pretty printing of output with a true or false value respectively (default true).
 
-#### GetHandle
+#### GetHandle()
 Returns the set handle.
 
-#### GetErrorLevel
+#### GetErrorLevel()
 Returns the current error level of the writer.
 
-#### SetErrorLevel(ERRORLEVEL)
-Allows changing the error level of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and throw exception). If ERRORLEVEL does not equal one of these values does nothing.
+#### SetErrorLevel($errorLevel)
+Allows changing the error level of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and throw exception). If $errorLevel does not equal one of these values does nothing.
 
-#### GetPretty 
+#### GetPretty()
 Returns the current value set to pretty print.
 
-#### SetPretty(PRETTYENABLE)
-If PRETTYENABLE is a true value then enable pretty printing, else disable pretty printing.
+#### SetPretty($prettyEnable)
+If $prettyEnable is a true value then enable pretty printing, else disable pretty printing.
 
-#### CheckStart(INITIALDATA)
+#### CheckStart($initialData)
 Checks INITIALDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
-#### CheckBug(BUGDATA)
+#### CheckBug($bugData)
 Checks BUGDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
-#### CheckMetric(METRICDATA)
+#### CheckMetric($metricData)
 Checks METRICDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
 
-#### AddStartTag(INITIALDATA)
+#### AddStartTag($initialData)
 Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
 
-#### AddBugInstance(BUGDATA) 
+#### AddBugInstance($bugData) 
 Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-#### AddMetric(METRICDATA)
+#### AddMetric($metricData)
 Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-#### AddSummary
+#### AddSummary()
 Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most 1 time before 'AddEndTag'.
 
-#### AddEndTag
+#### AddEndTag()
 Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
 
 

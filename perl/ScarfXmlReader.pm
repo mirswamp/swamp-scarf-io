@@ -32,7 +32,7 @@ sub new
     $self->{parser} = new XML::Parser ();
     $self->{validStart} = 0;
     $self->{validBody} = 0;
-
+    $self->{encoding} = "UTF-8";
     $self->{return} = undef;
 
     bless $self, $class;
@@ -40,6 +40,17 @@ sub new
 }
 
 #################Callback accessors/mutators###################
+sub SetEncoding 
+{
+my ($self, $enc) = @_;
+$self->{encoding} = $enc;
+}
+sub GetEncoding
+{
+my ($self) = @_;
+return $self->{encoding};
+}
+
 
 sub SetInitialCallback
 {
@@ -148,11 +159,11 @@ sub Parse
     #possibly use xsdValidator to verify scarf
     #$self->{parser}->parsefile($self->{source});
     if (openhandle($self->{source}) or ref $self->{source} eq "IO" or ref $self->{source} eq "SCALAR"){ 
-	$self->{parser}->parse($self->{source});
+	$self->{parser}->parse($self->{source}, ProtocolEncoding => $self->{encoding});
     } else {
 	my $file;
 	open($file, "<", $self->{source}) or die "Can't open source with filename ${$self->{source}}\n";
-	$self->{parser}->parse($file);
+	$self->{parser}->parse($file, ProtocolEncoding => $self->{encoding});
     }
     if ( $lastElt eq "FINISHED" ) {
 	return $self->{return};
