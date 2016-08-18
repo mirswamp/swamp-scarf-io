@@ -14,16 +14,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-class ScarfToHash:
+class ScarfXmlReader:
 
     # initialize information
     def __init__(self, inputFile):
         self.inputFile = inputFile
+	self.encoding = None
         self.callback = callback
         self.validStart = 0;
         self.validBody = 0;
 
     #################Callback Accessors/Mutators##############
+    def SetEncoding(self, encoding):
+	self.encoding = encoding
+
     def SetInitialCallback(self, callback):
 	self.callback["InitialCallback"] = callback
 
@@ -46,6 +50,9 @@ class ScarfToHash:
 	self.callback["CallbackData"] = callback
     
     
+    def GetEncoding:
+	return self.encoding
+
     def GetInitialCallback(self):
 	return self.callback["InitialCallback"]
 
@@ -75,7 +82,7 @@ class ScarfToHash:
 	ret = None
         #setup parser
         callback = self.callback
-        for event, elem in etree.iterparse(self.inputFile, events = ("start", "end")):
+        for event, elem in etree.iterparse(self.inputFile, events = ("start", "end"), parser = XMLParser(encoding = self.encoding)):
 
             #parse initial information
             if elem.tag == "AnalyzerReport" and event == "start":

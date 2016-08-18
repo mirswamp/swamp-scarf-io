@@ -20,7 +20,6 @@ from xml.dom import minidom
 from lxml.etree import ElementTree as ET
 from lxml import etree
 
-/
 ###################Handle errors#############################################################
 def error(error_level, message):
     if error_level == 0:
@@ -112,7 +111,7 @@ def CheckBug(bugHash):
 
 
 ##########################################################################################
-class HashToScarf:
+class ScarfXmlWriter:
 
 ##################Initialize Writer##################################################
     def __init__(self, output, error_level, pretty_enable):
@@ -137,12 +136,20 @@ class HashToScarf:
 	self.bodyType = ""
 	self.start = 0
 	self.pretty = pretty_enable
+	self.encoding = "UTF-8"
 
 	self.bugID = 1
 	self.metricID = 1
 
 	self.metricSummaries = {}
 	self.bugSummaries = {}
+
+###########################encoding access/mutate#######################################
+    def GetEncoding(self):
+	return self.encoding
+    def SetEncoding(self, encoding):
+	self.encoding = encoding
+
 
 
 #########################Returns file#######################################################
@@ -193,7 +200,7 @@ class HashToScarf:
 	self.bugSummaries = {}
 
 	writer = self.output
-	writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" )
+	writer.write("<?xml version=\"1.0\" encoding=\"%s\"?>\n" % (self.encoding) )
 	writer.write("<AnalyzerReport tool_name=\"%s\" tool_version=\"%s\" uuid=\"%s\">\n" % (initial_details["tool_name"], initial_details["tool_version"], initial_details["uuid"]) )
 	return self
 
@@ -298,9 +305,9 @@ class HashToScarf:
 		end = etree.SubElement(line, "End")
 		end.text = "%s" % linenum["End"]
 	if self.pretty:
-	    self.output.write(etree.tostring(bug, pretty_print = True))
+	    self.output.write(etree.tostring(bug, encoding=self.encoding, pretty_print = True))
 	else:
-	    self.output.write(etree.tostring(bug))
+	    self.output.write(etree.tostring(bug, encoding=self.encoding))
 	bug.clear()
 	self.bugID = self.bugID + 1
 
@@ -365,9 +372,9 @@ class HashToScarf:
 	    req = etree.SubElement(metric, reqMetr)
 	    req.text = "%s" % metricHash[reqMetr]
 	if self.pretty:
-	    self.output.write(etree.tostring(metric, pretty_print = True))
+	    self.output.write(etree.tostring(metric, encoding=self.encoding, pretty_print = True))
 	else:
-	    self.output.write(etree.tostring(metric))
+	    self.output.write(etree.tostring(metric, encoding=self.encoding))
 	self.metricID = self.metricID + 1
 
 	metricType = metricHash["Type"]
@@ -431,7 +438,7 @@ class HashToScarf:
 		    groupBranch = etree.SubElement(codeBranch, group)
 		    groupBranch.set("count", "%s" % summary["count"])
 		    groupBranch.set("bytes", "%s" % summary["bytes"])
-	    self.output.write(etree.tostring(summaries, pretty_print = True))
+	    self.output.write(etree.tostring(summaries, encoding=self.encoding, pretty_print = True))
 
 	if self.metricSummaries:
 	    self.bodyType = "summary"
@@ -466,9 +473,9 @@ class HashToScarf:
 		    metricStdDeviation = etree.SubElement(metricSummary, "StandardDeviation")
 		    metricStdDeviation.text = "%s" % stdDeviation
 	    if self.pretty:
-		self.output.write(etree.tostring(summaries, pretty_print = True))
+		self.output.write(etree.tostring(summaries, encoding=self.encoding, pretty_print = True))
 	    else:
-		self.output.write(etree.tostring(summaries))
+		self.output.write(etree.tostring(summaries, encoding=self.encoding))
 	    summaries.clear()
 	    return self
 
