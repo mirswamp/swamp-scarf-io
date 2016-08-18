@@ -49,6 +49,17 @@ sub GetReadSize
 }
 
 #################Callback accessors/mutators###################
+sub getUTF8
+{
+    my ($self) = @_;
+    return $self->{parser}->utf8;
+}
+
+sub setUTF8
+{
+    my ($self, $utf) = @_;
+    $self->{parser}->utf8($utf);
+}
 
 sub SetInitialCallback
 {

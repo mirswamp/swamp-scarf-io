@@ -8,7 +8,7 @@ use strict;
 
 sub new
 {
-    my ($class, $handle, $error_level) = @_;
+    my ($class, $handle, $error_level,) = @_;
     my $self = {};
     if ( openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
 	$self->{output} = $handle;
@@ -27,7 +27,8 @@ sub new
 
     $self->{bugID} = 1;
     $self->{metricID} = 1;
-    
+    $self->{utf8} = 1;
+
     $self->{open}; 
     $self->{bodyType} = undef;
     $self->{openBody} = 0;
@@ -48,6 +49,27 @@ sub close
     $self = undef;
     return $self;
 }
+
+#encoding options
+sub getEncoding
+{
+    my ($self) = @_;
+    return $self->{utf8};
+}
+
+sub setEncoding 
+{
+    my ($self, $encode) = @_;
+    $self->{utf8} = $encode;
+    $self->{writer}->utf8($encode);
+}
+
+
+
+
+
+
+
 
 #pretty printing options
 sub getPretty
