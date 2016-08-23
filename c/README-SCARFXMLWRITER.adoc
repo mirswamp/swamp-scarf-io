@@ -1,0 +1,176 @@
+Version: 0.0.1 
+
+Last Updated: 2016-08-22
+
+=== NAME
+ScarfXmlWriter - A C library for writing SCARF
+
+=== SYNOPSIS
+[source,c]
+----
+#include <stdio.h>
+#include "ScarfXmlWriter.c"
+
+int main(int argc, char **argv) {
+    ScarfXmlWriter *writer = NewScarfXmlWriterForFilename("/path/to/file/", "UTF-8");
+    if (writer == NULL) {
+        printf("failed to create writer\n");
+        return 1;
+    }
+    
+    SetErrorLevel(writer, 1);
+    SetPretty(writer, 1);
+    
+    char *bugErrors = CheckBug(bugInformation);
+    char *metricErrors = CheckMetric(metricInformation);
+    char *initalErrors = CheckStart(initialInformation);
+
+    AddStartTag(writer, initialInformation);
+    AddBug(writer, bugInformation);
+    AddMetric(writer, metricInformation);
+    AddSummary(writer);
+    AddEndTag(writer);
+
+    DeleteScarfXmlWriter(writer);
+     
+    return 0;
+}
+----
+=== DESCRIPTION
+This library provides the ability to convert C data structures into SWAMP Common Assesment Results Format (SCARF) XML formatted documents. It is dependent on libxml, which is used to handle writing of the SCARF document.
+
+The writer's output is determined by the user through method calls that provide the data to be written. The data is provided as C structures shown below.
+
+The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
+
+=== METHODS
+==== ScarfXmlWriter *NewScarfXmlWriterFilename(char *filename, char *encoding)
+Initializes a ScarfXmlWriter struct. Opens a file stream from the file represented by the filename with the specified encoding. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII.
+
+==== ScarfXmlWriter *NewScarfXmlWriterFromFd(int fd, char *encoding)
+Initializes a ScarfXmlWriter struct. Opens a file stream from the given file descriptor with the specified encoding. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII. 
+
+==== ScarfXmlWriter *NewScarfXmlWriterFromFile(FILE *file, char *encoding)
+Initializes a ScarfXmlWriter struct with the given file with the specified encoding. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII.
+
+==== ScarfXmlWriter *NewScarfXmlWriterFromString(char *s, int *size, encoding)
+Initializes a ScarfXmlWriter struct to write to a specified address in memory. s is a initial char pointer, size contains the total amount of memory occupied by the string and encoding is the encoding to be used when writing the document. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII.
+
+==== int SetPretty(ScarfXmlWriter *writerInfo, int pretty_en) 
+Either enable or disable pretty printing with a true or false value (default true). Returns 0 or 1 if error changing settings.
+
+==== int SetErrorLevel(ScarfXmlWriter *writerInfo, int errorLevel)
+Allows changing the errorlevel of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and exit). If ERRORLEVEL does not equal one of these value returns 1 and does nothing.
+
+==== xmlTextWriterPtr GetWriter(ScarfXmlWriter *writerInfo)
+Returns the xmlTextWriter used for writing.
+
+==== int GetErrorLevel(ScarfXmlWriter *writerInfo)
+Returns the current error level.
+
+==== char *CheckStart(Initial *initialInformation)
+Checks an Initial data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return  value must be freed by the user.
+
+==== char *CheckBug(BugInstance *bugInformation)
+Checks a BugInstance data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return value must be freed by the user.
+
+==== char *CheckMetric(Metric *metricInformation)
+Checks a Metric data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return value must be freed by the user.
+
+==== AddStartTag(ScarfXmlWriter *writerInfo, Initial *initialInformation)
+Writes a start tag to the file based on initialInformation. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
+
+==== AddBug(ScarfXmlWriter *writerInfo, BugInstance *bugInformation)
+Writes a bug to the file based on bugInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+
+==== AddMetric(ScarfXmlWriter *writerInfo, Metric *metricInformation)
+Writes a metric to the file based on metricInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+
+==== AddSummary(ScarfXmlWriter *writerInfo)
+Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most once before 'AddEndTag'.
+
+==== AddEndTag(ScarfXmlWriter *writerInfo)
+Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
+
+==== void DeleteScarfXmlWriter(ScarfXmlWriter *writerInfo)
+Frees writer and closes any opened files opened by the writer.
+
+
+=== DATA STRUCTURES
+
+The following are the data structures used in the methods listed above. Elements listed as required must be included to produce a valid SCARF file. All other elements are optional, but should they be included shall be written to SCARF in the correct format.
+
+==== typedef struct InitialData
+----
+{
+    char *tool_name                 //REQUIRED
+    char *tool_version              //REQUIRED 
+    char *uuid                      //REQUIRED
+} 
+----
+==== typedef struct BugInstance
+----
+{
+    char *className
+    char *bugSeverity
+    char *bugRank
+    char *resolutionSuggestion
+    char *bugMessage                //REQUIRED
+    char *bugCode
+    char *bugGroup 
+    char *assessmentReportFile      //REQUIRED
+    char *buildId                   //REQURIED
+    int *cweIds
+    int *cweIdsCount
+    InstanceLocation instanceLocation
+    Method *methods
+    int methodsCount
+    Location *locations             //REQUIRED
+    int locationsCount              //REQUIRED
+}
+----
+===== typedef struct InstanceLocation
+----
+{
+    LineNum lineNum
+    char *xPath
+}
+----
+====== typedef struct LineNum
+----
+{
+    int start                       //REQUIRED
+    int end                         //REQUIRED
+}
+----
+===== typedef struct Method
+----
+{
+    int primary                     //REQUIRED
+    char *name                      //REQUIRED
+}
+----
+===== typedef struct Location
+----
+{
+    int primary                    //REQUIRED
+    int startLine
+    int endLine
+    int startColumn
+    int endColumn
+    char *explanation
+    char *sourceFile               //REQUIRED
+}
+----
+==== typedef struct Metric
+----
+{
+    char *value                    //REQUIRED
+    char *className
+    char *methodName
+    char *sourceFile               //REQUIRED
+    char *type                     //REQUIRED
+}
+----
+=== AUTHOR
+Brandon Klein

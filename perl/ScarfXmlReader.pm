@@ -377,7 +377,7 @@ sub charHandler
 	if ( exists $$hash->{CweIds} ) {
 	    push @{$$hash->{CweIds}}, $chars;
 	} else {
-	    $$hash->{CweIds} = ($chars);
+	    @{$$hash->{CweIds}} = ($chars);
 	}
 	return $$hash;
     }

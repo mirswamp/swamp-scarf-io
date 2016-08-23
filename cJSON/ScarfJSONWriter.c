@@ -346,8 +346,8 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 	yajl_gen_string(writer, "CweIds", 6);
 	yajl_gen_array_open(writer);
 	int i;
-	for ( i = 0 ; i < bug->cweIds->count ; i++ ) {
-	    tempLen = sprintf(temp, "%d", bug->cweIds->cweids[i]);
+	for ( i = 0 ; i < bug->cweIdsCount ; i++ ) {
+	    tempLen = sprintf(temp, "%d", bug->cweIds[i]);
 	    yajl_gen_number(writer, temp, tempLen);
 	}
         yajl_gen_array_close(writer);
@@ -357,10 +357,10 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
         int methodId = 1;
 	yajl_gen_string(writer, "Methods", 7);
         yajl_gen_array_open(writer);
-	Methods * methods = bug->methods;
+	Method * methods = bug->methods;
 	int i;
-	for ( i = 0 ; i < bug->methods->count; i++ ) { 
-	    Method *method = &methods->methods[i];
+	for ( i = 0 ; i < bug->methodsCount; i++ ) { 
+	    Method *method = &methods[i];
 	    yajl_gen_map_open(writer);	    
             yajl_gen_string(writer, "name", 4);
 	    tempLen = sprintf(temp, "%s", method->name);
@@ -384,10 +384,10 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 	int locID = 1;
         yajl_gen_string(writer, "BugLocations", 12);
         yajl_gen_array_open(writer);
-	BugLocations * bugloc = bug->bugLocations;
+	Location * bugloc = bug->locations;
 	int i;
-	for ( i = 0; i < bugloc->count; i++){
-	    Location *location = &bugloc->locations[i];
+	for ( i = 0; i < bug->locationsCount; i++){
+	    Location *location = &bugloc[i];
             yajl_gen_map_open(writer);
 
             if ( location->startLine != 0 ) {

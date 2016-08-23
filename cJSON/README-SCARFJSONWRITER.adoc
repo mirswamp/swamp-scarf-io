@@ -1,0 +1,185 @@
+Version: 0.0.1 
+
+Last Updated: 2016-08-22
+
+=== NAME
+ScarfJSONWriter - A C library for writing SCARF JSON files
+
+=== SYNOPSIS
+[source,c]
+----
+#include <stdio.h>
+#include "ScarfJSONWriter.c"
+
+int main(int argc, char **argv) {
+    ScarfJSONWriter *writer = NewScarfJSONWriterForFilename("/path/to/file/", "UTF-8");
+    if (writer == NULL) {
+        printf("failed to create writer\n");
+        return 1;
+    }
+    
+    SetErrorLevel(writer, 1);
+    SetPretty(writer, 1);
+    
+    char *bugErrors = CheckBug(bugInformation);
+    char *metricErrors = CheckMetric(metricInformation);
+    char *initalErrors = CheckStart(initialInformation);
+
+    AddStartTag(writer, initialInformation);
+    AddBug(writer, bugInformation);
+    AddMetric(writer, metricInformation);
+    AddSummary(writer);
+    AddEndTag(writer);
+
+    DeleteScarfJSONWriter(writer);
+     
+    return 0;
+}
+----
+=== DESCRIPTION
+This library provides the ability to convert C data structures into SWAMP Common Assesment Results Format (SCARF) JSON formatted documents. It is dependent on yajl, which is used to handle writing of the SCARF document.
+
+The writer's output is determined by the user through method calls that provide the data to be written. The data is provided as C structures shown below.
+
+The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
+
+=== METHODS
+==== ScarfJSONWriter *NewScarfJSONWriterFilename(char *filename, char *encoding)
+Initializes a ScarfJSONWriter struct. Opens a file stream from the file represented by the filename with UTF-8 validation set to enable. To disable UTF-8 validation see the SetUTF8 method.
+
+==== ScarfJSONWriter *NewScarfJSONWriterFromFd(int fd, char *encoding)
+Initializes a ScarfJSONWriter struct. Opens a file stream from the given file descriptor with the specified encoding. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII. 
+
+==== ScarfJSONWriter *NewScarfJSONWriterFromFile(FILE *file)
+Initializes a ScarfJSONWriter struct with the given file with UTF-8 validation set to enable. To disable UTF-8 validation see the SetUTF8 method.
+
+==== ScarfJSONWriter *NewScarfJSONWriterFromString(char *s, int *size)
+Initializes a ScarfJSONWriter struct to write to a specified address in memory. s is a initial char pointer, size contains the total amount of memory occupied by the string. Vy default UTF-8 validation set to enable. To disable UTF-8 validation see the SetUTF8 method.
+
+==== void SetPretty(ScarfJSONWriter *writerInfo, int pretty_en) 
+Either enable or disable pretty printing with a true or false value (default true). Returns 0 or 1 if error changing settings.
+
+==== int SetErrorLevel(ScarfJSONWriter *writerInfo, int errorLevel)
+Allows changing the errorlevel of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and exit). If ERRORLEVEL does not equal one of these value returns 1 and does nothing.
+
+==== void SetUTF8 (ScarfJSONWriter * writerInfo, int utf8)
+Allows enabling/disabling of UTF8 validation. Any true value will enable validation, and 0 will disable validation.
+
+==== JSONTextWriterPtr GetWriter(ScarfJSONWriter *writerInfo)
+Returns the JSONTextWriter used for writing.
+
+==== int GetPretty (ScarfJSONWriter * writerInfo)
+Returns current value set to pretty_en. 
+
+==== int GetUTF8 (ScarfJSONWriter * writerInfo)
+Returns current value set for UTF-8 validation.
+
+==== int GetErrorLevel(ScarfJSONWriter *writerInfo)
+Returns the current error level.
+
+==== char *CheckStart(Initial *initialInformation)
+Checks an Initial data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return  value must be freed by the user.
+
+==== char *CheckBug(BugInstance *bugInformation)
+Checks a BugInstance data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return value must be freed by the user.
+
+==== char *CheckMetric(Metric *metricInformation)
+Checks a Metric data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return value must be freed by the user.
+
+==== AddStartTag(ScarfJSONWriter *writerInfo, Initial *initialInformation)
+Writes a start tag to the file based on initialInformation. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
+
+==== AddBug(ScarfJSONWriter *writerInfo, BugInstance *bugInformation)
+Writes a bug to the file based on bugInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+
+==== AddMetric(ScarfJSONWriter *writerInfo, Metric *metricInformation)
+Writes a metric to the file based on metricInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+
+==== AddSummary(ScarfJSONWriter *writerInfo)
+Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most once before 'AddEndTag'.
+
+==== AddEndTag(ScarfJSONWriter *writerInfo)
+Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
+
+==== void DeleteScarfJSONWriter(ScarfJSONWriter *writerInfo)
+Frees writer and closes any opened files opened by the writer.
+
+
+=== DATA STRUCTURES
+
+The following are the data structures used in the methods listed above. Elements listed as required must be included to produce a valid SCARF file. All other elements are optional, but should they be included shall be written to SCARF in the correct format.
+
+==== typedef struct InitialData
+----
+{
+    char *tool_name                 //REQUIRED
+    char *tool_version              //REQUIRED 
+    char *uuid                      //REQUIRED
+} 
+----
+==== typedef struct BugInstance
+----
+{
+    char *className
+    char *bugSeverity
+    char *bugRank
+    char *resolutionSuggestion
+    char *bugMessage                //REQUIRED
+    char *bugCode
+    char *bugGroup 
+    char *assessmentReportFile      //REQUIRED
+    char *buildId                   //REQURIED
+    int *cweIds
+    int *cweIdsCount
+    InstanceLocation instanceLocation
+    Method *methods
+    int methodsCount
+    Location *locations             //REQUIRED
+    int locationsCount              //REQUIRED
+}
+----
+===== typedef struct InstanceLocation
+----
+{
+    LineNum lineNum
+    char *xPath
+}
+----
+====== typedef struct LineNum
+----
+{
+    int start                       //REQUIRED
+    int end                         //REQUIRED
+}
+----
+===== typedef struct Method
+----
+{
+    int primary                     //REQUIRED
+    char *name                      //REQUIRED
+}
+----
+===== typedef struct Location
+----
+{
+    int primary                    //REQUIRED
+    int startLine
+    int endLine
+    int startColumn
+    int endColumn
+    char *explanation
+    char *sourceFile               //REQUIRED
+}
+----
+==== typedef struct Metric
+----
+{
+    char *value                    //REQUIRED
+    char *className
+    char *methodName
+    char *sourceFile               //REQUIRED
+    char *type                     //REQUIRED
+}
+----
+=== AUTHOR
+Brandon Klein

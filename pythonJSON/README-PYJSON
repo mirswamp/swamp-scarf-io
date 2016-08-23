@@ -1,2 +1,0 @@
-DEPENDENCIES: git clone git://github.com/lloyd/yajl
-	      yajl-py

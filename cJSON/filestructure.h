@@ -59,14 +59,8 @@ typedef struct Method{
     int methodId;
     int primary;
     char *name;
-    struct Method *next;
 } Method;
 
-typedef struct Methods{
-    int count;
-    int size;
-    Method *methods;
-} Methods;
 
 typedef struct Location{
     int primary;
@@ -78,12 +72,6 @@ typedef struct Location{
     char *explanation;
     char *sourceFile;
 } Location;
-
-typedef struct BugLocations{
-    int count;
-    int size;
-    Location *locations;
-} BugLocations;
 
 typedef struct {
     int start;
@@ -97,16 +85,15 @@ typedef struct {
 } InstanceLocation;
 
 
-typedef struct CweIds{
-    int *cweids;
-    int count;
-    int size;
-} CweIds;
-
-
 typedef struct {
     int bugId;
-    CweIds *cweIds;
+    int *cweIds;
+    int cweIdsCount;
+    int cweIdsSize;
+    int methodsCount;
+    int methodsSize;
+    int locationsCount;
+    int locationsSize;
     char *className;
     char *bugSeverity;
     char *bugRank;
@@ -117,8 +104,8 @@ typedef struct {
     char *assessmentReportFile;
     char *buildId;
     InstanceLocation instanceLocation;
-    Methods *methods;
-    BugLocations *bugLocations;
+    Method *methods;
+    Location *locations;
 } BugInstance;
 
 
