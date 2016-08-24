@@ -317,8 +317,9 @@ sub endHandler
 		return $$hash;
 	    }
 	}
-    } 
-
+    } elsif ( $elt eq "Metric" or $elt eq "BugInstance" or $elt eq "BugSummary" or $elt eq "MetricSummaries" ) {
+	$$hash = {};
+    }
     $$lastElt = "";
     return $$hash;
 }
