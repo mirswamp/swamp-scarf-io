@@ -3,6 +3,7 @@ package javaSCARF;
 import dataStructures.BugInstance;
 import dataStructures.BugSummary;
 import dataStructures.InitialInfo;
+import dataStructures.Metric;
 import dataStructures.MetricSummary;
 
 public interface ScarfInterface {
@@ -15,7 +16,11 @@ public interface ScarfInterface {
 		System.out.println(bug);
 	}
 	
-	default public void metricCallback(MetricSummary metricSum) {
+	default public void metricCallback(Metric metric) {
+		System.out.println(metric);
+	}
+	
+	default public void metricSummaryCallback(MetricSummary metricSum) {
 		System.out.println(metricSum);
 	}
 	

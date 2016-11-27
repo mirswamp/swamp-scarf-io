@@ -24,7 +24,12 @@ import dataStructures.MetricSummary;
 
 public class ScarfXmlReader {
 	private XMLStreamReader reader;
+	private ScarfInterface scarfCallbacks;
 	
+	public ScarfXmlReader(ScarfInterface s) {
+		scarfCallbacks = s;
+	}
+
 	private void parse() {
 		try { 
 			int eventType = reader.getEventType();
@@ -56,28 +61,33 @@ public class ScarfXmlReader {
 			InitialInfo info = handleAnalyzerReport();
 			System.out.println(info);
 			// TODO: pass it to initialCallback
+			scarfCallbacks.initialCallback(info);
 			break;
 		case Constants.BUG_INSTANCE:
 			BugInstance bug = handleBugInstance();
 			System.out.println(bug);
 			// TODO: pass it to bugCallback
+			scarfCallbacks.bugCallback(bug);
 			break;
 		case Constants.METRIC:
 			Metric metric = handleMetric();
 			System.out.println(metric);
 			// TODO: pass it to metricCallback
+			scarfCallbacks.metricCallback(metric);
 			break;
 		case Constants.BUG_SUMMARY:
 			BugSummary summary = handleBugSummary();
 			System.out.println(summary);
 			// TODO: pass it to bugSummaryCallback
+			scarfCallbacks.bugSummaryCallback(summary);
 			break;
 		case Constants.METRIC_SUMMARIES:
 			List<MetricSummary> summaries = handleMetricSummaries();
 			for (MetricSummary m : summaries) {
 				System.out.println(m);
+				// TODO: pass it to metricSummaryCallback
+				scarfCallbacks.metricSummaryCallback(m);
 			}
-			// TODO: pass it to metricSummaryCallback
 			break;
 		}
 	}
@@ -495,10 +505,12 @@ public class ScarfXmlReader {
 		}
 	}
 	
+	/*
 	public static void main(String[] args) {
 		System.out.println("1st arg: " + args[0]);
 		ScarfXmlReader r = new ScarfXmlReader();
 		r.parseFromFilepath(args[0]);
 	}
+	*/
 	
 }
