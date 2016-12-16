@@ -13,26 +13,26 @@ from HashToScarf import CheckStart
 from HashToScarf import CheckBug
 from HashToScarf import CheckMetric
 
-output = "/path/to/file";
+output = "/path/to/file"
 
-writer = HashToScarf(output, 1, 1);
-defaultPretty = writer.GetPretty;
-defaultErrorLevel = writer.GetErrorLevel;
-writer.setPretty(0);
-writer.setErrorLevel(0);
+writer = HashToScarf(output, 1, 1)
+defaultPretty = writer.GetPretty
+defaultErrorLevel = writeer.GetErrorLevel
+writer.setPretty(0)
+writer.setErrorLevel(0)
 
-errors = [];
-errors.append(CheckStart(INITIALDETAILS));
-errors.append(CheckBug(BUG));
-errors.append(CheckMetric(METRIC));
+errors = []
+errors.append(CheckStart(INITIALDETAILS))
+errors.append(CheckBug(BUG))
+errors.append(CheckMetric(METRIC))
 
-writer.AddStartTag(INITIALDETAILS);
-writer.AddBugInstance(BUG);
-writer.AddMetric(METRIC);
-writer.AddSummary;
-writer.AddEndTag;
+writer.AddStartTag(INITIALDETAILS)
+writer.AddBugInstance(BUG)
+writer.AddMetric(METRIC)
+writer.AddSummary
+writer.AddEndTag
 
-writer->Close;
+writer.Close
 ----
 === DESCRIPTION
 This module provides the ability to convert Python data structures into SWAMP Common Assessment Results Format (SCARF) XML formatted documents. It is dependant on the lxml library for writing.

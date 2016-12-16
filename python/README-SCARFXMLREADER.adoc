@@ -8,13 +8,12 @@ ScarfXmlReader - A Python module for parsing SCARF XML files.
 === SYNOPSIS
 [source,python]
 ----
-use ScarfXmlReader;
+from ScarfXmlReader import ScarfXmlReader
 
-my input = "/path/to/file";
-my reader = new ScarfXmlReader(input);
-reader->SetEncoding('UTF-8');
+input = "/path/to/file"
+reader = ScarfXmlReader(input)
 
-reader = ScarfToHash(inputFile)
+reader.SetEncoding('UTF-8')
 reader.SetInitialCallback(initialFunction)
 reader.SetBugCallback(bugFunction)
 reader.SetMetricCallback(metricFunction)
