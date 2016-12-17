@@ -16,6 +16,7 @@
 #
 
 import sys
+import math
 from lxml import etree
 
 
@@ -33,7 +34,7 @@ def error(error_level, message):
 class ScarfXmlWriter:
     
 ##################Initialize Writer##################################################
-    def __init__(self, output, error_level, pretty_enable):
+    def __init__(self, output, error_level=1, pretty_enable=1):
 #       try:
 #           self.output = open(output, "w")
 #       except IOError:
@@ -46,7 +47,7 @@ class ScarfXmlWriter:
             self.filetype = 0
         except AttributeError:
             self.output = open(output, 'w')
-        self.output = output
+        #self.output = output
         if error_level == 1 or error_level == 0:
             self.error_level = error_level
         else:
@@ -235,11 +236,12 @@ class ScarfXmlWriter:
             group = bugHash["BugGroup"]
         else:
             group = "undefined"
+
         if "BugCode" in bugHash:
             code = bugHash["BugCode"]
         else:
             code = "undefined"
-        
+
         if code in self.bugSummaries:
             if group in self.bugSummaries[code]:
                 summary = self.bugSummaries[code][group]
@@ -342,18 +344,23 @@ class ScarfXmlWriter:
 
 ############Add summary from written elements##############################################################
     def AddSummary(self):
-        import math
 
         if self.bugSummaries:
             self.bodyType = "summary"
             summaries = etree.Element("BugSummary")
             for code in self.bugSummaries:
-                for group in code:
+                for group in self.bugSummaries[code]:
+                    # summary = self.bugSummaries[code][group]
+                    # codeBranch = etree.SubElement(summaries, code)
+                    # groupBranch = etree.SubElement(codeBranch, group)
+                    # groupBranch.set("count", "%s" % summary["count"])
+                    # groupBranch.set("bytes", "%s" % summary["bytes"])
                     summary = self.bugSummaries[code][group]
-                    codeBranch = etree.SubElement(summaries, code)
-                    groupBranch = etree.SubElement(codeBranch, group)
-                    groupBranch.set("count", "%s" % summary["count"])
-                    groupBranch.set("bytes", "%s" % summary["bytes"])
+                    summary_xml_element = etree.SubElement(summaries, 'BugCategory')
+                    summary_xml_element.set("group", group)
+                    summary_xml_element.set("code", code)
+                    summary_xml_element.set("count", "%s" % summary["count"])
+                    summary_xml_element.set("bytes", "%s" % summary["bytes"])
             self.output.write(etree.tostring(summaries, encoding=self.encoding,
                                              pretty_print=True))
 
