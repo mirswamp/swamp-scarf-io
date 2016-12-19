@@ -64,7 +64,14 @@ class ScarfXmlWriter:
         self.metricSummaries = {}
         self.bugSummaries = {}
 
-###########################encoding access/mutate#######################################
+    def _output_write(self, str_or_bytes):
+
+        if isinstance(str_or_bytes, bytes):
+            self.output.write(str_or_bytes.decode('UTF-8'))
+        elif isinstance(str_or_bytes, str):
+            self.output.write(str_or_bytes)
+
+    ###########################encoding access/mutate#######################################
     def GetEncoding(self):
         return self.encoding
 
@@ -220,10 +227,11 @@ class ScarfXmlWriter:
                 end = etree.SubElement(line, "End")
                 end.text = "%s" % linenum["End"]
         if self.pretty:
-            self.output.write(etree.tostring(bug, encoding=self.encoding,
-                                             pretty_print=True))
+            self._output_write(etree.tostring(bug,
+                                              encoding=self.encoding,
+                                              pretty_print=True))
         else:
-            self.output.write(etree.tostring(bug, encoding=self.encoding))
+            self._output_write(etree.tostring(bug, encoding=self.encoding))
         bug.clear()
         self.bugID = self.bugID + 1
 
@@ -289,10 +297,10 @@ class ScarfXmlWriter:
             req = etree.SubElement(metric, reqMetr)
             req.text = "%s" % metricHash[reqMetr]
         if self.pretty:
-            self.output.write(etree.tostring(metric, encoding=self.encoding,
-                                             pretty_print=True))
+            self._output_write(etree.tostring(metric, encoding=self.encoding,
+                                              pretty_print=True))
         else:
-            self.output.write(etree.tostring(metric, encoding=self.encoding))
+            self._output_write(etree.tostring(metric, encoding=self.encoding))
         self.metricID = self.metricID + 1
 
         metricType = metricHash["Type"]
@@ -361,8 +369,8 @@ class ScarfXmlWriter:
                     summary_xml_element.set("code", code)
                     summary_xml_element.set("count", "%s" % summary["count"])
                     summary_xml_element.set("bytes", "%s" % summary["bytes"])
-            self.output.write(etree.tostring(summaries, encoding=self.encoding,
-                                             pretty_print=True))
+            self._output_write(etree.tostring(summaries, encoding=self.encoding,
+                                              pretty_print=True))
 
         if self.metricSummaries:
             self.bodyType = "summary"
@@ -397,10 +405,10 @@ class ScarfXmlWriter:
                     metricStdDeviation = etree.SubElement(metricSummary, "StandardDeviation")
                     metricStdDeviation.text = "%s" % stdDeviation
             if self.pretty:
-                self.output.write(etree.tostring(summaries, encoding=self.encoding,
-                                                 pretty_print=True))
+                self._output_write(etree.tostring(summaries, encoding=self.encoding,
+                                                  pretty_print=True))
             else:
-                self.output.write(etree.tostring(summaries, encoding=self.encoding))
+                self._output_write(etree.tostring(summaries, encoding=self.encoding))
             summaries.clear()
             return self
 
@@ -413,12 +421,12 @@ class ScarfXmlWriter:
                 if self.error_level == 2:
                     sys.exit(1)
         self.start = 0
-        self.output.write("</AnalyzerReport>")
+        self._output_write("</AnalyzerReport>")
         return self
 
     def Close(self):
         if self.start:
-            self.output.write("</AnalyzerReport>")
+            self._output_write("</AnalyzerReport>")
         if self.filetype == 1:
             self.output.close()
         self = None
