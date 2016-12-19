@@ -46,22 +46,22 @@ Accesses the current value stored as the encoding name.
 ==== Parse()
 This method initiates the parsing of the XML. If parsing fails an exception is thrown with an error message detailing where in the file it failed. The return value of parse will be the return value of the FinalCallback if it is defined. Otherwise the return value will be the same as the last callback executed, or undef if there are no failures.
 
-==== SetInitialCallback(\&initialFunction)
+==== SetInitialCallback(initialFunction)
 Sets the InitialCallback to be called after each start AnalyzerReport start tag is parsed.
 
-==== SetBugCallback(\&bugFunction)
+==== SetBugCallback(bugFunction)
 Sets the BugCallback to be called after each full BugInstance is parsed.
 
-==== SetMetricCallback(\&metricFunction)
+==== SetMetricCallback(metricFunction)
 Sets the BugCallback to be called after each full BugInstance is parsed.
 
-==== SetMetricSummaryCallback(\&metricSummaryFunction)
+==== SetMetricSummaryCallback(metricSummaryFunction)
 Sets the MetricSummaryCallback to be called after all metric summaries are parsed.
 
-==== SetBugSummaryCallback(\&bugSummaryFunction)
+==== SetBugSummaryCallback(bugSummaryFunction)
 Sets the BugSummaryCallback to be called after all metric summaries are parsed.
 
-==== SetFinalCallback(\&finalFunction)
+==== SetFinalCallback(finalFunction)
 Sets the FinalCallback to be called after each AnalyzerReport end tag is parsed.
 
 ==== SetCallbackData(callbackData)
