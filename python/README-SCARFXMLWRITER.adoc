@@ -1,6 +1,6 @@
 Module Version: 0.0.1
 
-Last Updated: 2016-08-23
+Last Updated: 2016-12-16
 
 === NAME
 ScarfXmlWriter - A Python module for writing SCARF XML files.
@@ -8,31 +8,26 @@ ScarfXmlWriter - A Python module for writing SCARF XML files.
 === SYNOPSIS
 [source,python]
 ----
-from HashToScarf import HashToScarf
-from HashToScarf import CheckStart
-from HashToScarf import CheckBug
-from HashToScarf import CheckMetric
+from ScarfXmlWriter import ScarfXmlWriter
 
-output = "/path/to/file";
+output_file = "/path/to/file"
 
-writer = HashToScarf(output, 1, 1);
-defaultPretty = writer.GetPretty;
-defaultErrorLevel = writer.GetErrorLevel;
-writer.setPretty(0);
-writer.setErrorLevel(0);
+writer = ScarfXmlWriter(output_file, 1, 1)
+writer.setPretty(0)
+writer.setErrorLevel(0)
 
-errors = [];
-errors.append(CheckStart(INITIALDETAILS));
-errors.append(CheckBug(BUG));
-errors.append(CheckMetric(METRIC));
+errors = []
+errors.append(writer.CheckStart(INITIALDETAILS))
+errors.append(writer.CheckBug(BUG))
+errors.append(writer.CheckMetric(METRIC))
 
-writer.AddStartTag(INITIALDETAILS);
-writer.AddBugInstance(BUG);
-writer.AddMetric(METRIC);
-writer.AddSummary;
-writer.AddEndTag;
+writer.AddStartTag(INITIALDETAILS)
+writer.AddBugInstance(BUG)
+writer.AddMetric(METRIC)
+writer.AddSummary()
+writer.AddEndTag()
+writer.Close()
 
-writer->Close;
 ----
 === DESCRIPTION
 This module provides the ability to convert Python data structures into SWAMP Common Assessment Results Format (SCARF) XML formatted documents. It is dependant on the lxml library for writing.
@@ -42,8 +37,8 @@ The writer's output is determined by the user through method calls that provide 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 === METHODS
-==== new(file [, errorLevel, prettyEnable])
-This is a class method used to instantiate the writer. File is either an object that has a write() method or, a string file path. ErrorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). PrettyEnable will enable or disable pretty printing of output with a true or false value respectively (default true). The default encoding is UTF-8.
+==== ScarfXmlWriter(outputFile, errorLevel, prettyEnable)
+This is a class method used to instantiate the writer. outputFile is either an object that has a write() method or, a string file path. ErrorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). PrettyEnable will enable or disable pretty printing of output with a true or false value respectively (default true). The default encoding is UTF-8.
 
 ==== SetEncoding(encoding)
 Sets the encoding to the given type. Currently this can only be UTF-8 or ASCII.
