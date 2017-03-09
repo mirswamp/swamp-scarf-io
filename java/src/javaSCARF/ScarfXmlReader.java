@@ -33,7 +33,6 @@ public class ScarfXmlReader {
 	private void parse() {
 		try { 
 			int eventType = reader.getEventType();
-			System.out.println("Event type: " + eventType);
 			while (reader.hasNext()) {
 				if (reader.next() == XMLEvent.START_ELEMENT) {
 		        	String elementName = reader.getLocalName();
@@ -41,51 +40,37 @@ public class ScarfXmlReader {
 		        }
 			}
 		} catch (XMLStreamException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Error: XMLStream error");
 			e.printStackTrace();
 		}
 		try {
 			reader.close();
 		} catch (XMLStreamException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	private void handleElement(String elementName) {
-		System.out.println("Name: " + elementName);
 		
 		switch(elementName) {
 		case Constants.ANALYZER_REPORT:
 			InitialInfo info = handleAnalyzerReport();
-			System.out.println(info);
-			// TODO: pass it to initialCallback
 			scarfCallbacks.initialCallback(info);
 			break;
 		case Constants.BUG_INSTANCE:
 			BugInstance bug = handleBugInstance();
-			System.out.println(bug);
-			// TODO: pass it to bugCallback
 			scarfCallbacks.bugCallback(bug);
 			break;
 		case Constants.METRIC:
 			Metric metric = handleMetric();
-			System.out.println(metric);
-			// TODO: pass it to metricCallback
 			scarfCallbacks.metricCallback(metric);
 			break;
 		case Constants.BUG_SUMMARY:
 			BugSummary summary = handleBugSummary();
-			System.out.println(summary);
-			// TODO: pass it to bugSummaryCallback
 			scarfCallbacks.bugSummaryCallback(summary);
 			break;
 		case Constants.METRIC_SUMMARIES:
 			List<MetricSummary> summaries = handleMetricSummaries();
 			for (MetricSummary m : summaries) {
-				System.out.println(m);
-				// TODO: pass it to metricSummaryCallback
 				scarfCallbacks.metricSummaryCallback(m);
 			}
 			break;
@@ -190,7 +175,6 @@ public class ScarfXmlReader {
 	private BugInstance handleBugInstance() {
 		String namespace = reader.getNamespaceURI();
 		String id = reader.getAttributeValue(namespace, Constants.ID);
-		System.out.println("ID: " + id);
 		BugInstance bug = new BugInstance(Integer.parseInt(id));
 		try {
 			while (reader.hasNext()) {
