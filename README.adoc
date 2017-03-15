@@ -1,0 +1,30 @@
+= SWAMP SCARF IO libraries
+
+The https://wwwm.continuousassurnace.com[Software Assurance Marketplace (SWAMP)]
+runs software assurance tools, and converts the results of each tool into a
+common format called SCARF (SWAMP Common Assessment Result Format).
+This repository contains a set of libraries that allows a client to read and
+write SCARF data from programs written in Perl, Python, C, C++ and Java
+(read only).
+SCARF was originally an XML based file format, but there is an experimental
+JSON file format supported.
+
+Documentation for each language can be found in the appropriate directory.
+
+.Available libraries
+[options="header",cols="3"]
+|======
+|Language	| XML | JSON
+|Perl
+    | link:perl/README-SCARFXMLREADER.html[reader] link:perl/README-SCARFXMLWRITER.html[writer]
+    | link:perlJSON/README-SCARFJSONREADER.html[reader] link:perlJSON/README-SCARFJSONWRITER.html[writer]
+|Python
+    | link:python/README-SCARFXMLREADER.html[reader] link:python/README-SCARFXMLWRITER.html[writer]
+    | link:pythonJSON/README-SCARFJSONREADER.html[reader] link:pythonJSON/README-SCARFJSONWRITER.html[writer]
+|C/C++
+    | link:c/README-SCARFXMLREADER.html[reader] link:c/README-SCARFXMLWRITER.html[writer]
+    | link:cJSON/README-SCARFJSONREADER.html[reader] link:cJSON/README-SCARFJSONWRITER.html[writer]
+|Java
+    | link:java/[reader]
+    |
+|======
