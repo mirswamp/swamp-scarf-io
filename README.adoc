@@ -9,6 +9,8 @@ write SCARF data from programs written in Perl, Python, C, C++ and Java
 SCARF was originally an XML based file format, but there is an experimental
 JSON file format supported.
 
+For documentation on SCARF see link:docs/SCARF.pdf[docs/SCARF.pdf]
+
 Documentation for each language can be found in the appropriate directory.
 
 .Available libraries
