@@ -25,6 +25,15 @@ public class BugInstance {
 		cweIds = new ArrayList<>();
 		methods = new ArrayList<>();
 		locations = new ArrayList<>();
+		className = "";
+		bugSeverity = "";
+		bugRank = "";
+		resolutionSuggestion = "";
+		bugMessage = "";
+		bugGroup = "";
+		assessmentReportFile = "";
+		buildId = "";
+		bugTrace = null;
 	}
 	
 	public int getBugId() {

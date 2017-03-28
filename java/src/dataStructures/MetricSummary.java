@@ -10,6 +10,17 @@ public class MetricSummary {
 	private double average;
 	private double stdDev;
 	
+	public MetricSummary() {
+		metricType = "";
+		count = 0;
+		sum = 0.0;
+		sumOfSquares = 0.0;
+		min = 0.0;
+		max = 0.0;
+		average = 0.0;
+		stdDev = 0.0;
+	}
+	
 	public void setMetricType(String type) {
 		metricType = type;
 	}

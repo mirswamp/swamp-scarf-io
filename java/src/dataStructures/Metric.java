@@ -7,6 +7,14 @@ public class Metric {
 	private String metricType;
 	private String metricValue;
 	
+	public Metric() {
+		location = null;
+		className = "";
+		methodName = "";
+		metricType = "";
+		metricValue = "";
+	}
+	
 	public void setLocation(Location l) {
 		location = l;
 	}

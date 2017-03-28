@@ -7,6 +7,8 @@ public class BugTrace {
 	
 	public void setBuildID(String id) {
 		buildId = id;
+		assessmentReportFile = "";
+		instanceLocation = null;
 	}
 	
 	public String getBuildID() {

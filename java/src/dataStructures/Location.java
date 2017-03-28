@@ -13,6 +13,12 @@ public class Location {
 	public Location(String id, boolean isPrimary) {
 		this.id = id;
 		primary = isPrimary;
+		startLine = -1;
+		endLine = -1;
+		startColumn = 0;
+		endColumn = 0;
+		explanation = "";
+		sourceFile = "";
 	}
 	
 	public String getID() {

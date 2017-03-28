@@ -5,6 +5,12 @@ public class InstanceLocation {
 	int endLine;
 	String xPath;
 	
+	public InstanceLocation() {
+		startLine = -1;
+		endLine = -1;
+		xPath = "";
+	}
+	
 	public int getStartLine() {
 		return startLine;
 	}
