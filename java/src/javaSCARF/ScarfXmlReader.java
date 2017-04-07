@@ -32,7 +32,6 @@ public class ScarfXmlReader {
 
 	private void parse() {
 		try { 
-			int eventType = reader.getEventType();
 			while (reader.hasNext()) {
 				if (reader.next() == XMLEvent.START_ELEMENT) {
 		        	String elementName = reader.getLocalName();
@@ -87,15 +86,13 @@ public class ScarfXmlReader {
 	
 	private String getChars(String endEvent) {
 		try {
-			int eventType = reader.next();
-			while (reader.hasNext()) {
-				if (isEndElement(endEvent)) {
-					return "";
-				}
-				if (eventType == XMLEvent.CHARACTERS) {
-					return reader.getText();
-				}
+			String content = reader.getElementText();
+			if (content == null) {
+				return "";
 			}
+			content = content.trim();
+			content = content.replaceAll("<.>", "");
+			return content;
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
