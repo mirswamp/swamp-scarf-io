@@ -1,10 +1,10 @@
-package dataStructures;
+package org.continuousassurance.scarf.datastructures;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BugSummary {
-	List<BugCategory> list;
+	private final List<BugCategory> list;
 	
 	public BugSummary() {
 		list = new ArrayList<>();
@@ -19,7 +19,7 @@ public class BugSummary {
 	
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (BugCategory c : list) {
 			sb.append(c);
 		}

@@ -1,7 +1,9 @@
-package javaSCARF;
+package org.continuousassurance.scarf.parser;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,27 +13,32 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.events.XMLEvent;
 
-import dataStructures.BugInstance;
-import dataStructures.BugSummary;
-import dataStructures.BugTrace;
-import dataStructures.BugCategory;
-import dataStructures.InitialInfo;
-import dataStructures.InstanceLocation;
-import dataStructures.Location;
-import dataStructures.Method;
-import dataStructures.Metric;
-import dataStructures.MetricSummary;
+import org.continuousassurance.scarf.datastructures.BugInstance;
+import org.continuousassurance.scarf.datastructures.BugSummary;
+import org.continuousassurance.scarf.datastructures.BugTrace;
+import org.continuousassurance.scarf.datastructures.BugCategory;
+import org.continuousassurance.scarf.datastructures.InitialInfo;
+import org.continuousassurance.scarf.datastructures.InstanceLocation;
+import org.continuousassurance.scarf.datastructures.Location;
+import org.continuousassurance.scarf.datastructures.Method;
+import org.continuousassurance.scarf.datastructures.Metric;
+import org.continuousassurance.scarf.datastructures.MetricSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class ScarfXmlReader {
 	private XMLStreamReader reader;
-	private ScarfInterface scarfCallbacks;
+	private final ScarfInterface scarfCallbacks;
+	private static final Logger logger = LoggerFactory.getLogger(ScarfXmlReader.class);
+	private static final String errMsg = "Ops!";
 	
 	public ScarfXmlReader(ScarfInterface s) {
 		scarfCallbacks = s;
 	}
 
 	private void parse() {
-		try { 
+		try {
 			while (reader.hasNext()) {
 				if (reader.next() == XMLEvent.START_ELEMENT) {
 		        	String elementName = reader.getLocalName();
@@ -39,12 +46,13 @@ public class ScarfXmlReader {
 		        }
 			}
 		} catch (XMLStreamException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		try {
 			reader.close();
 		} catch (XMLStreamException e) {
-			e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 	}
 	
@@ -73,6 +81,8 @@ public class ScarfXmlReader {
 				scarfCallbacks.metricSummaryCallback(m);
 			}
 			break;
+		default:
+			break;
 		}
 	}
 	
@@ -85,26 +95,32 @@ public class ScarfXmlReader {
 	}
 	
 	private String getChars(String endEvent) {
+		String ret_val = "";
 		try {
-			String content = reader.getElementText();
-			if (content == null) {
-				return "";
+			int eventType = reader.next();
+			while (reader.hasNext()) {
+				if (isEndElement(endEvent)) {
+					break;
+				}
+				if (eventType == XMLEvent.CHARACTERS) {
+					ret_val = reader.getText();
+					break;
+				}
 			}
-			content = content.trim();
-			content = content.replaceAll("<.>", "");
-			return content;
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
-		return "";
+		return ret_val;
 	}
 	
 	private List<MetricSummary> handleMetricSummaries() {
 		List<MetricSummary> list = new ArrayList<>();
 		try {
 			while (reader.hasNext()) {
-				if (reader.next() == XMLEvent.START_ELEMENT && reader.getLocalName().equals(Constants.METRIC_SUMMARY)) {
+				//if (reader.next() == XMLEvent.START_ELEMENT && reader.getLocalName().equals(Constants.METRIC_SUMMARY)) {
+				if (reader.next() == XMLEvent.START_ELEMENT && Constants.METRIC_SUMMARY.equals(reader.getLocalName())) {	
 					list.add(handleMetricSummary());
 				}
 				else {
@@ -115,7 +131,8 @@ public class ScarfXmlReader {
 			}
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return list;
 	}
@@ -151,6 +168,9 @@ public class ScarfXmlReader {
 					case Constants.METRIC_SUMMARY_STANDARD_DEVIATION:
 						ms.setStdDev(Double.parseDouble(getChars(Constants.METRIC_SUMMARY_STANDARD_DEVIATION)));
 						break;
+					default:
+						System.err.println("Unknown metrics element");
+						break;
 					}
 				}
 				else {
@@ -161,10 +181,12 @@ public class ScarfXmlReader {
 			}
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return ms;
 	}
@@ -212,6 +234,9 @@ public class ScarfXmlReader {
 					case Constants.BUG_INSTANCE_BUG_CODE:
 						bug.setBugCode(getChars(Constants.BUG_INSTANCE_BUG_CODE));
 						break;
+					default:
+						System.err.println("Unknown BugInstance element");
+						break;
 					}
 				}
 				else {
@@ -222,7 +247,8 @@ public class ScarfXmlReader {
 			}
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return bug;
 	}
@@ -242,6 +268,9 @@ public class ScarfXmlReader {
 						case Constants.BUG_TRACE_INSTANCE_LOCATION:
 							bt.setInstanceLocation(handleInstanceLocation());
 							break;
+						default:
+							System.err.println("Unknown BugTrace element");
+							break;
 					}
 				}
 				else {
@@ -250,8 +279,9 @@ public class ScarfXmlReader {
 					}
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (XMLStreamException e) {
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return bt;
 	}
@@ -275,6 +305,8 @@ public class ScarfXmlReader {
 								case Constants.LINE_NUM_END:
 									il.setEndLine(Integer.parseInt(getChars(Constants.INSTANCE_LOCATION_LINE_NUM)));
 									break;
+								default:
+									break;
 								}
 							}
 							else {
@@ -284,6 +316,8 @@ public class ScarfXmlReader {
 							}
 						}
 						break;
+					default:
+						break;
 					}
 				}
 				else {
@@ -292,8 +326,9 @@ public class ScarfXmlReader {
 					}
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (XMLStreamException e) {
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return il;
 	}
@@ -303,7 +338,7 @@ public class ScarfXmlReader {
 		try {
 			while (reader.hasNext()) {
 				if (reader.next() == XMLEvent.START_ELEMENT) {
-					if (reader.getLocalName().equals(Constants.BUG_CATEGORY)) {
+					if (Constants.BUG_CATEGORY.equals(reader.getLocalName())) {
 						summary.add(handleBugCategory());
 					}
 				}
@@ -313,8 +348,9 @@ public class ScarfXmlReader {
 					}
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (XMLStreamException e) {
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return summary;
 	}
@@ -333,13 +369,12 @@ public class ScarfXmlReader {
 		try {
 			while (reader.hasNext()) {
 				int eventType = reader.next();
-				if (eventType == XMLEvent.START_ELEMENT && reader.getLocalName().equals(Constants.METHOD)) {
+				if (eventType == XMLEvent.START_ELEMENT && Constants.METHOD.equals(reader.getLocalName())) {
 					String namespace = reader.getNamespaceURI();
 					String id = reader.getAttributeValue(namespace, Constants.ID);
 					String primary = reader.getAttributeValue(namespace, Constants.PRIMARY);
 					String name = reader.getElementText();
-					Method m = new Method(id, name, Boolean.parseBoolean(primary));
-					list.add(m);
+					list.add(new Method(id, name, Boolean.parseBoolean(primary)));
 				}
 				else {
 					if (isEndElement(Constants.BUG_INSTANCE_METHODS)) {
@@ -349,7 +384,8 @@ public class ScarfXmlReader {
 			}
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return list;
 	}
@@ -359,7 +395,7 @@ public class ScarfXmlReader {
 		try {
 			while (reader.hasNext()) {
 				int eventType = reader.next();
-				if (eventType == XMLEvent.START_ELEMENT && reader.getLocalName().equals(Constants.LOCATION)) {
+				if (eventType == XMLEvent.START_ELEMENT && Constants.LOCATION.equals(reader.getLocalName())) {
 					Location l = handleLocation();
 					list.add(l);
 				}
@@ -371,7 +407,8 @@ public class ScarfXmlReader {
 			}
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return list;
 	}
@@ -404,6 +441,9 @@ public class ScarfXmlReader {
 					case Constants.LOCATION_EXPLANATION:
 						location.setExplanation(getChars(Constants.LOCATION_EXPLANATION));
 						break;
+					default:
+						System.err.println("Unknown BugLocation child element");
+						break;
 					}
 				}
 				else {
@@ -414,10 +454,12 @@ public class ScarfXmlReader {
 			}
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return location;
 	}
@@ -444,6 +486,9 @@ public class ScarfXmlReader {
 					case Constants.METRIC_VALUE:
 						metric.setMetricType(getChars(Constants.METRIC_VALUE));
 						break;
+					default:
+						System.err.println("Unknown Metrics element");
+						break;
 					}
 				}
 				else {
@@ -454,35 +499,48 @@ public class ScarfXmlReader {
 			}
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error(errMsg, e);
 		}
 		return metric;
 	}
 	private boolean isEndElement(String name) {
-		return (reader.getEventType() == XMLEvent.END_ELEMENT) && (reader.getLocalName().equals(name));
+		return reader.getEventType() == XMLEvent.END_ELEMENT && reader.getLocalName().equals(name);
 	}
 	
 	public void parseFromFile(File f) {
+		InputStream stream = null;
 		try {
 			XMLInputFactory factory = XMLInputFactory.newInstance();
-			InputStream stream = new FileInputStream(f);
+			 stream = new FileInputStream(f);
 			reader = factory.createXMLStreamReader(stream);
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
 			System.err.println("Error: Unable to open XML stream in specified file");
+		}catch (XMLStreamException e) {
+			System.err.println("Error: Unable to open XML stream in specified file");
+		}finally {
+			if (stream != null){
+				try {
+					stream.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					logger.error(errMsg, e);
+				}
+			}
 		}
 		parse();
 	}
 	
 	public void parseFromFilepath(String filepath) {
 		File f = new File(filepath);
-		if (!f.exists()) {
-			System.err.println("Error: Invalid filepath");
-		}
-		else {
+		if (f.exists()) {
 			parseFromFile(f);
+		} else {
+			System.err.println("Error: Invalid filepath");
 		}
 	}
 	

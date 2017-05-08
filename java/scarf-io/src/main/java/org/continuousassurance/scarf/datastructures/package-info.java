@@ -5,4 +5,4 @@
  * @author reid-jr
  *
  */
-package dataStructures;
+package datastructures;

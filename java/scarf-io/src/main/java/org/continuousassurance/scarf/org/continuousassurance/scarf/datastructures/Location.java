@@ -1,8 +1,8 @@
-package dataStructures;
+package org.continuousassurance.scarf.datastructures;
 
 public class Location {
-	private String id;
-	private boolean primary;
+	private final String id;
+	private final boolean primary;
 	private int startLine;
 	private int endLine;
 	private int startColumn;
@@ -13,12 +13,6 @@ public class Location {
 	public Location(String id, boolean isPrimary) {
 		this.id = id;
 		primary = isPrimary;
-		startLine = -1;
-		endLine = -1;
-		startColumn = 0;
-		endColumn = 0;
-		explanation = "";
-		sourceFile = "";
 	}
 	
 	public String getID() {

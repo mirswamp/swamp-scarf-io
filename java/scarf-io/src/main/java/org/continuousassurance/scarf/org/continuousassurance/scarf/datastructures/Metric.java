@@ -1,4 +1,4 @@
-package dataStructures;
+package org.continuousassurance.scarf.datastructures;
 
 public class Metric {
 	private Location location;
@@ -6,14 +6,6 @@ public class Metric {
 	private String methodName;
 	private String metricType;
 	private String metricValue;
-	
-	public Metric() {
-		location = null;
-		className = "";
-		methodName = "";
-		metricType = "";
-		metricValue = "";
-	}
 	
 	public void setLocation(Location l) {
 		location = l;
@@ -56,12 +48,12 @@ public class Metric {
 	
 	@Override 
 	public String toString() {
-		String result = "Location: " + location + "\n";
-		result += "Class Name: " + className + "\n";
-		result += "Method Name: " + methodName + "\n";
-		result += "Metric Type: " + metricType + "\n";
-		result += "Metric Value: " + metricValue + "\n";
-		return result;
+		StringBuilder result = new StringBuilder("Location: " + location + "\n" + 
+		"Class Name: " + className + "\n" + 
+		"Method Name: " + methodName + "\n" + 
+		"Metric Type: " + metricType + "\n" + 
+		"Metric Value: " + metricValue + "\n"); 
+		return result.toString();
 	}
 
 }

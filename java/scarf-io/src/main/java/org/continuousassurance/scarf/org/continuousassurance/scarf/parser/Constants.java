@@ -1,4 +1,4 @@
-package javaSCARF;
+package org.continuousassurance.scarf.parser;
 
 public class Constants {
 	// Analyzer report and attributes
