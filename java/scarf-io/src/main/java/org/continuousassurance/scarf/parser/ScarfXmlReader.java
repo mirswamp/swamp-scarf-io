@@ -522,16 +522,16 @@ public class ScarfXmlReader {
 			System.err.println("Error: Unable to open XML stream in specified file");
 		}catch (XMLStreamException e) {
 			System.err.println("Error: Unable to open XML stream in specified file");
-		}finally {
+		}/*finally {
 			if (stream != null){
 				try {
-					stream.close();
+					//stream.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					logger.error(errMsg, e);
 				}
 			}
-		}
+		}*/
 		parse();
 	}
 	
