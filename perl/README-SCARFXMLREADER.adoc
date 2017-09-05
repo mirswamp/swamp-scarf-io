@@ -35,7 +35,9 @@ All Callbacks except the FinalCallback receive as parameters a reference to a ha
 
 While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined. 
 Additional validation routines can be found in the ScarfXmlWriter module.
+
 === METHODS
+
 ==== new($file)
 This is a class method used to instantiate the parser. FILE can be an open handle, a string containing the filename of a file, or a reference to a string containing SCARF data.
 
@@ -116,12 +118,29 @@ This is called after reaching an AnalayzerReport end tag. If one of the above ca
 The following are the data structures used in the callbacks listed above. If a keys value is not defined in the SCARF file, then the corresponding key will not exist in the data structures.
 
 ==== $initialData
-InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements in the AnalyzerReport start tag therefore they should always be present.
+InitialData contains information regarding the tool used to test the package.
+All fields in this structure are required elements in the AnalyzerReport start
+tag therefore they should always be present.  Older versions of SCARF only
+required tool_name, tool_version and uuid, so for these older version the key
+is not defined.
+
 ----
 {
-    tool_name => TOOLNAMEVALUE,            # REQUIRED
-    tool_verison => TOOLVERSIONVALUE,      # REQUIRED
-    uuid => UUIDVALUE                       # REQUIRED
+    assess_fw'              => ASSESSMENT_FRAMEWORK,
+    assess_fw_version'      => ASSESSMENT_FRAMEWORK_VERSION,
+    assessment_start_ts'    => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
+    build_fw'               => BUILD_FRAMEWORK,
+    build_fw_version'       => BUILD_FRAMEWORK_VERSION,
+    build_root_dir'         => PACKAGE_DIRECTORY,
+    package_name'           => PACKAGE_NAME,
+    package_root_dir'       => DIRECTORY_CONTAINING_PACKAGE,
+    package_version'        => PACKAGE_VERSION,
+    parser_fw'              => PARSER_FRAMEWORK,
+    parser_fw_version'      => PARSER_FRAMEWORK_VERSION,
+    platform_name'          => PLATFORM_NAME_AND_VERSION,
+    tool_name               => TOOL_NAME,
+    tool_verison            => TOOL_VERSION,
+    uuid                    => UUIDVALUE
 } 
 ----
 
@@ -136,12 +155,12 @@ BugData contains information on one BugInstance from the SCARF file. All items l
     BugRank => BUGRANKVALUE,
     BugSeverity => SEVERITYVALUE,
     ResolutionSuggestion => RESOLUTIONSUGGESTIONVALUE,
-    AssessmentReportFile => ASSESSREPORTVALUE,    # REQUIRED
+    AssessmentReportFile => ASSESSREPORTVALUE,     # REQUIRED
     BuildId => BUILDIDVALUE,                       # REQUIRED
     InstanceLocation => {
         Xpath => XPATHVALUE,
         LineNum => { 
-            Start = STARTVALUE,                   # REQUIRED
+            Start = STARTVALUE,                    # REQUIRED
             End = ENDVALUE                         # REQUIRED
         }
     },
@@ -185,7 +204,7 @@ MetricData contains information on one Metric from the SCARF file. All items lis
     Method => METHODVALUE,
     Class => CLASSVALUE,
     SourceFile => SOURCEVALUE,   # REQUIRED
-    MetricId => METRICIDVALUE     # REQUIRED
+    MetricId => METRICIDVALUE    # REQUIRED
 }
 ----
 
