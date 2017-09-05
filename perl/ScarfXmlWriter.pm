@@ -68,10 +68,10 @@ sub new
     $self->{bugID} = 1;
     $self->{metricID} = 1;
     
-    $self->{bodyType};
-    $self->{open};
-    $self->{MetricSummaries};
-    $self->{BugSummaries};
+    $self->{bodyType} = undef;
+    $self->{open} = undef;
+    $self->{MetricSummaries} = {};
+    $self->{BugSummaries} = {};
     
     bless $self, $class;
     return $self;
@@ -178,8 +178,7 @@ sub AddStartTag
     }
     $self->{bodyType} = "body";
 
-    $self->{writer}->startTag('AnalyzerReport', tool_name => $initial_details->{tool_name}, 
-	    tool_version => $initial_details->{tool_version}, uuid => $initial_details->{uuid});
+    $self->{writer}->startTag('AnalyzerReport', %$initial_details);
     $self->{open} = 1;
     $self->{MetricSummaries} = {};
     $self->{BugSummaries} = {};
@@ -199,7 +198,6 @@ sub AddEndTag
 	    }
 	}
     }
-    my ($self) = @_;
     $self->{writer}->endTag();
     return $self;
 }
