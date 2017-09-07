@@ -3,7 +3,14 @@ from yajl import YajlGen
 ###################Handle errors############################################################
 def checkStart(initial_details):
     errors = []
-    for reqAttr in ["tool_name", "tool_version", "uuid"]:
+    for reqAttr in ['assess_fw', 'assess_fw_version',
+                    'assessment_start_ts', 'build_fw',
+                    'build_fw_version', 'build_root_dir',
+                    'package_name', 'package_root_dir',
+                    'package_version', 'parser_fw',
+                    'parser_fw_version', 'platform_name',
+                    'uuid', 'tool_name', 'tool_version']:
+
         if reqAttr not in initial_details:
            errors.append(self.error_level, "Required attribute: %s not found when creating startTag" % reqAttr)
     return errors
@@ -171,12 +178,36 @@ def close(self)
         writer.yajl_gen_map_open()
         writer.yajl_gen_string("AnalyzerReport")
         writer.yajl_gen_map_open()
-        writer.yajl_gen_string("tool_name")
-        writer.yajl_gen_string(initial_details["tool_name"])
-        writer.yajl_gen_string("tool_version")
-        writer.yajl_gen_string(initial_details["tool_version"])
-        writer.yajl_gen_string("uuid")
-        writer.yajl_gen_string(initial_details["uuid"])
+        writer.yajl_gen_string('assess_fw')
+        writer.yajl_gen_string(initial_details['assess_fw'])
+        writer.yajl_gen_string('assess_fw_version')
+        writer.yajl_gen_string(initial_details['assess_fw_version'])
+        writer.yajl_gen_string('assessment_start_ts')
+        writer.yajl_gen_string(initial_details['assessment_start_ts'])
+        writer.yajl_gen_string('build_fw')
+        writer.yajl_gen_string(initial_details['build_fw'])
+        writer.yajl_gen_string('build_fw_version')
+        writer.yajl_gen_string(initial_details['build_fw_version'])
+        writer.yajl_gen_string('build_root_dir')
+        writer.yajl_gen_string(initial_details['build_root_dir'])
+        writer.yajl_gen_string('package_name')
+        writer.yajl_gen_string(initial_details['package_name'])
+        writer.yajl_gen_string('package_root_dir')
+        writer.yajl_gen_string(initial_details['package_root_dir'])
+        writer.yajl_gen_string('package_version')
+        writer.yajl_gen_string(initial_details['package_version'])
+        writer.yajl_gen_string('parser_fw')
+        writer.yajl_gen_string(initial_details['parser_fw'])
+        writer.yajl_gen_string('parser_fw_version')
+        writer.yajl_gen_string(initial_details['parser_fw_version'])
+        writer.yajl_gen_string('platform_name')
+        writer.yajl_gen_string(initial_details['platform_name'])
+        writer.yajl_gen_string('tool_name')
+        writer.yajl_gen_string(initial_details['tool_name'])
+        writer.yajl_gen_string('tool_version')
+        writer.yajl_gen_string(initial_details['tool_version'])
+        writer.yajl_gen_string('uuid')
+        writer.yajl_gen_string(initial_details['uuid'])
 
         self.output.write(writer.yajl_gen_get_buf())
 
