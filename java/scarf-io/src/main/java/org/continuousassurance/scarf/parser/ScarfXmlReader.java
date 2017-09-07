@@ -88,10 +88,30 @@ public class ScarfXmlReader {
 	
 	private InitialInfo handleAnalyzerReport() {
 		String namespace = reader.getNamespaceURI();
-		String name = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_TOOL_NAME);
-		String version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_TOOL_VERSION);
+		String assess_fw = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_ASSESSMENT_FRAMEWORK);
+		String assess_fw_version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_ASSESSMENT_FRAMEWORK_VERISON);
+		String assessment_start_ts = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_START_TIME);
+		String build_fw = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_BUILD_FRAMEWORK);
+		String build_fw_version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_BUILD_FRAMEWORK_VERSION);
+		String build_root_dir = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_BUILD_ROOT_DIR);
+		String package_name = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PACKAGE_NAME);   
+		String package_root_dir = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PACKAGE_ROOT_DIR);
+		String package_version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PACKAGE_VERSION); 
+		String parser_fw = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PARSER_FRAMEWORK);
+		String parser_fw_version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PARSER_FRAMEWORK_VERSION); 
+		String platform_name = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_PLATFORM_NAME);
+		String tool_name = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_TOOL_NAME);
+		String tool_version = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_TOOL_VERSION);
 		String uuid = reader.getAttributeValue(namespace, Constants.ANALYZER_REPORT_ATTR_UUID);
-		return new InitialInfo(name, version, uuid);
+
+		//return new InitialInfo(name, version, uuid);
+		return new InitialInfo(assess_fw, assess_fw_version, 
+				assessment_start_ts, build_fw, 
+				build_fw_version, build_root_dir, 
+				package_name, package_root_dir, 
+				package_version, parser_fw, 
+				parser_fw_version, platform_name, 
+				tool_name, tool_version, uuid);
 	}
 	
 	private String getChars(String endEvent) {

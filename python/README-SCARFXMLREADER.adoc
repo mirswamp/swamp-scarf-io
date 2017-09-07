@@ -117,9 +117,21 @@ The following are the data structures used in the callbacks listed above. If a k
 InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements in the AnalyzerReport start tag therefore they should always be present.
 ----
 {
-    tool_name => TOOLNAMEVALUE,            # REQUIRED
-    tool_verison => TOOLVERSIONVALUE,      # REQUIRED
-    uuid => UUIDVALUE                       # REQUIRED
+    assess_fw              => ASSESSMENT_FRAMEWORK,
+    assess_fw_version      => ASSESSMENT_FRAMEWORK_VERSION,
+    assessment_start_ts    => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
+    build_fw               => BUILD_FRAMEWORK,
+    build_fw_version       => BUILD_FRAMEWORK_VERSION,
+    build_root_dir         => PACKAGE_DIRECTORY,
+    package_name           => PACKAGE_NAME,
+    package_root_dir       => DIRECTORY_CONTAINING_PACKAGE,
+    package_version        => PACKAGE_VERSION,
+    parser_fw              => PARSER_FRAMEWORK,
+    parser_fw_version      => PARSER_FRAMEWORK_VERSION,
+    platform_name          => PLATFORM_NAME_AND_VERSION,
+    tool_name              => TOOLNAMEVALUE,
+    tool_verison           => TOOLVERSIONVALUE,
+    uuid                   => UUIDVALUE
 } 
 ----
 

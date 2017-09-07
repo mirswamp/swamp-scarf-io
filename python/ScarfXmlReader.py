@@ -89,9 +89,23 @@ class ScarfXmlReader:
 
             #parse initial information
             if elem.tag == "AnalyzerReport" and event == "start":
-                initialDetails = {"tool_name": elem.get("tool_name"),
-                                  "tool_version": elem.get("tool_version"),
-                                  "uuid": elem.get("uuid")}
+                initialDetails = {
+                    'assess_fw': elem.get('assess_fw'),
+                    'assess_fw_version': elem.get('assess_fw_version'),
+                    'assessment_start_ts': elem.get('assessment_start_ts'),
+                    'build_fw': elem.get('build_fw'),
+                    'build_fw_version': elem.get('build_fw_version'),
+                    'build_root_dir': elem.get('build_root_dir'),
+                    'package_name': elem.get('package_name'),
+                    'package_root_dir': elem.get('package_root_dir'),
+                    'package_version': elem.get('package_version'),
+                    'parser_fw': elem.get('parser_fw'),
+                    'parser_fw_version': elem.get('parser_fw_version'),
+                    'platform_name': elem.get('platform_name'),
+                    'tool_name': elem.get('tool_name'),
+                    'tool_version': elem.get('tool_version'),
+                    'uuid': elem.get('uuid')
+                }
 
                 parent = elem
 
