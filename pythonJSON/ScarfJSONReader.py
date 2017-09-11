@@ -81,9 +81,19 @@ class ParseContentHandler(YajlContentHandler):
                     self.data[self.sumGroup][self.curr] = stringNum
 
     def yajl_string(self, ctx, stringVal):
-        if not self.requiredStart and self.curr in ["uuid", "tool_name", "tool_version"]:
+        initial_attr = ['assess_fw', 'assess_fw_version',
+                        'assessment_start_ts', 'build_fw',
+                        'build_fw_version', 'build_root_dir',
+                        'package_name', 'package_root_dir',
+                        'package_version', 'parser_fw',
+                        'parser_fw_version', 'platform_name',
+                        'uuid', 'tool_name', 'tool_version']
+
+        if not self.requiredStart and self.curr in initial_attr:
             self.initialInfo[self.curr] = stringVal
-            if "uuid" in self.initialInfo and "tool_name" in self.initialInfo and "tool_version" in self.initialInfo:
+            
+            #if "uuid" in self.initialInfo and "tool_name" in self.initialInfo and "tool_version" in self.initialInfo:
+            if set(self.initialInfo).issuperset(set(initial_attr)):
                 self.requiredStart = 1
                 if "InitialCallback" in self.callbacks:
                     if "CallbackInfo" in self.callbacks:

@@ -3,6 +3,18 @@ package org.continuousassurance.scarf.parser;
 public class Constants {
 	// Analyzer report and attributes
 	public static final String ANALYZER_REPORT = "AnalyzerReport";
+	public static final String ANALYZER_REPORT_ATTR_ASSESSMENT_FRAMEWORK = "assess_fw";
+	public static final String ANALYZER_REPORT_ATTR_ASSESSMENT_FRAMEWORK_VERISON = "assess_fw_version";
+	public static final String ANALYZER_REPORT_ATTR_START_TIME = "assessment_start_ts";
+	public static final String ANALYZER_REPORT_ATTR_BUILD_FRAMEWORK = "build_fw";
+	public static final String ANALYZER_REPORT_ATTR_BUILD_FRAMEWORK_VERSION = "build_fw_version";
+	public static final String ANALYZER_REPORT_ATTR_BUILD_ROOT_DIR = "build_root_dir";
+	public static final String ANALYZER_REPORT_ATTR_PACKAGE_NAME = "package_name";   
+	public static final String ANALYZER_REPORT_ATTR_PACKAGE_ROOT_DIR = "package_root_dir";
+	public static final String ANALYZER_REPORT_ATTR_PACKAGE_VERSION = "package_version";
+	public static final String ANALYZER_REPORT_ATTR_PARSER_FRAMEWORK = "parser_fw";
+	public static final String ANALYZER_REPORT_ATTR_PARSER_FRAMEWORK_VERSION = "parser_fw_version"; 
+	public static final String ANALYZER_REPORT_ATTR_PLATFORM_NAME = "platform_name";	
 	public static final String ANALYZER_REPORT_ATTR_TOOL_NAME = "tool_name";
 	public static final String ANALYZER_REPORT_ATTR_TOOL_VERSION = "tool_version";
 	public static final String ANALYZER_REPORT_ATTR_UUID = "uuid";

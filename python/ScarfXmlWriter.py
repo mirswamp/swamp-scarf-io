@@ -123,10 +123,23 @@ class ScarfXmlWriter:
 
         writer = self.output
         writer.write("<?xml version=\"1.0\" encoding=\"%s\"?>\n" % (self.encoding))
-        writer.write("<AnalyzerReport tool_name=\"%s\" tool_version=\"%s\" uuid=\"%s\">\n" %
-                     (initial_details["tool_name"],
-                      initial_details["tool_version"],
-                      initial_details["uuid"]))
+        writer.write("<AnalyzerReport assess_fw=\"%s\" assess_fw_version=\"%s\" assessment_start_ts=\"%s\" build_fw=\"%s\" build_fw_version=\"%s\" build_root_dir=\"%s\" package_name=\"%s\" package_root_dir=\"%s\" package_version=\"%s\" parser_fw=\"%s\" parser_fw_version=\"%s\" platform_name=\"%s\" tool_name=\"%s\" tool_version=\"%s\" uuid=\"%s\">\n" % (
+            initial_details['assess_fw'],
+            initial_details['assess_fw_version'],
+            initial_details['assessment_start_ts'],
+            initial_details['build_fw'],
+            initial_details['build_fw_version'],
+            initial_details['build_root_dir'],
+            initial_details['package_name'],
+            initial_details['package_root_dir'],
+            initial_details['package_version'],
+            initial_details['parser_fw'],
+            initial_details['parser_fw_version'],
+            initial_details['platform_name'],
+            initial_details['tool_name'],
+            initial_details['tool_version'],
+            initial_details['uuid']))
+
         return self
 
 ####################Write a bug instance#########################################################
