@@ -101,8 +101,8 @@ void DeleteScarfJSONWriter (ScarfJSONWriter * writerInfo)
 
 ////////////////////////change options////////////////////////////////
 void SetPretty ( ScarfJSONWriter * writerInfo, int pretty_level ) {
-    yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level); 
-    writerInfo->pretty = pretty_level;   
+    yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level);
+    writerInfo->pretty = pretty_level;
 }
 
 void SetUTF8 (ScarfJSONWriter * writerInfo, int utf8){
@@ -130,14 +130,14 @@ int getErrorLevel(ScarfJSONWriter * writerInfo)
 {
     if (writerInfo != NULL){
 	return writerInfo->errorLevel;
-    } else return -1; 
+    } else return -1;
 }
 
 
 int SetErrorLevel(ScarfJSONWriter * writerInfo, int errorLevel)
 {
     if (writerInfo != NULL){
-	if ( errorLevel == 0 || errorLevel == 1 || errorLevel == 2 ) { 
+	if ( errorLevel == 0 || errorLevel == 1 || errorLevel == 2 ) {
 	    writerInfo->errorLevel = errorLevel;
 	} else return 1;
     } else return 1;
@@ -200,7 +200,7 @@ char * CheckBug(BugInstance * bug)
 	    }
 	    methodID++;
 	}
-	
+
         if (methodPrimary == 0 && methodID != 1) {
             sprintf(temp, "Misformed Element: No primary Method found in  BugInstance\n");
             errors = realloc(errors, strlen(errors) + strlen(temp) + 1);
@@ -247,7 +247,7 @@ char * CheckBug(BugInstance * bug)
         errors = realloc(errors, strlen(errors) + strlen(temp) + 1);
         errors = strcat(errors, temp);
     }
-    
+
     free(temp);
     return errors;
 }
@@ -292,12 +292,12 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
     }
     char temp [1024];
     int tempLen;
-    
+
     yajl_gen_map_open(writer);
-    
-    
+
+
     yajl_gen_string(writer, "BugId", 5);
-    
+
     tempLen = sprintf(temp, "%d", writerInfo->bugId);
     yajl_gen_number(writer, temp, tempLen);
 
@@ -359,9 +359,9 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
         yajl_gen_array_open(writer);
 	Method * methods = bug->methods;
 	int i;
-	for ( i = 0 ; i < bug->methodsCount; i++ ) { 
+	for ( i = 0 ; i < bug->methodsCount; i++ ) {
 	    Method *method = &methods[i];
-	    yajl_gen_map_open(writer);	    
+	    yajl_gen_map_open(writer);
             yajl_gen_string(writer, "name", 4);
 	    tempLen = sprintf(temp, "%s", method->name);
             yajl_gen_string(writer, temp, tempLen);
@@ -411,7 +411,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
                 yajl_gen_number(writer, temp, tempLen);
 	    }
 
-	    
+
             if ( location->sourceFile != NULL ) {
                 yajl_gen_string(writer, "SourceFile", 10);
 		tempLen = sprintf(temp, "%s", location->sourceFile);
@@ -422,14 +422,14 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 		tempLen = sprintf(temp, "%s", location->explanation);
                 yajl_gen_string(writer, temp, tempLen);
 	    }
-            
+
 	    yajl_gen_string(writer, "primary", 7);
             if ( location->primary ) {
                 yajl_gen_bool(writer, 1);
             } else {
                 yajl_gen_bool(writer, 0);
 	    }
-	    
+
             yajl_gen_string(writer, "LocationId", 10);
 	    tempLen = sprintf(temp, "%d", locID);
             yajl_gen_number(writer, temp, tempLen);
@@ -438,7 +438,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 	}
         yajl_gen_array_close(writer);
     }
-    
+
     InstanceLocation inst = bug->instanceLocation;
     if ( inst.xPath != NULL || inst.lineNum.start != 0 || inst.lineNum.end != 0 ) {
 	yajl_gen_string(writer, "InstanceLocation", 16);
@@ -611,7 +611,7 @@ int AddMetric(ScarfJSONWriter *  writerInfo, Metric * metric)
 	writerInfo->openBody = 1;
     }
 
-    
+
     char temp [1024];
     int tempLen;
 
@@ -748,18 +748,18 @@ int AddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
         }
         free(errors);
     }
-    
+
     yajl_gen writer = writerInfo->writer;
     yajl_gen_map_open(writer);
     yajl_gen_string(writer, "AnalyzerReport", 14);
     yajl_gen_map_open(writer);
-    
+
     char temp[1024];
     int tempLen;
     if (initial->uuid != NULL ){
 	yajl_gen_string(writer, "uuid", 4);
 	tempLen = sprintf(temp, "%s", initial->uuid);
-	yajl_gen_string(writer, temp, tempLen);		
+	yajl_gen_string(writer, temp, tempLen);
     }
     if (initial->tool_name != NULL ){
 	yajl_gen_string(writer, "tool_name", 9);
@@ -770,7 +770,7 @@ int AddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
 	yajl_gen_string(writer, "tool_version", 12);
 	tempLen = sprintf(temp, "%s", initial->tool_version);
 	printf("%s : %d \n", initial->tool_version, tempLen);
-	yajl_gen_string(writer, temp, tempLen);		
+	yajl_gen_string(writer, temp, tempLen);
     }
 
 
@@ -806,7 +806,7 @@ int AddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
         free(prev->type);
         free(prev);
     }
-    
+
     writerInfo->start = 1;
     writerInfo->metricSum = NULL;
     writerInfo->bugSums = NULL;
@@ -892,15 +892,15 @@ int AddSummary(ScarfJSONWriter * writerInfo)
 	    tempLen = sprintf(temp, "%d", curBugSummaryGroup->bytes);
 	    yajl_gen_string(writer, "bytes", 5);
 	    yajl_gen_string(writer, temp, tempLen);
-	    yajl_gen_map_close(writer); 
+	    yajl_gen_map_close(writer);
 	    curBugSummaryGroup = curBugSummaryGroup->next;
         }
-	yajl_gen_map_close(writer); 
+	yajl_gen_map_close(writer);
         curBugSummary = curBugSummary->next;
     }
 
     if (curMetricSummary != NULL) {
-	yajl_gen_map_close(writer);  
+	yajl_gen_map_close(writer);
 	yajl_gen_string(writer, "MetricSummaries", 15);
 	yajl_gen_map_open(writer);
     }
@@ -914,12 +914,12 @@ int AddSummary(ScarfJSONWriter * writerInfo)
 	tempLen = sprintf(temp, "%d", count);
 	yajl_gen_string(writer, "Count", 5);
         yajl_gen_string(writer, temp, tempLen);
-	
+
 	if (curMetricSummary->valid != 0) {
             tempLen = sprintf(temp, "%d", sum);
 	    yajl_gen_string(writer, "Sum", 3);
             yajl_gen_string(writer, temp, tempLen);
-	    tempLen = sprintf(temp, "%d", sumOfSquares);	    
+	    tempLen = sprintf(temp, "%d", sumOfSquares);
 	    yajl_gen_string(writer, "SumOfSquares", 12);
             yajl_gen_string(writer, temp, tempLen);
 	    sprintf(temp, "%d", curMetricSummary->max);
@@ -949,7 +949,7 @@ int AddSummary(ScarfJSONWriter * writerInfo)
     if ( hasSummary ) {
 	yajl_gen_map_close(writer);
     }
-	
+
     const unsigned char * buf;
     size_t bufLen;
     yajl_gen_get_buf(writer, &buf, &bufLen);

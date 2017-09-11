@@ -4,7 +4,7 @@
 #include <string.h>
 #include "ScarfJson.h"
 
-typedef void * (*BugCallback)(BugInstance * bug, void * reference); 
+typedef void * (*BugCallback)(BugInstance * bug, void * reference);
 typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
 typedef void * (*MetricCallback)(Metric * metr, void * reference);
 typedef void * (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
@@ -415,7 +415,7 @@ static int handle_number(void * data, const char * s, size_t l)
 		    ctx->bug->methods[ctx->bug->methodsCount].methodId = number;
 		}
 	    } else if ( strncmp("CweIds", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
-		
+
 		if ( ctx->bug->cweIds == NULL ) {
 		    ctx->bug->cweIds->size = 5;
 		    ctx->bug->cweIds->count = 0;
@@ -430,8 +430,8 @@ static int handle_number(void * data, const char * s, size_t l)
 			printf("Could not expand CweID array. Exiting parsing");
 			exit(1);
 		    }
-		}	
-		
+		}
+
 		ctx->bug->cweIds[ctx->bug->cweIdsCount] = number;
 		ctx->bug->cweIdsCount++;
             }
@@ -486,7 +486,7 @@ static int handle_string(void * data, const unsigned char * string,
 
 	} else if ( strncmp(ctx->curr, "tool_version", ctx->currLength) == 0 ) {
 	    ctx->initial->tool_version = stringValue;
-	} 
+	}
 	if ( ctx->initial->tool_version != NULL && ctx->initial->tool_name != NULL && ctx->initial->uuid != NULL ) {
 	    ctx->requiredStart = 1;
 	    if ( ctx->callbacks->initialCall != NULL ) {
@@ -499,39 +499,39 @@ static int handle_string(void * data, const unsigned char * string,
 	}
     } else if ( strcmp("bug", ctx->hashType) == 0 ) {
 	if ( strncmp(ctx->curr, "BugId", ctx->currLength) == 0 ) {
-	    ctx->bug->bugId = number;	
+	    ctx->bug->bugId = number;
 	} else if ( strncmp(ctx->curr, "AssessmentReportFile", ctx->currLength) == 0 ) {
 	    ctx->bug->assessmentReportFile = stringValue ;
         } else if ( strncmp(ctx->curr, "BuildId", ctx->currLength) == 0 ) {
-	    ctx->bug->buildId = stringValue; 
+	    ctx->bug->buildId = stringValue;
         } else if ( strncmp(ctx->curr, "ClassName", ctx->currLength) == 0 ) {
-	    ctx->bug->className = stringValue; 
+	    ctx->bug->className = stringValue;
 
         } else if ( strncmp(ctx->curr, "BugGroup", ctx->currLength) == 0 ) {
-	    ctx->bug->bugGroup = stringValue; 
+	    ctx->bug->bugGroup = stringValue;
 
         } else if ( strncmp(ctx->curr, "BugCode", ctx->currLength) == 0 ) {
-	    ctx->bug->bugCode = stringValue; 
+	    ctx->bug->bugCode = stringValue;
 
         } else if ( strncmp(ctx->curr, "BugRank", ctx->currLength) == 0 ) {
-	    ctx->bug->bugRank = stringValue; 
+	    ctx->bug->bugRank = stringValue;
 
         } else if ( strncmp(ctx->curr, "BugSeverity", ctx->currLength) == 0 ) {
-	    ctx->bug->bugSeverity = stringValue; 
+	    ctx->bug->bugSeverity = stringValue;
 
         } else if ( strncmp(ctx->curr, "BugMessage", ctx->currLength) == 0 ) {
-	    ctx->bug->bugMessage = stringValue; 
+	    ctx->bug->bugMessage = stringValue;
 
         } else if ( strncmp(ctx->curr, "ResolutionSuggestion", ctx->currLength) == 0 ) {
-	    ctx->bug->resolutionSuggestion = stringValue; 
+	    ctx->bug->resolutionSuggestion = stringValue;
 
         } else if ( strncmp(ctx->curr, "Xpath", ctx->currLength) == 0 ) {
-	    ctx->bug->instanceLocation.xPath = stringValue; 
+	    ctx->bug->instanceLocation.xPath = stringValue;
         } else if ( strncmp(ctx->curr, "Start", ctx->currLength) == 0 ) {
 	    ctx->bug->instanceLocation.lineNum.start = number;
         } else if ( strncmp(ctx->curr, "End", ctx->currLength) == 0 ) {
 	    ctx->bug->instanceLocation.lineNum.end = number;
-        
+
 	} else if ( ctx->isArray ) {
 	    if ( strncmp("BugLocations", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
                 if (strncmp("primary", ctx->curr, ctx->currLength) == 0) {
@@ -597,8 +597,8 @@ static int handle_string(void * data, const unsigned char * string,
 			printf("Could not expand CweID array. Exiting parsing");
 			exit(1);
 		    }
-		}	
-		
+		}
+
 		ctx->bug->cweIds[ctx->bug->cweIdsCount] = number;
 		ctx->bug->cweIdsCount++;
 	    }
@@ -606,17 +606,17 @@ static int handle_string(void * data, const unsigned char * string,
 
     } else if ( strcmp("metric", ctx->hashType) == 0 ) {
 	if ( strncmp(ctx->curr, "MetricId", ctx->currLength) == 0 ) {
-	    ctx->metric->id = number;	
+	    ctx->metric->id = number;
 	} else if ( strncmp(ctx->curr, "Value", ctx->currLength) == 0 ) {
-            ctx->metric->value = stringValue; 
+            ctx->metric->value = stringValue;
 	} else if ( strncmp(ctx->curr, "Class", ctx->currLength) == 0 ) {
             ctx->metric->className = stringValue;
 	} else if ( strncmp(ctx->curr, "Method", ctx->currLength) == 0 ) {
             ctx->metric->methodName = stringValue;
 	} else if ( strncmp(ctx->curr, "SourceFile", ctx->currLength) == 0 ) {
-            ctx->metric->sourceFile = stringValue; 
+            ctx->metric->sourceFile = stringValue;
 	} else if ( strncmp(ctx->curr, "Type", ctx->currLength) == 0 ) {
-            ctx->metric->type = stringValue; 
+            ctx->metric->type = stringValue;
 	}
     } else if ( strcmp("bugsum", ctx->hashType) == 0 ) {
 	if ( strncmp(ctx->curr, "bytes", ctx->currLength) == 0 ) {
@@ -640,7 +640,7 @@ static int handle_string(void * data, const unsigned char * string,
         } else if ( strncmp(ctx->curr, "Count", ctx->currLength) == 0 ) {
             ctx->metricSum->count = number;
         } else if ( strncmp(ctx->curr, "Type", ctx->currLength) == 0 ) {
-	    ctx->metricSum->type = stringValue; 
+	    ctx->metricSum->type = stringValue;
 	}
     }
     return 1;
@@ -698,10 +698,10 @@ static int handle_start_map(void * data)
     struct State * ctx = (struct State *) data;
 /*    if (ctx->isArray && ctx->depth == 3) {
 	if ( strncmp( ctx->arrayType, "BugLocations", ctx->arrayTypeLength-1 ) == 0 ) {
-	    ctx->loc = calloc(1, sizeof(Location)); 
+	    ctx->loc = calloc(1, sizeof(Location));
 	} else if  ( strncmp( ctx->arrayType, "Methods", ctx->arrayTypeLength-1 ) == 0 ) {
-	    ctx->method = calloc(1, sizeof(Method)); 
-    	} 
+	    ctx->method = calloc(1, sizeof(Method));
+    	}
     } else*/ if (ctx->depth == 3) {
 	if ( strcmp(ctx->hashType, "bugsum") == 0 ) {
 	    ctx->bugSum = calloc(1, sizeof(BugSummary));
@@ -776,7 +776,7 @@ static int handle_end_map(void * data)
 //                    }
 //                    cur->next = ctx->loc;
 //                }
-	        	     
+
 	    } else if  ( strncmp( ctx->arrayType, "Methods", ctx->arrayTypeLength ) == 0 ) {
 		ctx->bug->methodsCount++;
 		if ( ctx->bug->methodsCount >= ctx->bug->methodsSize ) {
@@ -832,7 +832,7 @@ static int handle_end_map(void * data)
 	    if ( ctx->returnValue != NULL ) {
 		return 0;
 	    }
-	} 
+	}
     }
     if ( ctx->isArray ) {
         ctx->arrayLoc = ctx->arrayLoc + 1;
