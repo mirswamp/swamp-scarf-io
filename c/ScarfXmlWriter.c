@@ -62,10 +62,10 @@ ScarfXmlWriter * NewScarfXmlWriterFromFd(int fd, char *encoding)
 	printf("Error at xmlTextWriterStartDocument\n");
 	return NULL;
     }
-    if (handle == NULL){
-	printf("Bad FILE * object\n");
-	exit(1);
-    }
+//    if (handle == NULL){
+//	printf("Bad FILE * object\n");
+//	exit(1);
+//    }
     writerInfo->file = fdopen(fd, "w");
     if (writerInfo->file == NULL){
 	printf("File could not open\n");
@@ -264,7 +264,7 @@ char * CheckBug(BugInstance * bug)
     errors[0] = '\0';
     char * temp = malloc(140);    
 
-    if (bug->bugLocations == NULL) {	
+    if (bug->locations == NULL) {	
 	sprintf(temp, "Required element: BugLocations could not be found in BugInstance\n");
 	errors = realloc(errors, strlen(errors) + strlen(temp));
 	errors = strcat(errors, temp);
@@ -318,13 +318,13 @@ char * CheckBug(BugInstance * bug)
 	}
     }
 
-    BugLocations *bugLocs = bug->bugLocations;
+    Location *bugLocs = bug->locations;
     int locID = 1;
     int locPrimary = 0;
     int k;
-    for ( k = 0; k < bugLocs->count; k++){
+    for ( k = 0; k < bug->locationsCount; k++){
 	//printf("found loc\n");
-	Location * loc = &bugLocs->locations[k];
+	Location * loc = &bugLocs[k];
 	//printf("%d\n", loc->primary);
         if (loc->primary != 0 && loc->primary != 1) {	    
 	    sprintf(temp, "Invalid primary attribute for a Location:%d in BugInstance\n", locID);
@@ -429,10 +429,10 @@ int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug)
             printf("Error at AddBug adding Methods tag\n");
             return 1;
         }
-        Methods * methods = bug->methods;
+        Method *methods = bug->methods;
 	int i;
-	for ( i = 0; i < methods->count; i++) {
-            Method *cur = &methods->methods[i];
+	for ( i = 0; i < bug->methodsCount; i++) {
+            Method *cur = &methods[i];
 	    bytes += rc;
             rc = xmlTextWriterStartElement(writer, (xmlChar *) "Method");
             if (rc < 0) {
@@ -994,21 +994,32 @@ int AddMetric(ScarfXmlWriter *  writerInfo, Metric * metric)
 char * CheckStart(Initial * initial){
     char * errors = malloc(strlen("\0"));
     errors[0] = '\0'; 
-    if (initial->tool_name == NULL){
-	char * temp = "Required Attribute: tool_name not found in Initial";
-	errors = realloc(errors, strlen(errors) + strlen(temp));
-	errors = strcat(errors, temp);
+
+#define CheckAttr(e, i, a) if (i->a == NULL)  { \
+	char * temp = "Required Attribute: " #a " not found in Initial"; \
+	e = realloc(e, strlen(e) + strlen(temp) + 1); \
+	e = strcat(e, temp); \
     }
-    if ( initial->tool_version == NULL ) {
-	char * temp = "Required Attribute: tool_version not found in Initial";
-	errors = realloc(errors, strlen(errors) + strlen(temp));
-	errors = strcat(errors, temp);
-    }
-    if ( initial->uuid == NULL ) {
-	char * temp = "Required Attribute: uuid not found in Initial";
-	errors = realloc(errors, strlen(errors) + strlen(temp));
-	errors = strcat(errors, temp);
-    }
+    /*
+     * Newly add attributes, not required
+     *
+    CheckAttr(errors, initial, assess_fw);
+    CheckAttr(errors, initial, assess_fw_version);
+    CheckAttr(errors, initial, assessment_start_ts);
+    CheckAttr(errors, initial, build_fw);
+    CheckAttr(errors, initial, build_fw_version);
+    CheckAttr(errors, initial, build_root_dir);
+    CheckAttr(errors, initial, package_name);
+    CheckAttr(errors, initial, package_root_dir);
+    CheckAttr(errors, initial, package_version);
+    CheckAttr(errors, initial, parser_fw);
+    CheckAttr(errors, initial, parser_fw_version);
+    CheckAttr(errors, initial, platform_name);
+    */
+    CheckAttr(errors, initial, tool_name);
+    CheckAttr(errors, initial, tool_version);
+    CheckAttr(errors, initial, uuid);
+
     if (strcmp("", errors) == 0) {
 	return NULL;
     }
@@ -1047,23 +1058,29 @@ int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial)
 	return 1;
     }
 
-    rc = xmlTextWriterWriteAttribute(writer,  (xmlChar *) "tool_name", (xmlChar *) initial->tool_name);
-    if (rc < 0) {
-	printf("Error adding start tag attribute tool_name\n");
-	return 1;
-    }
+#define WriteInitialAttr(i, a)  \
+	rc = xmlTextWriterWriteAttribute(writer, (xmlChar *) #a, (xmlChar *) i->a); \
+	if (rc < 0) { \
+	    printf("Error adding start tag attribute" #a "\n"); \
+	    return 1; \
+	}
 
-    rc = xmlTextWriterWriteAttribute(writer,  (xmlChar *) "tool_version", (xmlChar *) initial->tool_version);
-    if (rc < 0) {
-	printf("Error adding start tag attribute tool_version\n");
-	return 1;
-    }
+    WriteInitialAttr(initial, assess_fw);
+    WriteInitialAttr(initial, assess_fw_version);
+    WriteInitialAttr(initial, assessment_start_ts);
+    WriteInitialAttr(initial, build_fw);
+    WriteInitialAttr(initial, build_fw_version);
+    WriteInitialAttr(initial, build_root_dir);
+    WriteInitialAttr(initial, package_name);
+    WriteInitialAttr(initial, package_root_dir);
+    WriteInitialAttr(initial, package_version);
+    WriteInitialAttr(initial, parser_fw);
+    WriteInitialAttr(initial, parser_fw_version);
+    WriteInitialAttr(initial, platform_name);
+    WriteInitialAttr(initial, tool_name);
+    WriteInitialAttr(initial, tool_version);
+    WriteInitialAttr(initial, uuid);
 
-    rc = xmlTextWriterWriteAttribute(writer,  (xmlChar *) "uuid", (xmlChar *) initial->uuid);
-    if (rc < 0) {
-	printf("Error adding start tag attribute uuid\n");
-	return 1;
-    }
     xmlTextWriterFlush(writer);
     fwrite((char *) xmlBufferContent(writerInfo->buf), 1, xmlBufferLength(writerInfo->buf), writerInfo->file);
     xmlBufferEmpty(writerInfo->buf);

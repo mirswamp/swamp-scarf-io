@@ -36,6 +36,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 ----
+
 === DESCRIPTION
 This library provides the ability to convert C data structures into SWAMP Common Assesment Results Format (SCARF) XML formatted documents. It is dependent on libxml, which is used to handle writing of the SCARF document.
 
@@ -44,6 +45,7 @@ The writer's output is determined by the user through method calls that provide 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 === METHODS
+
 ==== ScarfXmlWriter *NewScarfXmlWriterFilename(char *filename, char *encoding)
 Initializes a ScarfXmlWriter struct. Opens a file stream from the file represented by the filename with the specified encoding. Supported encodings include UTF-8 (default), UTF-16, ISO-Latin-1 (ISO-8859-1), and ASCII.
 
@@ -103,11 +105,24 @@ The following are the data structures used in the methods listed above. Elements
 ==== typedef struct InitialData
 ----
 {
-    char *tool_name                 //REQUIRED
-    char *tool_version              //REQUIRED 
-    char *uuid                      //REQUIRED
+    char *assess_fw;
+    char *assess_fw_version;
+    char *assessment_start_ts;
+    char *build_fw;
+    char *build_fw_version;
+    char *build_root_dir;
+    char *package_name;
+    char *package_root_dir;
+    char *package_version;
+    char *parser_fw;
+    char *parser_fw_version;
+    char *platform_name;
+    char *tool_name;
+    char *tool_verison;
+    char *uuid;
 } 
 ----
+
 ==== typedef struct BugInstance
 ----
 {
@@ -129,28 +144,32 @@ The following are the data structures used in the methods listed above. Elements
     int locationsCount              //REQUIRED
 }
 ----
-===== typedef struct InstanceLocation
+
+==== typedef struct InstanceLocation
 ----
 {
     LineNum lineNum
     char *xPath
 }
 ----
-====== typedef struct LineNum
+
+==== typedef struct LineNum
 ----
 {
     int start                       //REQUIRED
     int end                         //REQUIRED
 }
 ----
-===== typedef struct Method
+
+==== typedef struct Method
 ----
 {
     int primary                     //REQUIRED
     char *name                      //REQUIRED
 }
 ----
-===== typedef struct Location
+
+==== typedef struct Location
 ----
 {
     int primary                    //REQUIRED
@@ -162,6 +181,7 @@ The following are the data structures used in the methods listed above. Elements
     char *sourceFile               //REQUIRED
 }
 ----
+
 ==== typedef struct Metric
 ----
 {
