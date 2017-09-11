@@ -1,15 +1,12 @@
 #ifndef GRANDFATHER_H
 #define GRANDFATHER_H
 
-
-/////////////////////////Summary Data Struct///////////////////////////////////////
-
-
+/////////////////Summary structs ///////////////////////////
 typedef struct BugSummary{
+    int count;
+    int byteCount;
     char * code;
     char * group;
-    int count;
-    int bytes;
     struct BugSummary * next;
 } BugSummary;
 
@@ -22,21 +19,33 @@ typedef struct BugSummaries {
 
 
 typedef struct MetricSummary{
-    char * type;
-    int valid;
-    double max;
-    double min;
+    double count;
     double sum;
+    double min;
+    double max;
     double sumOfSquares;
     double stdDeviation;
     double average;
-    double count;
+    int valid;
+    char * type;
     struct MetricSummary * next;
 } MetricSummary;
 
 
 /////////////////////////Initial Data Struct///////////////////////////////////////
 typedef struct Initial{
+    char *assess_fw;
+    char *assess_fw_version;
+    char *assessment_start_ts;
+    char *build_fw;
+    char *build_fw_version;
+    char *build_root_dir;
+    char *package_name;
+    char *package_root_dir;
+    char *package_version;
+    char *parser_fw;
+    char *parser_fw_version;
+    char *platform_name;
     char *tool_name;
     char *tool_version;
     char *uuid;
@@ -61,7 +70,6 @@ typedef struct Method{
     char *name;
 } Method;
 
-
 typedef struct Location{
     int primary;
     int startLine;
@@ -73,19 +81,17 @@ typedef struct Location{
     char *sourceFile;
 } Location;
 
-typedef struct {
+typedef struct LineNum  {
     int start;
     int end;
 } LineNum;
 
-
-typedef struct {
+typedef struct InstanceLocation  {
     LineNum lineNum;
     char *xPath;
 } InstanceLocation;
 
-
-typedef struct {
+typedef struct BugInstance  {
     int bugId;
     int *cweIds;
     int cweIdsCount;
@@ -108,7 +114,4 @@ typedef struct {
     Location *locations;
 } BugInstance;
 
-
-
 #endif
-
