@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include "filestructure.h"
+#include "ScarfJson.h"
 
 
 

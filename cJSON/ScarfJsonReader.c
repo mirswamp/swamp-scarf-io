@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "filestructure.h"
+#include "ScarfJson.h"
 
 typedef void * (*BugCallback)(BugInstance * bug, void * reference); 
 typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
