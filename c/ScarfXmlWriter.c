@@ -19,7 +19,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <libxml/xmlwriter.h>
-#include "filestructure.h"
+#include "ScarfXml.h"
 
 ////////////////////Writer operation structs/////////////////////////////////////
 

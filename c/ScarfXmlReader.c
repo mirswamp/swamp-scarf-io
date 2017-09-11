@@ -18,7 +18,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <libxml/xmlreader.h>
-#include "filestructure.h"
+#include "ScarfXml.h"
 
 /////////////////////////TypeDef for Clarity///////////////////////////////////////
 
