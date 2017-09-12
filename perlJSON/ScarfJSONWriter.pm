@@ -29,7 +29,7 @@ sub new
     $self->{metricID} = 1;
     $self->{utf8} = 1;
 
-    $self->{open}; 
+    $self->{open};
     $self->{bodyType} = undef;
     $self->{openBody} = 0;
     $self->{openStart} = 0;
@@ -57,17 +57,12 @@ sub getEncoding
     return $self->{utf8};
 }
 
-sub setEncoding 
+sub setEncoding
 {
     my ($self, $encode) = @_;
     $self->{utf8} = $encode;
     $self->{writer}->utf8($encode);
 }
-
-
-
-
-
 
 
 
@@ -136,6 +131,26 @@ sub checkStart
 }
 
 
+sub QuoteString
+{
+    my ($s) = @_;
+
+    $s =~ s/(["\\])/\\$1/g;
+
+    return "\"$s\"";
+}
+
+
+sub MakeField
+{
+    my ($name, $values) = @_;
+
+    return "" unless exists $values->{$name};
+
+    return QuoteString($name) . ": " . QuoteString($value->{$name})
+}
+
+
 #start analyzer report
 sub AddStartTag
 {
@@ -154,12 +169,20 @@ sub AddStartTag
             die "Exiting";
         }
     }
-   
+
     my $jsonw = $self->{writer};
 
     if ( $self->{openStart} == 0 ) {
-	$self->{output}->print("{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
-#	print($self->{output}, "{\n  \"AnalyzerReport\" : {\n    \"tool_name\" : \"$initial_details->{tool_name}\",\n    \"tool_version\" : \"$initial_details->{tool_version}\",\n    \"uuid\" : \"$initial_details->{uuid}\",\n");	
+#	my @attrs = qw/ assess_fw assess_fw_version assessment_start_ts build_fw
+#			build_fw_version build_root_dir package_name
+#			package_root_dir package_version parser_fw
+#			parser_fw_version platform_name tool_name tool_version
+#			uuid /;
+	my $header = "{\n  \"AnalyzerReport\": {\n    \"assessmentAttrs\" :\n";
+	$header .= $self->{writer}->encode($initial_details);
+	$header .= '\n";
+#	$header .= join ",\n      ", map {MakeField($_, $initial_details)} @attrs;
+	$self->{output}->print($header));
 
 	$self->{openStart} = 1;
     }
@@ -182,7 +205,7 @@ sub AddEndTag
     }
     my ($self) = @_;
     my $jsonw = $self->{writer};
-    
+
     if ( $self->{openBody} == 1 ) {
 	$self->{output}->print("]\n");
 	$self->{openBody} = 0;
@@ -309,7 +332,7 @@ sub AddBugInstance
     }
 
     my $writer = $self->{writer};
-    #byte count info    
+    #byte count info
     my $byte_count = 0;
     my $initial_byte_count = 0;
     my $final_byte_count = tell($self->{output});
@@ -318,11 +341,11 @@ sub AddBugInstance
     if ( $self->{bodyType} eq "metric" ) {
 	$self->{output}->print("    ],\n    \"BugInstances\" : [\n    ");
     } elsif ( $self->{bodyType} eq "bug") {
-	$self->{output}->print(", ");	
+	$self->{output}->print(", ");
     } else {
-	$self->{output}->print("    \"BugInstances\" : [\n    ");
+	$self->{output}->print(",\n    \"BugInstances\" : [\n    ");
 	$self->{openBody} = 1;
-    } 
+    }
 
     my $true = JSON->true;
     my $false = JSON->false;
@@ -382,7 +405,7 @@ sub AddBugInstance
         $bugSummary->{bytes} = $byte_count;
         $self->{BugSummaries}->{$group}->{$code} = $bugSummary;
     }
-    
+
     $self->{bugID}++;
     return $self;
 }
@@ -425,11 +448,11 @@ sub AddMetric
     if ( $self->{bodyType} eq "bug" ) {
 	$self->{output}->print("    ],\n    \"Metrics\" : [\n    ");
     } elsif ( $self->{bodyType} eq "metric") {
-	$self->{output}->print(", ");	
+	$self->{output}->print(", ");
     } else {
-	$self->{output}->print("    \"Metrics\" : [\n    ");
+	$self->{output}->print(",\n    \"Metrics\" : [\n    ");
 	$self->{openBody} = 1;
-    } 
+    }
     $self->{bodyType} = "metric";
     $metric->{MetricId} = $self->{metricID};
 
@@ -487,20 +510,20 @@ sub AddSummary
     if ($self->{openBody}) {
 	$out->print("],\n ");
 	$self->{openBody} = 0;
-	$self->{bodyType} = "summary"; 
+	$self->{bodyType} = "summary";
         if (defined $self->{BugSummaries}) {
 
 	    $out->print("  \"BugSummaries\" : ");
 	    $out->print($self->{writer}->encode($self->{BugSummaries}));
 	    if ($self->{MetricSummaries}) {
-		$out->print(", ");		
+		$out->print(", ");
 	    }
         }
-    
+
         if ($self->{MetricSummaries}) {
 	    foreach my $summaryName (keys(%{$self->{MetricSummaries}})) {
                 my $summary = $self->{MetricSummaries}->{$summaryName};
-		
+
 		if ( defined $summary->{Sum} ) {
 		    my $count = $summary->{Count};
 		    my $average = 0;
@@ -520,25 +543,11 @@ sub AddSummary
 	    $out->print(" \"MetricSummaries\" : ");
 	    $out->print($self->{writer}->encode($self->{MetricSummaries}));
 
-		
-	}	
+
+	}
     }
     return $self;
 }
 
 
-
-
 1;
-
-
-
-
-
-
-
-
-
-
-
-

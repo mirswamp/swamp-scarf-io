@@ -1,19 +1,19 @@
 #!/usr/bin/perl -w
 
 #  Copyright 2016 Brandon G. Klein
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#  
+#
 
 package ScarfJSONReader;
 use strict;
@@ -159,14 +159,14 @@ sub Parse
     my $validBody = 0;
     $parser->set_jsonpointer( [ ("/^/tool_name", "/^/tool_version", "/^/uuid", "/^/^/^") ] );
     my $fh;
-    if (ref $self->{source} eq "SCALAR"){	
+    if (ref $self->{source} eq "SCALAR"){
 	open( $fh, "<", $self->{source} ) or die "Could not open specified string\n";
     } elsif ( openhandle($self->{source}) or ref $self->{source} eq "IO" ){
 	$fh = $self->{source};
     } else {
 	open( $fh, "<", $self->{source} ) or die "Could not open specified file\n";
     }
-    local $/ = \$self->{readSize}; 
+    local $/ = \$self->{readSize};
     FINISH: {
 	while (my $buf = <$fh>) {
 	    $parser->feed($buf); #parse what you can
@@ -175,14 +175,18 @@ sub Parse
 	    while (my $obj = $parser->fetch) {
 		my $tempHash = {};
 		if ( ! ( $validStart ) ) {
-		    if ( $obj->{JSONPointer} eq "/^/tool_name" ) { 
-			$hash->{tool_name} = $obj->{Value};
-		    } elsif ( $obj->{JSONPointer} eq "/^/tool_version" ) { 
-			$hash->{tool_version} = $obj->{Value};
-		    } elsif ( $obj->{JSONPointer} eq "/^/uuid" ) { 
-			$hash->{uuid} = $obj->{Value};
-		    }	 
-		    if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
+		    if ( $obj->{JSONPointer} eq "/^/AssessmentAttrs" )  {
+			$hash = $obj->{Value};
+
+#		    if ( $obj->{JSONPointer} eq "/^/tool_name" ) {
+#			$hash->{tool_name} = $obj->{Value};
+#		    } elsif ( $obj->{JSONPointer} eq "/^/tool_version" ) {
+#			$hash->{tool_version} = $obj->{Value};
+#		    } elsif ( $obj->{JSONPointer} eq "/^/uuid" ) {
+#			$hash->{uuid} = $obj->{Value};
+#		    }
+#		    if ( defined $hash->{tool_name} && defined $hash->{tool_version} && defined $hash->{uuid} ) {
+#
 			$validStart = 1;
 			if ( defined $self->{callbacks}->{InitialCallback} ) {
 			    if ( defined $self->{callbacks}->{CallbackData} ) {
@@ -230,7 +234,7 @@ sub Parse
 			}
 		    }
 		    $validBody = 1;
-	    
+
 		} elsif ($obj->{Path} =~ /(\/AnalyzerReport\/Metrics\/)([0-9]+)/) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
 			$return = $self->{callbacks}->{MetricCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});
@@ -244,7 +248,7 @@ sub Parse
 			}
 		    }
 		    $validBody = 1;
-	    
+
 		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/BugSummaries\//) {
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
 			$return = $self->{callbacks}->{BugSummaryCallback}->($obj->{Value}, $self->{callbacks}->{CallbackData});
@@ -257,7 +261,7 @@ sub Parse
 			    last FINISH;
 			}
 		    }
-	    
+
 		} elsif ($obj->{JSONPointer} =~ /\/AnalyzerReport\/MetricSummaries\//) {
 		    $hash = $obj->{Value};
 		    if ( defined $self->{callbacks}->{CallbackData} ) {
@@ -272,7 +276,7 @@ sub Parse
 			}
 		    }
 		}
-    	    }	
+    	    }
         }
     }
 
@@ -287,7 +291,4 @@ sub Parse
 
 
 
-
-
-
-return 1;
+1;
