@@ -9,7 +9,7 @@ ScarfJSONWriter - A C library for writing SCARF JSON files
 [source,c]
 ----
 #include <stdio.h>
-#include "ScarfJSONWriter.c"
+#include "ScarfJson.h"
 
 int main(int argc, char **argv) {
     ScarfJSONWriter *writer = NewScarfJSONWriterForFilename("/path/to/file/", "UTF-8");

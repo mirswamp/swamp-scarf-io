@@ -9,7 +9,7 @@ ScarfXmlReader - A C library for parsing SCARF
 [source,c]
 ----
 #include <stdio.h>
-#include "ScarfXmlReader.c"
+#include "ScarfXml.h"
 
 int main(int argc, char **argv) {
     ScarfXmlReader *reader = NewScarfXmlReaderFilename("/path/to/file", "UTF-8");

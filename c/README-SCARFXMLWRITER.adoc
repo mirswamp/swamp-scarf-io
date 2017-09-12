@@ -9,7 +9,7 @@ ScarfXmlWriter - A C library for writing SCARF
 [source,c]
 ----
 #include <stdio.h>
-#include "ScarfXmlWriter.c"
+#include "ScarfXml.h"
 
 int main(int argc, char **argv) {
     ScarfXmlWriter *writer = NewScarfXmlWriterForFilename("/path/to/file/", "UTF-8");

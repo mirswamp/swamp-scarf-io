@@ -8,7 +8,7 @@ ScarfJSONReader - A C library for parsing SCARF JSON files
 [source,c]
 ----
 #include <stdio.h>
-#include "ScarfJSONReader.c"
+#include "ScarfJson.h"
 
 int main(int argc, char **argv) {
     ScarfJSONReader *reader = NewScarfJSONReaderFilename("/path/to/file", "UTF-8");
