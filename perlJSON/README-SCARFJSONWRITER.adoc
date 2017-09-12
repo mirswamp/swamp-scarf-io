@@ -32,7 +32,9 @@ $writer->AddEndTag();
 
 $writer->Close();
 ----
+
 === DESCRIPTION
+
 This module provides the ability to convert Perl data structures into SWAMP Common Assessment Results Format (SCARF) JSON formatted documents. It is dependant on JSON::MaybeXS library for writing.
 
 The writer's output is determined by the user through method calls that provide the data to be written. This data is to be structured as a hash containing all fields for a specific section. For details on how the data structures are formatted see below.
@@ -40,6 +42,7 @@ The writer's output is determined by the user through method calls that provide 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 === METHODS
+
 ==== new($file [, $errorLevel, $prettyEnable])
 This is a class method used to instantiate the writer. File is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. By defaults the writer will validate all strings are UTF-8. To disable validation see the setEncoding() method. ErrorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). prettyEnable will enable or disable pretty printing of output with a true or false value respectively (default true).
 
@@ -97,10 +100,22 @@ The following are the data structures used in the methods listed above. Undefine
 InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements therefore must be included in the data structure.
 ----
 {
-    tool_name => TOOLNAMEVALUE,            #REQUIRED
-    tool_verison => TOOLVERSIONVALUE,      #REQUIRED
-    uuid => UUIDVALUE                       #REQUIRED
-}
+    assess_fw               => ASSESSMENT_FRAMEWORK,
+    assess_fw_version       => ASSESSMENT_FRAMEWORK_VERSION,
+    assessment_start_ts     => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
+    build_fw                => BUILD_FRAMEWORK,
+    build_fw_version        => BUILD_FRAMEWORK_VERSION,
+    build_root_dir          => PACKAGE_DIRECTORY,
+    package_name            => PACKAGE_NAME,
+    package_root_dir        => DIRECTORY_CONTAINING_PACKAGE,
+    package_version         => PACKAGE_VERSION,
+    parser_fw               => PARSER_FRAMEWORK,
+    parser_fw_version       => PARSER_FRAMEWORK_VERSION,
+    platform_name           => PLATFORM_NAME_AND_VERSION,
+    tool_name               => TOOL_NAME,
+    tool_verison            => TOOL_VERSION,
+    uuid                    => UUIDVALUE
+} 
 ----
 
 ==== $bugData

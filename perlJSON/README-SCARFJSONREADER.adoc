@@ -26,6 +26,7 @@ $reader->SetCallbackData(\$data);
 
 $reader->Parse();
 ----
+
 === DESCRIPTION
 This module provides the ability to convert SWAMP Common Assessment Results Format (SCARF) files into Perl data structures. It is dependent on JSON::SL library for parsing of the JSON document.
 
@@ -35,7 +36,9 @@ All Callbacks except the FinalCallback receive as parameters a reference to a ha
 
 While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined. 
 Additional validation routines can be found in the ScarfJSONWriter module.
+
 === METHODS
+
 ==== new($file)
 This is a class method used to instantiate the parser. FILE can be an open handle, a string containing the filename of a file, or a reference to a string containing SCARF data.
 
@@ -125,9 +128,21 @@ The following are the data structures used in the callbacks listed above. If a k
 InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements in the AnalyzerReport start tag therefore they should always be present.
 ----
 {
-    tool_name => TOOLNAMEVALUE,            # REQUIRED
-    tool_verison => TOOLVERSIONVALUE,      # REQUIRED
-    uuid => UUIDVALUE                       # REQUIRED
+    assess_fw               => ASSESSMENT_FRAMEWORK,
+    assess_fw_version       => ASSESSMENT_FRAMEWORK_VERSION,
+    assessment_start_ts     => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
+    build_fw                => BUILD_FRAMEWORK,
+    build_fw_version        => BUILD_FRAMEWORK_VERSION,
+    build_root_dir          => PACKAGE_DIRECTORY,
+    package_name            => PACKAGE_NAME,
+    package_root_dir        => DIRECTORY_CONTAINING_PACKAGE,
+    package_version         => PACKAGE_VERSION,
+    parser_fw               => PARSER_FRAMEWORK,
+    parser_fw_version       => PARSER_FRAMEWORK_VERSION,
+    platform_name           => PLATFORM_NAME_AND_VERSION,
+    tool_name               => TOOL_NAME,
+    tool_verison            => TOOL_VERSION,
+    uuid                    => UUIDVALUE
 } 
 ----
 
