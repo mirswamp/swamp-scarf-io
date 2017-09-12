@@ -221,7 +221,7 @@ BugSummaryCallback ScarfJSONReaderGetBugSummaryCallback(ScarfJSONReader * reader
 MetricSummaryCallback ScarfJSONReaderGetMetricSummaryCallback(ScarfJSONReader * reader);
 FinalCallback ScarfJSONReaderGetFinalCallback(ScarfJSONReader * reader);
 InitialCallback ScarfJSONReaderGetInitialCallback(ScarfJSONReader * reader);
-void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader, void * callbackData);
+void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader);
 void * ScarfJSONReaderParse(ScarfJSONReader * hand);
 
 

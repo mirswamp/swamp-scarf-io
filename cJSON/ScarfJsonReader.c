@@ -226,7 +226,7 @@ void  DeleteBug(BugInstance * bug)
     Method * method = bug->methods;
     if ( method != NULL ) {
 	int i;
-	for ( i < 0; i < bug->methodsCount; i++){
+	for ( i = 0; i < bug->methodsCount; i++){
 	    free(method[i].name);
 	}
 	free(method);
@@ -319,7 +319,7 @@ int _clearBug(BugInstance * bug)
     Method * method = bug->methods;
     if ( method != NULL ) {
 	int i;
-	for ( i < 0; i < bug->methodsCount; i++){
+	for ( i = 0; i < bug->methodsCount; i++){
 	    free(method[i].name);
 	}
 	free(method);
@@ -809,7 +809,6 @@ static int handle_end_map(void * data)
                     ctx->bugSummaries = ctx->bugSum;
                 } else {
                     BugSummary *  cur = ctx->bugSummaries;
-		    int i = 0;
                     while (cur->next != NULL) {
                         cur = cur->next;
                     }
@@ -1023,7 +1022,7 @@ FinalCallback ScarfJSONReaderGetFinalCallback(ScarfJSONReader * reader) {
 InitialCallback ScarfJSONReaderGetInitialCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->initialCall;
 }
-void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader, void * callbackData) {
+void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader) {
     return reader->state->callbacks->CallbackData;
 }
 
