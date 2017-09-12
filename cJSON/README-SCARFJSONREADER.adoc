@@ -17,17 +17,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    SetInitialCallback(reader, initialFunction);
-    SetBugCallback(reader, bugFunction);
-    SetMetricCallback(reader, metricFunction);
-    SetBugSummaryCallback(reader, bugSummaryFunction);
-    SetMetricSummaryCallback(reader, metricSummaryFunction);
-    SetFinishCallback(reader, finishFunction);
+    ScarfJSONReaderSetInitialCallback(reader, initialFunction);
+    ScarfJSONReaderSetBugCallback(reader, bugFunction);
+    ScarfJSONReaderSetMetricCallback(reader, metricFunction);
+    ScarfJSONReaderSetBugSummaryCallback(reader, bugSummaryFunction);
+    ScarfJSONReaderSetMetricSummaryCallback(reader, metricSummaryFunction);
+    ScarfJSONReaderSetFinishCallback(reader, finishFunction);
     
     void *context = DATA;
-    SetCallbackData(reader, context);
+    ScarfJSONReaderSetCallbackData(reader, context);
 
-    Parse(reader);
+    ScarfJSONReaderParse(reader);
     DeleteScarfJSONReader(reader);
     return 0;
 }
@@ -56,55 +56,55 @@ Initializes a ScarfJSONReader struct with the given file descriptor. By default 
 ==== ScarfJSONReader *NewScarfJSONReaderFromMemory(char *s, int size)
 Initializes a ScarfJSONReader struct to parse from memory. s is a initial char pointer and size represents the size in bytes of the document in memory. By default the writer will verify that strings are valid UTF-8 and will throw a parsing error if this is not so. To disable this use the SetUTF8 method. 
 
-==== void SetUTF8(ScarfJSONReader * reader, int value) 
+==== void ScarfJSONReaderSetUTF8(ScarfJSONReader * reader, int value) 
 Allows enabling/disabling of UTF-8 validation. Any true value will enable validation.
 
-==== void SetInitialCallback(ScarfJSONReader *reader, InitialCallback startFunction)
+==== void ScarfJSONReaderSetInitialCallback(ScarfJSONReader *reader, InitialCallback startFunction)
 Sets the InitialCallback to be called after each AnalyzerReport start tag is parsed. For details on callbacks see below.
 
-==== void SetBugCallback(ScarfJSONReader *reader, BugCallback bugFunction)
+==== void ScarfJSONReaderSetBugCallback(ScarfJSONReader *reader, BugCallback bugFunction)
 Sets the BugCallback to be called after each full BugInstance is parsed. For details on callbacks see below.    
  
-==== void SetMetricCallback(ScarfJSONReader *reader, MetricCallback metricFunction)
+==== void ScarfJSONReaderSetMetricCallback(ScarfJSONReader *reader, MetricCallback metricFunction)
 Sets the MetricCallback to be called after each full Metric is parsed. For details on callbacks see below.
 
-==== void SetBugSummaryCallback(ScarfJSONReader *reader, BugSummaryCallback bugSummaryFunction)
+==== void ScarfJSONReaderSetBugSummaryCallback(ScarfJSONReader *reader, BugSummaryCallback bugSummaryFunction)
 Sets the BugSummaryCallback to be called after the bug summary data is parsed. For details on callbacks see below.
 
-==== void SetMetricSummaryCallback(ScarfJSONReader *reader, MetricSummaryCallback metricSummaryFunction)
+==== void ScarfJSONReaderSetMetricSummaryCallback(ScarfJSONReader *reader, MetricSummaryCallback metricSummaryFunction)
 Sets the MetricSummaryCallback to be called after the metric summary data is parsed. For details on callbacks see below. 
 
-==== void SetFinalCallback(ScarfJSONReader *reader, FinalCallback finalFunction) 
+==== void ScarfJSONReaderSetFinalCallback(ScarfJSONReader *reader, FinalCallback finalFunction) 
 Sets the FinalCallback to be called after each AnalyzerReport end tag is parsed. For details on callbacks see below.
 
-==== void SetCallbackData(ScarfJSONReader *reader, void *context) 
+==== void ScarfJSONReaderSetCallbackData(ScarfJSONReader *reader, void *context) 
 Sets the context data to be used as an additional parameter to callbacks. This data is passed to all callbacks and can be used to avoid global variables.
 
-==== int GetUTF8(ScarfJSONReader * reader)
+==== int ScarfJSONReaderGetUTF8(ScarfJSONReader * reader)
 Gets the current value set for UTF-8 validation. Any true value will enable validation.
 
-==== InitialCallback GetInitialCallback(ScarfJSONReader *reader) 
+==== InitialCallback ScarfJSONReaderGetInitialCallback(ScarfJSONReader *reader) 
 Access the current value of InitialCallback. For details on callbacks see below.
 
-==== BugCallback GetBugCallback(ScarfJSONReader *reader) 
+==== BugCallback ScarfJSONReaderGetBugCallback(ScarfJSONReader *reader) 
 Access the current value of BugCallback. For details on callbacks see below.
 
-==== MetricCallback GetMetricCallback(ScarfJSONReader *reader) 
+==== MetricCallback ScarfJSONReaderGetMetricCallback(ScarfJSONReader *reader) 
 Access the current value of MetricCallback. For details on callbacks see below.
 
-==== BugSummaryCallback GetBugSummaryCallback(ScarfJSONReader *reader) 
+==== BugSummaryCallback ScarfJSONReaderGetBugSummaryCallback(ScarfJSONReader *reader) 
 Access the current value of BugSummaryCallback. For details on callbacks see below.
 
-==== MetricSummaryCallback GetMetricSummaryCallback(ScarfJSONReader *reader) 
+==== MetricSummaryCallback ScarfJSONReaderGetMetricSummaryCallback(ScarfJSONReader *reader) 
 Access the current value of MetricCallback. For details on callbacks see below.
 
-==== FinalCallback GetFinalCallback(ScarfJSONReader *reader) 
+==== FinalCallback ScarfJSONReaderGetFinalCallback(ScarfJSONReader *reader) 
 Access the current value of FinalCallback. For details on callbacks see below.
 
-==== void *GetCallbackData(ScarfJSONReader *reader) 
+==== void *ScarfJSONReaderGetCallbackData(ScarfJSONReader *reader) 
 Access the current value of CallbackData.
 
-==== void *Parse()
+==== void *ScarfJSONReaderParse()
 This method initiates the parsing of the JSON. If parsing fails an exit(1) call will be thrown. The return value of parse will be the return value of FinalCallback if it is defined. Otherwise the return value will be the same as the last callback executed or NULL if there are no errors.  
 
 ==== BugInstance *CopyBug(BugInstance *bug)

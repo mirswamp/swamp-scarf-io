@@ -18,18 +18,18 @@ int main(int argc, char **argv) {
         return 1;
     }
     
-    SetErrorLevel(writer, 1);
-    SetPretty(writer, 1);
+    ScarfJSONWriterSetErrorLevel(writer, 1);
+    ScarfJSONWriterSetPretty(writer, 1);
     
     char *bugErrors = CheckBug(bugInformation);
     char *metricErrors = CheckMetric(metricInformation);
     char *initalErrors = CheckStart(initialInformation);
 
-    AddStartTag(writer, initialInformation);
-    AddBug(writer, bugInformation);
-    AddMetric(writer, metricInformation);
-    AddSummary(writer);
-    AddEndTag(writer);
+    ScarfJSONWriterAddStartTag(writer, initialInformation);
+    ScarfJSONWriterAddBug(writer, bugInformation);
+    ScarfJSONWriterAddMetric(writer, metricInformation);
+    ScarfJSONWriterAddSummary(writer);
+    ScarfJSONWriterAddEndTag(writer);
 
     DeleteScarfJSONWriter(writer);
      
@@ -59,22 +59,22 @@ Initializes a ScarfJSONWriter struct to write to a specified address in memory. 
 ==== void SetPretty(ScarfJSONWriter *writerInfo, int pretty_en) 
 Either enable or disable pretty printing with a true or false value (default true). Returns 0 or 1 if error changing settings.
 
-==== int SetErrorLevel(ScarfJSONWriter *writerInfo, int errorLevel)
+==== int ScarfJSONWriterSetErrorLevel(ScarfJSONWriter *writerInfo, int errorLevel)
 Allows changing the errorlevel of the writer to 0 (none), 1 (print warnings), or 2 (print warnings and exit). If ERRORLEVEL does not equal one of these value returns 1 and does nothing.
 
-==== void SetUTF8 (ScarfJSONWriter * writerInfo, int utf8)
+==== void ScarfJSONWriterSetUTF8(ScarfJSONWriter * writerInfo, int utf8)
 Allows enabling/disabling of UTF8 validation. Any true value will enable validation, and 0 will disable validation.
 
-==== JSONTextWriterPtr GetWriter(ScarfJSONWriter *writerInfo)
+==== JSONTextWriterPtr ScarfJSONWriterGetWriter(ScarfJSONWriter *writerInfo)
 Returns the JSONTextWriter used for writing.
 
-==== int GetPretty (ScarfJSONWriter * writerInfo)
+==== int ScarfJSONWriterGetPretty(ScarfJSONWriter * writerInfo)
 Returns current value set to pretty_en. 
 
-==== int GetUTF8 (ScarfJSONWriter * writerInfo)
+==== int ScarfJSONWriterGetUTF8(ScarfJSONWriter * writerInfo)
 Returns current value set for UTF-8 validation.
 
-==== int GetErrorLevel(ScarfJSONWriter *writerInfo)
+==== int ScarfJSONWriterGetErrorLevel(ScarfJSONWriter *writerInfo)
 Returns the current error level.
 
 ==== char *CheckStart(Initial *initialInformation)
@@ -86,19 +86,19 @@ Checks a BugInstance data structure for errors. Returns a string containing all 
 ==== char *CheckMetric(Metric *metricInformation)
 Checks a Metric data structure for errors. Returns a string containing all errors found seperated by newlines, otherwise returns NULL. The return value must be freed by the user.
 
-==== AddStartTag(ScarfJSONWriter *writerInfo, Initial *initialInformation)
+==== ScarfJSONWriterAddStartTag(ScarfJSONWriter *writerInfo, Initial *initialInformation)
 Writes a start tag to the file based on initialInformation. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
 
-==== AddBug(ScarfJSONWriter *writerInfo, BugInstance *bugInformation)
+==== ScarfJSONWriterAddBug(ScarfJSONWriter *writerInfo, BugInstance *bugInformation)
 Writes a bug to the file based on bugInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-==== AddMetric(ScarfJSONWriter *writerInfo, Metric *metricInformation)
+==== ScarfJSONWriterAddMetric(ScarfJSONWriter *writerInfo, Metric *metricInformation)
 Writes a metric to the file based on metricInformation. For details on valid data structures see below. May be called 0 or more time and inter-leaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
 
-==== AddSummary(ScarfJSONWriter *writerInfo)
+==== ScarfJSONWriterAddSummary(ScarfJSONWriter *writerInfo)
 Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most once before 'AddEndTag'.
 
-==== AddEndTag(ScarfJSONWriter *writerInfo)
+==== ScarfJSONWriterAddEndTag(ScarfJSONWriter *writerInfo)
 Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
 
 ==== void DeleteScarfJSONWriter(ScarfJSONWriter *writerInfo)
