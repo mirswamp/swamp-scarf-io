@@ -974,61 +974,61 @@ void DeleteScarfJSONReader(ScarfJSONReader * reader) {
     free(reader);
 }
 
-void SetUTF8(ScarfJSONReader * reader, int value){
+void ScarfJSONReaderSetUTF8(ScarfJSONReader * reader, int value){
     reader->utf8 = value;
 }
 
-void SetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
+void ScarfJSONReaderSetBugCallback(ScarfJSONReader * reader, BugCallback callback) {
     reader->state->callbacks->bugCall = callback;
 }
-void SetMetricCallback(ScarfJSONReader * reader, MetricCallback callback) {
+void ScarfJSONReaderSetMetricCallback(ScarfJSONReader * reader, MetricCallback callback) {
     reader->state->callbacks->metricCall = callback;
 }
-void SetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback) {
+void ScarfJSONReaderSetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback) {
     reader->state->callbacks->bugSumCall = callback;
 }
-void SetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback) {
+void ScarfJSONReaderSetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback) {
     reader->state->callbacks->metricSumCall = callback;
 }
-void SetFinalCallback(ScarfJSONReader * reader, FinalCallback callback) {
+void ScarfJSONReaderSetFinalCallback(ScarfJSONReader * reader, FinalCallback callback) {
     reader->state->callbacks->finalCallback = callback;
 }
-void SetInitialCallback(ScarfJSONReader * reader, InitialCallback callback) {
+void ScarfJSONReaderSetInitialCallback(ScarfJSONReader * reader, InitialCallback callback) {
     reader->state->callbacks->initialCall = callback;
 }
-void SetCallbackData(ScarfJSONReader * reader, void * callbackData) {
+void ScarfJSONReaderSetCallbackData(ScarfJSONReader * reader, void * callbackData) {
     reader->state->callbacks->CallbackData = callbackData;
 }
 
 
-int GetUTF8(ScarfJSONReader * reader) {
+int ScarfJSONReaderGetUTF8(ScarfJSONReader * reader) {
     return reader->utf8;
 }
 
-BugCallback GetBugCallback(ScarfJSONReader * reader) {
+BugCallback ScarfJSONReaderGetBugCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->bugCall;
 }
-MetricCallback GetMetricCallback(ScarfJSONReader * reader) {
+MetricCallback ScarfJSONReaderGetMetricCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->metricCall;
 }
-BugSummaryCallback GetBugSummaryCallback(ScarfJSONReader * reader) {
+BugSummaryCallback ScarfJSONReaderGetBugSummaryCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->bugSumCall;
 }
-MetricSummaryCallback GetMetricSummaryCallback(ScarfJSONReader * reader) {
+MetricSummaryCallback ScarfJSONReaderGetMetricSummaryCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->metricSumCall;
 }
-FinalCallback GetFinalCallback(ScarfJSONReader * reader) {
+FinalCallback ScarfJSONReaderGetFinalCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->finalCallback;
 }
-InitialCallback GetInitialCallback(ScarfJSONReader * reader) {
+InitialCallback ScarfJSONReaderGetInitialCallback(ScarfJSONReader * reader) {
     return reader->state->callbacks->initialCall;
 }
-void * GetCallbackData(ScarfJSONReader * reader, void * callbackData) {
+void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader, void * callbackData) {
     return reader->state->callbacks->CallbackData;
 }
 
 
-void * Parse(ScarfJSONReader * hand)
+void * ScarfJSONReaderParse(ScarfJSONReader * hand)
 {
     hand->reader =  yajl_alloc(&callbacks, NULL, hand->state);
     yajl_config(hand->reader, yajl_dont_validate_strings, hand->utf8);

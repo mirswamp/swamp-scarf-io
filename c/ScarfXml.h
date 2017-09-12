@@ -2,7 +2,8 @@
 #define SCARFXML_H
 
 /////////////////Summary structs ///////////////////////////
-typedef struct BugSummary {
+typedef struct BugSummary
+{
     int count;
     int byteCount;
     char * code;
@@ -11,14 +12,16 @@ typedef struct BugSummary {
 } BugSummary;
 
 
-typedef struct BugSummaries {
+typedef struct BugSummaries
+{
     char * code;
     struct BugSummary * codeSummary;
     struct BugSummaries * next;
 } BugSummaries;
 
 
-typedef struct MetricSummary {
+typedef struct MetricSummary
+{
     double count;
     double sum;
     double min;
@@ -33,7 +36,8 @@ typedef struct MetricSummary {
 
 
 /////////////////////////Initial Data Struct///////////////////////////////////////
-typedef struct Initial{
+typedef struct Initial
+{
     char *assess_fw;
     char *assess_fw_version;
     char *assessment_start_ts;
@@ -53,7 +57,8 @@ typedef struct Initial{
 
 
 /////////////////////////Metric Structs////////////////////////////////////////////
-typedef struct Metric  {
+typedef struct Metric
+{
     int id;
     char *value;
     char *className;
@@ -64,13 +69,15 @@ typedef struct Metric  {
 
 
 ///////////////////////////Bug Structs////////////////////////////////////////////
-typedef struct Method  {
+typedef struct Method
+{
     int methodId;
     int primary;
     char *name;
 } Method;
 
-typedef struct Location  {
+typedef struct Location
+{
     int primary;
     int startLine;
     int endLine;
@@ -81,17 +88,20 @@ typedef struct Location  {
     char *sourceFile;
 } Location;
 
-typedef struct LineNum  {
+typedef struct LineNum
+{
     int start;
     int end;
 } LineNum;
 
-typedef struct InstanceLocation  {
+typedef struct InstanceLocation
+{
     LineNum lineNum;
     char *xPath;
 } InstanceLocation;
 
-typedef struct BugInstance  {
+typedef struct BugInstance
+{
     int bugId;
     int *cweIds;
     int cweIdsCount;
@@ -115,7 +125,7 @@ typedef struct BugInstance  {
 } BugInstance;
 
 
-typedef struct ScarfXmlReader ScarfXmlReader;
+/*************** Common Scarf Types and Functions  *************/
 typedef void *(*BugCallback)(BugInstance *bug, void *reference);
 typedef void *(*BugSummaryCallback)(BugSummary *bugSum, void *reference);
 typedef void *(*MetricCallback)(Metric *metr, void *reference);
@@ -123,14 +133,24 @@ typedef void *(*MetricSummaryCallback)(MetricSummary *metrSum, void *reference);
 typedef void *(*InitialCallback)(Initial *initial, void *reference);
 typedef void *(*FinalCallback)(void *killValue, void *reference);
 
-
 void DeleteInitial(Initial *initial);
 void DeleteMetric(Metric *metric);
 void DeleteBug(BugInstance *bug);
 BugInstance *CopyBug(BugInstance *bug);
 Metric *CopyMetric(Metric *metr);
 Initial *CopyInitial(Initial *init);
-;
+void DeleteBugSummary(BugSummary *bugSummary);
+void DeleteMetricSummary(MetricSummary *metricSummary);
+
+char * CheckStart(Initial * initial);
+char * CheckBug(BugInstance * bug);
+char * CheckMetric(Metric * metric);
+
+
+
+/*************** ScarfXmlReader *************/
+typedef struct ScarfXmlReader ScarfXmlReader;
+
 ScarfXmlReader *NewScarfXmlReaderFromFilename(char *filename, char *encoding);
 ScarfXmlReader *NewScarfXmlReaderFromString(char *str, char *encoding);
 ScarfXmlReader *NewScarfXmlReaderFromFd(int fd, char *encoding);
@@ -158,9 +178,7 @@ int DeleteScarfXmlReader(ScarfXmlReader *reader);
 
 
 
-
-
-
+/*************** ScarfXmlWriter *************/
 typedef struct ScarfXmlWriter ScarfXmlWriter;
 
 ScarfXmlWriter * NewScarfXmlWriterFromFd(int fd, char *encoding);
@@ -172,15 +190,60 @@ int SetPretty ( ScarfXmlWriter * writerInfo, int pretty_level );
 int GetErrorLevel(ScarfXmlWriter * writerInfo);
 int SetErrorLevel(ScarfXmlWriter * writerInfo, int errorLevel);
 void SetIndent(ScarfXmlWriter * writerInfo, int tabSpace);
-char * CheckBug(BugInstance * bug);
 int AddBug(ScarfXmlWriter * writerInfo, BugInstance * bug);
-char * CheckMetric(Metric * metric);
 int AddMetric(ScarfXmlWriter *  writerInfo, Metric * metric);
-char * CheckStart(Initial * initial);
 int AddStartTag(ScarfXmlWriter * writerInfo, Initial * initial);
 int AddEndTag(ScarfXmlWriter * writerInfo);
 int AddSummary(ScarfXmlWriter * writerInfo);
 
+
+
+/*************** ScarfJsonReader *************/
+typedef struct ScarfJSONReader ScarfJSONReader;
+
+ScarfJSONReader * NewScarfJSONReaderFromFilename(char * filename);
+ScarfJSONReader * NewScarfJSONReaderFromFd(int fd);
+ScarfJSONReader * NewScarfJSONReaderFromFile(FILE * file);
+ScarfJSONReader * NewScarfJSONReaderFromString(char * str, size_t * size);
+void DeleteScarfJSONReader(ScarfJSONReader * reader);
+void ScarfJSONReaderSetUTF8(ScarfJSONReader * reader, int value);
+void ScarfJSONReaderSetBugCallback(ScarfJSONReader * reader, BugCallback callback);
+void ScarfJSONReaderSetMetricCallback(ScarfJSONReader * reader, MetricCallback callback);
+void ScarfJSONReaderSetBugSummaryCallback(ScarfJSONReader * reader, BugSummaryCallback callback);
+void ScarfJSONReaderSetMetricSummaryCallback(ScarfJSONReader * reader, MetricSummaryCallback callback);
+void ScarfJSONReaderSetFinalCallback(ScarfJSONReader * reader, FinalCallback callback);
+void ScarfJSONReaderSetInitialCallback(ScarfJSONReader * reader, InitialCallback callback);
+void ScarfJSONReaderSetCallbackData(ScarfJSONReader * reader, void * callbackData);
+int ScarfJSONReaderGetUTF8(ScarfJSONReader * reader);
+BugCallback ScarfJSONReaderGetBugCallback(ScarfJSONReader * reader);
+MetricCallback ScarfJSONReaderGetMetricCallback(ScarfJSONReader * reader);
+BugSummaryCallback ScarfJSONReaderGetBugSummaryCallback(ScarfJSONReader * reader);
+MetricSummaryCallback ScarfJSONReaderGetMetricSummaryCallback(ScarfJSONReader * reader);
+FinalCallback ScarfJSONReaderGetFinalCallback(ScarfJSONReader * reader);
+InitialCallback ScarfJSONReaderGetInitialCallback(ScarfJSONReader * reader);
+void * ScarfJSONReaderGetCallbackData(ScarfJSONReader * reader, void * callbackData);
+void * ScarfJSONReaderParse(ScarfJSONReader * hand);
+
+
+
+/*************** ScarfJsonWriter *************/
+typedef struct ScarfJSONWriter ScarfJSONWriter;
+
+ScarfJSONWriter * NewScarfJSONWriterFromFile(FILE * file);
+ScarfJSONWriter * NewScarfJSONWriterFromFilename(char * filename);
+ScarfJSONWriter * NewScarfJSONWriterFromString(char * str, size_t *size);
+void DeleteScarfJSONWriter (ScarfJSONWriter * writerInfo);
+void ScarfJSONWriterSetPretty ( ScarfJSONWriter * writerInfo, int pretty_level );
+void ScarfJSONWriterSetUTF8 (ScarfJSONWriter * writerInfo, int utf8);
+int ScarfJSONWriterGetPretty (ScarfJSONWriter * writerInfo);
+int ScarfJSONWriterGetUTF8 (ScarfJSONWriter * writerInfo);
+int ScarfJSONWriterGetErrorLevel(ScarfJSONWriter * writerInfo);
+int ScarfJSONWriterSetErrorLevel(ScarfJSONWriter * writerInfo, int errorLevel);
+int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug);
+int ScarfJSONWriterAddMetric(ScarfJSONWriter *  writerInfo, Metric * metric);
+int ScarfJSONWriterAddStartTag(ScarfJSONWriter * writerInfo, Initial * initial);
+int ScarfJSONWriterAddEndTag(ScarfJSONWriter * writerInfo);
+int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo);
 
 
 #endif

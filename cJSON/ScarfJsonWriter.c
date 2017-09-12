@@ -100,21 +100,21 @@ void DeleteScarfJSONWriter (ScarfJSONWriter * writerInfo)
 }
 
 ////////////////////////change options////////////////////////////////
-void SetPretty ( ScarfJSONWriter * writerInfo, int pretty_level ) {
+void ScarfJSONWriterSetPretty(ScarfJSONWriter * writerInfo, int pretty_level) {
     yajl_gen_config(writerInfo->writer, yajl_gen_beautify, pretty_level);
     writerInfo->pretty = pretty_level;
 }
 
-void SetUTF8 (ScarfJSONWriter * writerInfo, int utf8){
+void ScarfJSONWriterSetUTF8(ScarfJSONWriter * writerInfo, int utf8){
     yajl_gen_config(writerInfo->writer, yajl_gen_validate_utf8 , 1);
     writerInfo->utf8 = utf8;
 }
 
-int GetPretty (ScarfJSONWriter * writerInfo) {
+int ScarfJSONWriterGetPretty(ScarfJSONWriter * writerInfo) {
     return writerInfo->pretty;
 }
 
-int GetUTF8 (ScarfJSONWriter * writerInfo) {
+int ScarfJSONWriterGetUTF8 (ScarfJSONWriter * writerInfo) {
     return writerInfo->utf8;
 }
 
@@ -126,7 +126,7 @@ yajl_gen  getScarfJSONWriter (ScarfJSONWriter * writerInfo)
 }
 
 
-int getErrorLevel(ScarfJSONWriter * writerInfo)
+int ScarfJSONWriterGetErrorLevel(ScarfJSONWriter * writerInfo)
 {
     if (writerInfo != NULL){
 	return writerInfo->errorLevel;
@@ -134,7 +134,7 @@ int getErrorLevel(ScarfJSONWriter * writerInfo)
 }
 
 
-int SetErrorLevel(ScarfJSONWriter * writerInfo, int errorLevel)
+int ScarfJSONWriterSetErrorLevel(ScarfJSONWriter * writerInfo, int errorLevel)
 {
     if (writerInfo != NULL){
 	if ( errorLevel == 0 || errorLevel == 1 || errorLevel == 2 ) {
@@ -253,7 +253,7 @@ char * CheckBug(BugInstance * bug)
 }
 
 
-int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
+int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
         if (strcmp(writerInfo->curr, "summary") == 0) {
@@ -575,7 +575,7 @@ char * CheckMetric(Metric * metric)
 }
 
 
-int AddMetric(ScarfJSONWriter *  writerInfo, Metric * metric)
+int ScarfJSONWriterAddMetric(ScarfJSONWriter *  writerInfo, Metric * metric)
 {
     yajl_gen writer = writerInfo->writer;
     if (writerInfo->errorLevel != 0) {
@@ -728,7 +728,7 @@ char * CheckStart(Initial * initial){
     return errors;
 }
 
-int AddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
+int ScarfJSONWriterAddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
 {
     strcpy(writerInfo->curr, "Init");
     if (writerInfo->errorLevel != 0) {
@@ -817,7 +817,7 @@ int AddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
 
 
 //////////////////////End initialtag/////////////////////////////////////////////
-int AddEndTag(ScarfJSONWriter * writerInfo)
+int ScarfJSONWriterAddEndTag(ScarfJSONWriter * writerInfo)
 {
     strcpy(writerInfo->curr, "end");
     if (writerInfo->errorLevel != 0) {
@@ -844,7 +844,7 @@ int AddEndTag(ScarfJSONWriter * writerInfo)
 }
 
 //////////////Add summary generated from instances//////////////////////////////////
-int AddSummary(ScarfJSONWriter * writerInfo)
+int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo)
 {
     strcpy(writerInfo->curr, "summary");
     yajl_gen writer = writerInfo->writer;
