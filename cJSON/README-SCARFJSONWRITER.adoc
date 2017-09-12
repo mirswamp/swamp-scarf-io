@@ -112,11 +112,24 @@ The following are the data structures used in the methods listed above. Elements
 ==== typedef struct InitialData
 ----
 {
-    char *tool_name                 //REQUIRED
-    char *tool_version              //REQUIRED 
-    char *uuid                      //REQUIRED
+    char *assess_fw;
+    char *assess_fw_version;
+    char *assessment_start_ts;
+    char *build_fw;
+    char *build_fw_version;
+    char *build_root_dir;
+    char *package_name;
+    char *package_root_dir;
+    char *package_version;
+    char *parser_fw;
+    char *parser_fw_version;
+    char *platform_name;
+    char *tool_name;
+    char *tool_verison;
+    char *uuid;
 } 
 ----
+
 ==== typedef struct BugInstance
 ----
 {
@@ -138,28 +151,32 @@ The following are the data structures used in the methods listed above. Elements
     int locationsCount              //REQUIRED
 }
 ----
-===== typedef struct InstanceLocation
+
+==== typedef struct InstanceLocation
 ----
 {
     LineNum lineNum
     char *xPath
 }
 ----
-====== typedef struct LineNum
+
+==== typedef struct LineNum
 ----
 {
     int start                       //REQUIRED
     int end                         //REQUIRED
 }
 ----
-===== typedef struct Method
+
+==== typedef struct Method
 ----
 {
     int primary                     //REQUIRED
     char *name                      //REQUIRED
 }
 ----
-===== typedef struct Location
+
+==== typedef struct Location
 ----
 {
     int primary                    //REQUIRED
@@ -171,6 +188,7 @@ The following are the data structures used in the methods listed above. Elements
     char *sourceFile               //REQUIRED
 }
 ----
+
 ==== typedef struct Metric
 ----
 {
@@ -181,5 +199,6 @@ The following are the data structures used in the methods listed above. Elements
     char *type                     //REQUIRED
 }
 ----
+
 === AUTHOR
 Brandon Klein

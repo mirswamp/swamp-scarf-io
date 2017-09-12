@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 ----
+
 === DESCRIPTION
 This library provides the ability to parse SWAMP Common Assessment Results Format (SCARF) JSON files into C data structures. It is dependent on yajl, which is used to handle parsing of the JSON document.
 
@@ -40,7 +41,9 @@ The parser provides data to the user through the use of user provided callbacks.
 All Callbacks except the FinishCallback receive as parameters a pointer to a struct containing information on their section of parsed data and a pointer to the context data passed to SetCallbackData (or NULL if not set). Upon reaching the end of an Analyzer Report the FinishCallback  will be called with the error value returned by the previous call or NULL if there was no error, and if set the context reference set by SetCallbackData.
 
 While the parser does do minor checks to ensure the inputted file is a SCARF file, if an invalid SCARF file is passed in, most behavior is undefined. Additional validation routines can be found in the ScarfJSONWriter library.
+
 === METHODS
+
 ==== ScarfJSONReader *NewScarfJSONReaderFromFilename(char *filename)
 Initializes a ScarfJSONReader struct. Opens a file stream from the file represented by the filename to be parsed. The file stream is closed upon completion of the parse. By default the writer will verify that strings are valid UTF-8 and will throw a parsing error if this is not so. To disable this use the SetUTF8 method. 
 
@@ -160,105 +163,124 @@ The following are the data structures used in the callbacks listed above. Elemen
 ==== typedef struct Initial
 ----
 {
+    char *assess_fw;
+    char *assess_fw_version;
+    char *assessment_start_ts;
+    char *build_fw;
+    char *build_fw_version;
+    char *build_root_dir;
+    char *package_name;
+    char *package_root_dir;
+    char *package_version;
+    char *parser_fw;
+    char *parser_fw_version;
+    char *platform_name;
     char *tool_name
     char *tool_version
     char *uuid
 } 
 ----
+
 ==== typedef struct BugInstance
 ----
 {
-    int bugId
-    char *className
-    char *bugSeverity
-    char *bugRank
-    char *resolutionSuggestion
-    char *bugMessage
-    char *bugCode
-    char *bugGroup
-    char *assessmentReportFile
-    char *buildId
-    int *cweIds
-    int cweIdsCount
-    InstanceLocation instanceLocation
-    Method *methods
-    int methodsCount
-    Location *locations
-    int locationsCount
+    int bugId;
+    char *className;
+    char *bugSeverity;
+    char *bugRank;
+    char *resolutionSuggestion;
+    char *bugMessage;
+    char *bugCode;
+    char *bugGroup;
+    char *assessmentReportFile;
+    char *buildId;
+    int *cweIds;
+    int cweIdsCount;
+    InstanceLocation instanceLocation;
+    Method *methods;
+    int methodsCount;
+    Location *locations;
+    int locationsCount;
 }
 ----
-===== typedef struct InstanceLocation
+
+==== typedef struct InstanceLocation
 ----
 {
-    LineNum lineNum
-    char *xPath
+    LineNum lineNum;
+    char *xPath;
 }
 ----
-====== typedef struct LineNum
+
+==== typedef struct LineNum
 ----
 {
-    int start
-    int end
+    int start;
+    int end;
 }
 ----
-====== typedef struct Method
+
+==== typedef struct Method
 ----
 {
-    int methodId
-    int primary
-    char *name
+    int methodId;
+    int primary;
+    char *name;
 }
 ----
-====== typedef struct Location
+
+==== typedef struct Location
 ----
 {
-    int primary
-    int startLine
-    int endLine
-    int startColumn
-    int endColumn
-    int locationId
-    char *explanation
-    char *sourceFile
+    int primary;
+    int startLine;
+    int endLine;
+    int startColumn;
+    int endColumn;
+    int locationId;
+    char *explanation;
+    char *sourceFile;
 }
 ----
+
 ==== typedef struct Metric
 ----
 {
-    int id
-    char *value
-    char *className
-    char *methodName
-    char *sourceFile
-    char *type
+    int id;
+    char *value;
+    char *className;
+    char *methodName;
+    char *sourceFile;
+    char *type;
 }
 ----
 
 ==== typedef struct BugSummary
 ----
 {
-    int count
-    int byteCount
-    char *code
-    char *group
-    BugSummary *next
+    int count;
+    int byteCount;
+    char *code;
+    char *group;
+    BugSummary *next;
 }
 ----
 
 ==== typedef struct MetricSummary
 ----
 {
-    double count
-    double sum
-    double sumOfSquares
-    double max
-    double min
-    double stdDeviation
-    double average
-    int valid
-    char *type
-    MetricSummary *next
+    double count;
+    double sum;
+    double sumOfSquares;
+    double max;
+    double min;
+    double stdDeviation;
+    double average;
+    int valid;
+    char *type;
+    MetricSummary *next;
 }
 ----
+
 === AUTHOR
 Brandon Klein
