@@ -51,6 +51,7 @@ typedef struct ScarfJSONReader {
     yajl_handle reader;
     State * state;
     int filetype;
+    int utf8;
 } ScarfJSONReader;
 
 
@@ -118,6 +119,7 @@ BugInstance *CopyBug(BugInstance *bug) {
         ret->locationsSize = bug->locationsSize;
         ret->locationsCount = bug->locationsCount;
         ret->locations =  malloc(ret->locationsSize * sizeof(Location));
+	int i;
         for ( i = 0; i < ret->locationsCount; i++ ) {
             Location * retloc = &ret->locations[i];
             Location * bugloc = &bug->locations[i];
@@ -202,7 +204,7 @@ void  DeleteMetric(Metric * metric)
     free( metric->sourceFile);
     free( metric->value);
     free(metric);
-    return 0;
+    return;
 }
 
 ///////////////////////////////Delete a BugInstance///////////////////////////////////
@@ -224,7 +226,7 @@ void  DeleteBug(BugInstance * bug)
     Method * method = bug->methods;
     if ( method != NULL ) {
 	int i;
-	for ( i < 0; i < bug->methodCount; i++){
+	for ( i < 0; i < bug->methodsCount; i++){
 	    free(method[i].name);
 	}
 	free(method);
@@ -241,7 +243,7 @@ void  DeleteBug(BugInstance * bug)
     }
 
     free(bug);
-    return 0;
+    return;
 }
 
 
@@ -252,8 +254,8 @@ void DeleteBugSummary(BugSummary *bugSummary){
     while (cur != NULL) {
         prev = cur;
         cur = cur->next;
-        xmlFree((xmlChar *) prev->code);
-        xmlFree((xmlChar *) prev->group);
+        free(prev->code);
+        free(prev->group);
         free(prev);
     }
     return;
@@ -265,7 +267,7 @@ void DeleteMetricSummary(MetricSummary *metricSummary){
     while (cur != NULL) {
         prev = cur;
         cur = cur->next;
-        xmlFree((xmlChar *) prev->type);
+        free(prev->type);
         free(prev);
     }
     return;
@@ -309,7 +311,7 @@ int _clearBug(BugInstance * bug)
     free( bug->resolutionSuggestion);
 //    free( bug->instanceLocation);
 
-    CweIds * cwe = bug->cweIds;
+    int * cwe = bug->cweIds;
     if (cwe !=  NULL){
 	free(cwe);
     }
@@ -323,7 +325,7 @@ int _clearBug(BugInstance * bug)
 	free(method);
     }
 
-    BugLocations * bugloc = bug->bugLocations;
+    Location * bugloc = bug->locations;
     if (bugloc != NULL) {
 	int i;
 	for(i = 0; i < bug->locationsCount; i++) {
@@ -417,8 +419,8 @@ static int handle_number(void * data, const char * s, size_t l)
 	    } else if ( strncmp("CweIds", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
 
 		if ( ctx->bug->cweIds == NULL ) {
-		    ctx->bug->cweIds->size = 5;
-		    ctx->bug->cweIds->count = 0;
+		    ctx->bug->cweIdsSize = 5;
+		    ctx->bug->cweIdsCount = 0;
 		    ctx->bug->cweIds = malloc(ctx->bug->cweIdsSize * sizeof(int));
 		}
 		if ( ctx->bug->cweIdsCount >= ctx->bug->cweIdsSize ) {
@@ -445,7 +447,7 @@ static int handle_number(void * data, const char * s, size_t l)
 	if ( strncmp(ctx->curr, "count", ctx->currLength) == 0 ) {
 	    ctx->bugSum->count = number;
 	} else if ( strncmp(ctx->curr, "bytes", ctx->currLength) == 0 ) {
-	    ctx->bugSum->bytes = number;
+	    ctx->bugSum->byteCount = number;
 	}
 
     } else if  ( strcmp("metrsum", ctx->hashType) == 0) {
@@ -620,7 +622,7 @@ static int handle_string(void * data, const unsigned char * string,
 	}
     } else if ( strcmp("bugsum", ctx->hashType) == 0 ) {
 	if ( strncmp(ctx->curr, "bytes", ctx->currLength) == 0 ) {
-            ctx->bugSum->bytes = number;
+            ctx->bugSum->byteCount = number;
 	} else if ( strncmp(ctx->curr, "count", ctx->currLength) == 0 ) {
             ctx->bugSum->count = number;
 	}
@@ -781,7 +783,7 @@ static int handle_end_map(void * data)
 		ctx->bug->methodsCount++;
 		if ( ctx->bug->methodsCount >= ctx->bug->methodsSize ) {
 		    ctx->bug->methodsSize = ctx->bug->methodsSize * 2;
-		    int *tempArray = realloc(ctx->bug->methods, ctx->bug->methodsSize * sizeof(Methods));
+		    int *tempArray = realloc(ctx->bug->methods, ctx->bug->methodsSize * sizeof(Method));
 		    if (tempArray) {
 			ctx->bug->methods = (Method *)tempArray;
 			memset(&ctx->bug->methods[ctx->bug->methodsCount], 0, (ctx->bug->methodsSize/2) * sizeof(Method));
@@ -849,7 +851,7 @@ static int handle_start_array(void * data)
         strcpy(ctx->arrayType, ctx->curr);
 	ctx->arrayTypeLength = ctx->currLength;
 	if ( strncmp("BugLocations", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
-	    if ( ctx->bug->bugLocations == NULL ) {
+	    if ( ctx->bug->locations == NULL ) {
                 ctx->bug->locationsSize = 5;
                 ctx->bug->locationsCount = 0;
                 ctx->bug->locations = calloc(1, ctx->bug->locationsSize * sizeof(Location));
@@ -857,8 +859,8 @@ static int handle_start_array(void * data)
 	}
 	if ( strncmp("Methods", ctx->arrayType, ctx->arrayTypeLength) == 0 ) {
             if ( ctx->bug->methods == NULL ) {
-                ctx->bug->methods->size = 5;
-                ctx->bug->methods->count = 0;
+                ctx->bug->methodsSize = 5;
+                ctx->bug->methodsCount = 0;
                 ctx->bug->methods = calloc(1, ctx->bug->methodsSize * sizeof(Method));
             }
 	}
@@ -973,7 +975,7 @@ void DeleteScarfJSONReader(ScarfJSONReader * reader) {
 }
 
 void SetUTF8(ScarfJSONReader * reader, int value){
-    reader->utf8 = value
+    reader->utf8 = value;
 }
 
 void SetBugCallback(ScarfJSONReader * reader, BugCallback callback) {

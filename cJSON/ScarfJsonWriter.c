@@ -153,7 +153,7 @@ char * CheckBug(BugInstance * bug)
     char * temp = malloc(140);
 
 //    printf("errors: %p::%s\n", errors, errors);
-    if (bug->bugLocations == NULL) {
+    if (bug->locations == NULL) {
         sprintf(temp, "Required element: BugLocations could not be found in BugInstance\n");
         errors = realloc(errors, strlen(errors) + strlen(temp) + 1);
         errors = strcat(errors, temp);
@@ -176,10 +176,10 @@ char * CheckBug(BugInstance * bug)
     if (bug->methods != NULL) {
         int methodID = 1;
         int methodPrimary = 0;
-        Methods * methods = bug->methods;
+        Method * methods = bug->methods;
 	int i;
-	for ( i = 0 ; i < methods->count ; i++ ) {
-	    Method *method = &methods->methods[i];
+	for ( i = 0 ; i < bug->methodsCount ; i++ ) {
+	    Method *method = &methods[i];
 	    if (method->primary != 0 && method->primary != 1) {
 	        sprintf(temp, "Invalid primary attribute for Method:%d in BugInstance\n", methodID);
 	        errors = realloc(errors, strlen(errors) + strlen(temp) + 1);
@@ -208,13 +208,13 @@ char * CheckBug(BugInstance * bug)
         }
     }
 
-    BugLocations * buglocs = bug->bugLocations;
+    Location * buglocs = bug->locations;
     int locID = 1;
     int locPrimary = 0;
     if (buglocs != NULL) {
 	int i;
-	for ( i = 0 ; i < buglocs->count ; i++ ) {
-	    Location *loc = &buglocs->locations[i];
+	for ( i = 0 ; i < bug->locationsCount ; i++ ) {
+	    Location *loc = &buglocs[i];
 	    if (loc->primary != 0 && loc->primary != 1) {
 		sprintf(temp, "Invalid primary attribute for a Location:%d in BugInstance\n", locID);
 		errors = realloc(errors, strlen(errors) + strlen(temp) + 1);
@@ -380,7 +380,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
         yajl_gen_array_close(writer);
     }
 
-    if ( bug->bugLocations != NULL ) {
+    if ( bug->locations != NULL ) {
 	int locID = 1;
         yajl_gen_string(writer, "BugLocations", 12);
         yajl_gen_array_open(writer);
@@ -501,7 +501,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 
         BugSummary * summary = malloc(sizeof(BugSummary));
         summary->count = 1;
-        summary->bytes = bytes;
+        summary->byteCount = bytes;
         summary->next = NULL;
         summary->code = malloc(strlen(code) + 1);
         strcpy(summary->code, code);
@@ -525,7 +525,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
         if (curGroup == NULL) {
             BugSummary * summary = malloc(sizeof(BugSummary));
             summary->count = 1;
-            summary->bytes = bytes;
+            summary->byteCount = bytes;
             summary->next = NULL;
             summary->code = cur->code;
             summary->group = malloc(strlen(group) + 1);
@@ -539,7 +539,7 @@ int AddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 
         } else {
             curGroup->count++;
-            curGroup->bytes += bytes;
+            curGroup->byteCount += bytes;
         }
     }
 
@@ -889,7 +889,7 @@ int AddSummary(ScarfJSONWriter * writerInfo)
             tempLen = sprintf(temp, "%d", curBugSummaryGroup->count);
 	    yajl_gen_string(writer, "count", 5);
 	    yajl_gen_string(writer, temp, tempLen);
-	    tempLen = sprintf(temp, "%d", curBugSummaryGroup->bytes);
+	    tempLen = sprintf(temp, "%d", curBugSummaryGroup->byteCount);
 	    yajl_gen_string(writer, "bytes", 5);
 	    yajl_gen_string(writer, temp, tempLen);
 	    yajl_gen_map_close(writer);
