@@ -3,17 +3,17 @@ Module Version: 0.0.1
 Last Updated: 2016-08-23
 
 === NAME
-ScarfJSONWriter - A perl module for writing SCARF JSON files.
+ScarfJsonWriter - A perl module for writing SCARF JSON files.
 
 === SYNOPSIS
 [source,perl]
 ----
-use ScarfJSONWriter;
-use ScarfJSONWriter qw/CheckStart CheckBug CheckMetric/;
+use ScarfJsonWriter;
+use ScarfJsonWriter qw/CheckStart CheckBug CheckMetric/;
 
 my $output = "/path/to/file";
 
-my $writer = new ScarfJSONWriter($output, "utf-8");
+my $writer = new ScarfJsonWriter($output, "utf-8");
 my $defaultPretty = $writer->GetPretty();
 my $defaultErrorLevel = $writer->GetErrorLevel();
 $writer->SetPretty(0);

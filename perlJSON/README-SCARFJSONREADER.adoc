@@ -3,15 +3,15 @@ Module Verison: 0.0.1
 Last Update: 2016-08-23
 
 === NAME
-ScarfJSONReader - A perl module for parsing SCARF JSON files.
+ScarfJsonReader - A perl module for parsing SCARF JSON files.
 
 === SYNOPSIS
 [source,perl]
 ----
-use ScarfJSONReader;
+use ScarfJsonReader;
 
 my $input = "/path/to/file";
-my $reader = new ScarfJSONReader($input);
+my $reader = new ScarfJsonReader($input);
 $reader->SetEncoding('UTF-8');
 
 $reader->SetInitialCallback(\&initialFunction);
@@ -35,7 +35,7 @@ The parser provides data to the user through the use of user provided callbacks.
 All Callbacks except the FinalCallback receive as parameters a reference to a hash containing information on their section of parsed data and if set, the data passed to SetCallbackData. Upon reaching the end of an Analyzer Report the FinalCallback  will be called with the error value returned from the previous call or undef if there was no error, and if set, the data passed to SetCallbackData.
 
 While the parser does do minor checks to ensure the input file is a SCARF file, if an invalid SCARF file is passed in, the behavior is undefined. 
-Additional validation routines can be found in the ScarfJSONWriter module.
+Additional validation routines can be found in the ScarfJsonWriter module.
 
 === METHODS
 
