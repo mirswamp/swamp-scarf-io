@@ -1,6 +1,11 @@
 #ifndef SCARFXML_H
 #define SCARFXML_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /////////////////Summary structs ///////////////////////////
 typedef struct BugSummary
 {
@@ -245,5 +250,9 @@ int ScarfJSONWriterAddStartTag(ScarfJSONWriter * writerInfo, Initial * initial);
 int ScarfJSONWriterAddEndTag(ScarfJSONWriter * writerInfo);
 int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
