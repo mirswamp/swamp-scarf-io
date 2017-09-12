@@ -164,14 +164,14 @@ void SetFinalCallback(ScarfXmlReader *reader, FinalCallback callback);
 void SetInitialCallback(ScarfXmlReader *reader, InitialCallback callback);
 void SetCallbackData(ScarfXmlReader *reader, void *callbackData);
 
-BugCallback GetBugCallback(ScarfXmlReader *reader, BugCallback callback);
-MetricCallback GetMetricCallback(ScarfXmlReader *reader, MetricCallback callback);
-BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader *reader, BugSummaryCallback callback);
-MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader *reader, MetricSummaryCallback callback);
-FinalCallback GetFinalCallback(ScarfXmlReader *reader, FinalCallback callback);
-InitialCallback GetInitialCallback(ScarfXmlReader *reader, InitialCallback callback);
+BugCallback GetBugCallback(ScarfXmlReader *reader);
+MetricCallback GetMetricCallback(ScarfXmlReader *reader);
+BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader *reader);
+MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader *reader);
+FinalCallback GetFinalCallback(ScarfXmlReader *reader);
+InitialCallback GetInitialCallback(ScarfXmlReader *reader);
 
-void *GetCallbackData(ScarfXmlReader *reader, void *callbackData);
+void *GetCallbackData(ScarfXmlReader *reader);
 
 void * Parse(ScarfXmlReader *hand);
 int DeleteScarfXmlReader(ScarfXmlReader *reader);

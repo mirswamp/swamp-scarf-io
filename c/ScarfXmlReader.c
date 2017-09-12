@@ -663,25 +663,25 @@ void SetCallbackData(ScarfXmlReader *reader, void *callbackData) {
 }
 
 
-BugCallback GetBugCallback(ScarfXmlReader *reader, BugCallback callback) {
+BugCallback GetBugCallback(ScarfXmlReader *reader) {
     return reader->callback->bugCall;
 }
-MetricCallback GetMetricCallback(ScarfXmlReader *reader, MetricCallback callback) {
+MetricCallback GetMetricCallback(ScarfXmlReader *reader) {
     return reader->callback->metricCall;
 }
-BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader *reader, BugSummaryCallback callback) {
+BugSummaryCallback GetBugSummaryCallback(ScarfXmlReader *reader) {
     return reader->callback->bugSumCall;
 }
-MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader *reader, MetricSummaryCallback callback) {
+MetricSummaryCallback GetMetricSummaryCallback(ScarfXmlReader *reader) {
     return reader->callback->metricSumCall;
 }
-FinalCallback GetFinalCallback(ScarfXmlReader *reader, FinalCallback callback) {
+FinalCallback GetFinalCallback(ScarfXmlReader *reader) {
     return reader->callback->finishCallback;
 }
-InitialCallback GetInitialCallback(ScarfXmlReader *reader, InitialCallback callback) {
+InitialCallback GetInitialCallback(ScarfXmlReader *reader) {
     return reader->callback->initialCall;
 }
-void *GetCallbackData(ScarfXmlReader *reader, void *callbackData) {
+void *GetCallbackData(ScarfXmlReader *reader) {
     return reader->callback->CallbackData;
 }
 
