@@ -39,13 +39,13 @@ typedef struct State {
     Callback * callbacks;
 } State;
 
-typedef struct ScarfJSONReader {
+struct ScarfJSONReader {
     FILE * file;
     yajl_handle reader;
     State * state;
     int filetype;
     int utf8;
-} ScarfJSONReader;
+};
 
 
 ////////////////////////COPY DATA//////////////////////////////////////////////
