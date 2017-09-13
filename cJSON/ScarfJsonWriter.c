@@ -253,6 +253,9 @@ char * CheckBug(BugInstance * bug)
 }
 
 
+typedef const unsigned char *YAJL_UStr;
+
+
 int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
@@ -285,7 +288,7 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
     if ( strcmp (writerInfo->curr, "metric") == 0 ) {
         yajl_gen_array_close(writer);
     } else if (strcmp(writerInfo->curr, "bug") != 0) {
-        yajl_gen_string(writer, "BugInstances", 12);
+        yajl_gen_string(writer, (YAJL_UStr)"BugInstances", 12);
         yajl_gen_array_open(writer);
         strcpy (writerInfo->curr, "bug");
 	writerInfo->openBody = 1;
@@ -296,54 +299,54 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
     yajl_gen_map_open(writer);
 
 
-    yajl_gen_string(writer, "BugId", 5);
+    yajl_gen_string(writer, (YAJL_UStr)"BugId", 5);
 
     tempLen = sprintf(temp, "%d", writerInfo->bugId);
     yajl_gen_number(writer, temp, tempLen);
 
     if ( bug->buildId != NULL ) {
-	yajl_gen_string(writer, "BuildId", 7);
+	yajl_gen_string(writer, (YAJL_UStr)"BuildId", 7);
 	tempLen = sprintf(temp, "%s", bug->buildId);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->bugCode != NULL ) {
-	yajl_gen_string(writer, "BugCode", 7);
+	yajl_gen_string(writer, (YAJL_UStr)"BugCode", 7);
 	tempLen = sprintf(temp, "%s", bug->bugCode);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->bugRank != NULL ) {
-	yajl_gen_string(writer, "BugRank", 7);
+	yajl_gen_string(writer, (YAJL_UStr)"BugRank", 7);
 	tempLen = sprintf(temp, "%s", bug->bugRank);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->className != NULL ) {
-	yajl_gen_string(writer, "ClassName", 9);
+	yajl_gen_string(writer, (YAJL_UStr)"ClassName", 9);
 	tempLen = sprintf(temp, "%s", bug->className);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->bugSeverity != NULL ) {
-	yajl_gen_string(writer, "BugSeverity", 11);
+	yajl_gen_string(writer, (YAJL_UStr)"BugSeverity", 11);
 	tempLen = sprintf(temp, "%s", bug->bugSeverity);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->bugGroup != NULL ) {
-	yajl_gen_string(writer, "BugGroup", 8);
+	yajl_gen_string(writer, (YAJL_UStr)"BugGroup", 8);
 	tempLen = sprintf(temp, "%s", bug->bugGroup);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->bugMessage != NULL ) {
-	yajl_gen_string(writer, "BugMessage", 10);
+	yajl_gen_string(writer, (YAJL_UStr)"BugMessage", 10);
 	tempLen = sprintf(temp, "%s", bug->bugMessage);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( bug->resolutionSuggestion != NULL ) {
-	yajl_gen_string(writer, "ResolutionSuggestion", 20);
+	yajl_gen_string(writer, (YAJL_UStr)"ResolutionSuggestion", 20);
 	tempLen = sprintf(temp, "%s", bug->resolutionSuggestion);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
 
     if ( bug->cweIds != NULL ) {
-	yajl_gen_string(writer, "CweIds", 6);
+	yajl_gen_string(writer, (YAJL_UStr)"CweIds", 6);
 	yajl_gen_array_open(writer);
 	int i;
 	for ( i = 0 ; i < bug->cweIdsCount ; i++ ) {
@@ -355,23 +358,23 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 
     if ( bug->methods != NULL ) {
         int methodId = 1;
-	yajl_gen_string(writer, "Methods", 7);
+	yajl_gen_string(writer, (YAJL_UStr)"Methods", 7);
         yajl_gen_array_open(writer);
 	Method * methods = bug->methods;
 	int i;
 	for ( i = 0 ; i < bug->methodsCount; i++ ) {
 	    Method *method = &methods[i];
 	    yajl_gen_map_open(writer);
-            yajl_gen_string(writer, "name", 4);
+            yajl_gen_string(writer, (YAJL_UStr)"name", 4);
 	    tempLen = sprintf(temp, "%s", method->name);
-            yajl_gen_string(writer, temp, tempLen);
-            yajl_gen_string(writer, "primary", 7);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
+            yajl_gen_string(writer, (YAJL_UStr)"primary", 7);
             if ( method->primary ) {
                 yajl_gen_bool(writer, 1);
             } else {
                 yajl_gen_bool(writer, 0);
 	    }
-            yajl_gen_string(writer, "MethodId", 8);
+            yajl_gen_string(writer, (YAJL_UStr)"MethodId", 8);
 	    tempLen = sprintf(temp, "%d", methodId);
             yajl_gen_number(writer, temp, tempLen);
             methodId = methodId + 1;
@@ -382,7 +385,7 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 
     if ( bug->locations != NULL ) {
 	int locID = 1;
-        yajl_gen_string(writer, "BugLocations", 12);
+        yajl_gen_string(writer, (YAJL_UStr)"BugLocations", 12);
         yajl_gen_array_open(writer);
 	Location * bugloc = bug->locations;
 	int i;
@@ -391,46 +394,46 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
             yajl_gen_map_open(writer);
 
             if ( location->startLine != 0 ) {
-                yajl_gen_string(writer, "StartLine", 9);
+                yajl_gen_string(writer, (YAJL_UStr)"StartLine", 9);
 		tempLen = sprintf(temp, "%d", location->startLine);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
             if ( location->endLine != 0 ) {
-                yajl_gen_string(writer, "EndLine", 7);
+                yajl_gen_string(writer, (YAJL_UStr)"EndLine", 7);
 		tempLen = sprintf(temp, "%d", location->endLine);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
             if ( location->startColumn != 0 ) {
-                yajl_gen_string(writer, "StartColumn", 11);
+                yajl_gen_string(writer, (YAJL_UStr)"StartColumn", 11);
 		tempLen = sprintf(temp, "%d", location->startColumn);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
             if ( location->endColumn != 0 ) {
-                yajl_gen_string(writer, "EndColumn", 9);
+                yajl_gen_string(writer, (YAJL_UStr)"EndColumn", 9);
 		tempLen = sprintf(temp, "%d", location->endColumn);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
 
 
             if ( location->sourceFile != NULL ) {
-                yajl_gen_string(writer, "SourceFile", 10);
+                yajl_gen_string(writer, (YAJL_UStr)"SourceFile", 10);
 		tempLen = sprintf(temp, "%s", location->sourceFile);
-                yajl_gen_string(writer, temp, tempLen);
+                yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	    }
             if ( location->explanation != NULL ) {
-                yajl_gen_string(writer, "Explanation", 9);
+                yajl_gen_string(writer, (YAJL_UStr)"Explanation", 9);
 		tempLen = sprintf(temp, "%s", location->explanation);
-                yajl_gen_string(writer, temp, tempLen);
+                yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	    }
 
-	    yajl_gen_string(writer, "primary", 7);
+	    yajl_gen_string(writer, (YAJL_UStr)"primary", 7);
             if ( location->primary ) {
                 yajl_gen_bool(writer, 1);
             } else {
                 yajl_gen_bool(writer, 0);
 	    }
 
-            yajl_gen_string(writer, "LocationId", 10);
+            yajl_gen_string(writer, (YAJL_UStr)"LocationId", 10);
 	    tempLen = sprintf(temp, "%d", locID);
             yajl_gen_number(writer, temp, tempLen);
             locID = locID + 1;
@@ -441,23 +444,23 @@ int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 
     InstanceLocation inst = bug->instanceLocation;
     if ( inst.xPath != NULL || inst.lineNum.start != 0 || inst.lineNum.end != 0 ) {
-	yajl_gen_string(writer, "InstanceLocation", 16);
+	yajl_gen_string(writer, (YAJL_UStr)"InstanceLocation", 16);
         yajl_gen_map_open(writer);
 	if ( inst.xPath != NULL ) {
-	    yajl_gen_string(writer, "Xpath", 5);
+	    yajl_gen_string(writer, (YAJL_UStr)"Xpath", 5);
 	    tempLen = sprintf(temp, "%s", inst.xPath);
-	    yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	}
 	if ( inst.lineNum.start != 0 || inst.lineNum.end != 0 ) {
-	    yajl_gen_string(writer, "LineNum", 7);
+	    yajl_gen_string(writer, (YAJL_UStr)"LineNum", 7);
 	    yajl_gen_map_open(writer);
 	    if ( inst.lineNum.start != 0 ) {
-		yajl_gen_string(writer, "Start", 5);
+		yajl_gen_string(writer, (YAJL_UStr)"Start", 5);
 		tempLen = sprintf(temp, "%d", inst.lineNum.start);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
 	    if ( inst.lineNum.end != 0 ) {
-		yajl_gen_string(writer, "End", 3);
+		yajl_gen_string(writer, (YAJL_UStr)"End", 3);
 		tempLen = sprintf(temp, "%d", inst.lineNum.end);
                 yajl_gen_number(writer, temp, tempLen);
 	    }
@@ -605,7 +608,7 @@ int ScarfJSONWriterAddMetric(ScarfJSONWriter *  writerInfo, Metric * metric)
     if ( strcmp ( writerInfo->curr, "bug") == 0 ) {
         yajl_gen_array_close(writer);
     } else if (strcmp(writerInfo->curr, "metric") != 0) {
-        yajl_gen_string(writer, "Metrics", 7);
+        yajl_gen_string(writer, (YAJL_UStr)"Metrics", 7);
         yajl_gen_array_open(writer);
         strcpy(writerInfo->curr, "metric");
 	writerInfo->openBody = 1;
@@ -616,33 +619,33 @@ int ScarfJSONWriterAddMetric(ScarfJSONWriter *  writerInfo, Metric * metric)
     int tempLen;
 
     yajl_gen_map_open(writer);
-    yajl_gen_string(writer, "MetricId", 8);
+    yajl_gen_string(writer, (YAJL_UStr)"MetricId", 8);
     tempLen = sprintf(temp, "%d", writerInfo->metricId);
     yajl_gen_number(writer, temp, tempLen);
     if ( metric->value != NULL ) {
-        yajl_gen_string(writer, "Value", 5);
+        yajl_gen_string(writer, (YAJL_UStr)"Value", 5);
 	tempLen = sprintf(temp, "%s", metric->value);
-        yajl_gen_string(writer, temp, tempLen);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( metric->className != NULL ) {
-        yajl_gen_string(writer, "Class", 5);
+        yajl_gen_string(writer, (YAJL_UStr)"Class", 5);
 	tempLen = sprintf(temp, "%s", metric->className);
-        yajl_gen_string(writer, temp, tempLen);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( metric->methodName != NULL ) {
-        yajl_gen_string(writer, "Method", 6);
+        yajl_gen_string(writer, (YAJL_UStr)"Method", 6);
 	tempLen = sprintf(temp, "%s", metric->methodName);
-        yajl_gen_string(writer, temp, tempLen);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( metric->sourceFile != NULL ) {
-        yajl_gen_string(writer, "SourceFile", 10);
+        yajl_gen_string(writer, (YAJL_UStr)"SourceFile", 10);
 	tempLen = sprintf(temp, "%s", metric->sourceFile);
-        yajl_gen_string(writer, temp, tempLen);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if ( metric->type != NULL ) {
-        yajl_gen_string(writer, "Type", 4);
+        yajl_gen_string(writer, (YAJL_UStr)"Type", 4);
 	tempLen = sprintf(temp, "%s", metric->type);
-        yajl_gen_string(writer, temp, tempLen);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
 
     yajl_gen_map_close(writer);
@@ -751,26 +754,26 @@ int ScarfJSONWriterAddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
 
     yajl_gen writer = writerInfo->writer;
     yajl_gen_map_open(writer);
-    yajl_gen_string(writer, "AnalyzerReport", 14);
+    yajl_gen_string(writer, (YAJL_UStr)"AnalyzerReport", 14);
     yajl_gen_map_open(writer);
 
     char temp[1024];
     int tempLen;
     if (initial->uuid != NULL ){
-	yajl_gen_string(writer, "uuid", 4);
+	yajl_gen_string(writer, (YAJL_UStr)"uuid", 4);
 	tempLen = sprintf(temp, "%s", initial->uuid);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if (initial->tool_name != NULL ){
-	yajl_gen_string(writer, "tool_name", 9);
+	yajl_gen_string(writer, (YAJL_UStr)"tool_name", 9);
 	tempLen = sprintf(temp, "%s", initial->tool_name);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
     if (initial->tool_version != NULL ){
-	yajl_gen_string(writer, "tool_version", 12);
+	yajl_gen_string(writer, (YAJL_UStr)"tool_version", 12);
 	tempLen = sprintf(temp, "%s", initial->tool_version);
 	printf("%s : %d \n", initial->tool_version, tempLen);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
     }
 
 
@@ -874,24 +877,24 @@ int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo)
     int tempLen;
 
     if (curBugSummary != NULL) {
-	yajl_gen_string(writer, "BugSummaries", 12);
+	yajl_gen_string(writer, (YAJL_UStr)"BugSummaries", 12);
 	yajl_gen_map_open(writer);
     }
     while (curBugSummary != NULL) {
 	tempLen = sprintf(temp, "%s", curBugSummary->code);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	yajl_gen_map_open(writer);
         curBugSummaryGroup = curBugSummary->codeSummary;
 	while (curBugSummaryGroup != NULL) {
 	    tempLen = sprintf(temp, "%s", curBugSummaryGroup->group);
-	    yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	    yajl_gen_map_open(writer);
             tempLen = sprintf(temp, "%d", curBugSummaryGroup->count);
-	    yajl_gen_string(writer, "count", 5);
-	    yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)"count", 5);
+	    yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	    tempLen = sprintf(temp, "%d", curBugSummaryGroup->byteCount);
-	    yajl_gen_string(writer, "bytes", 5);
-	    yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)"bytes", 5);
+	    yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	    yajl_gen_map_close(writer);
 	    curBugSummaryGroup = curBugSummaryGroup->next;
         }
@@ -901,38 +904,38 @@ int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo)
 
     if (curMetricSummary != NULL) {
 	yajl_gen_map_close(writer);
-	yajl_gen_string(writer, "MetricSummaries", 15);
+	yajl_gen_string(writer, (YAJL_UStr)"MetricSummaries", 15);
 	yajl_gen_map_open(writer);
     }
     while (curMetricSummary != NULL){
         int count = curMetricSummary->count;
-        int sum = curMetricSummary->sum;
-        int sumOfSquares = curMetricSummary->sumOfSquares;
+        double sum = curMetricSummary->sum;
+        double sumOfSquares = curMetricSummary->sumOfSquares;
 	tempLen = sprintf(temp, "%s", curMetricSummary->type);
-	yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	yajl_gen_map_open(writer);
 	tempLen = sprintf(temp, "%d", count);
-	yajl_gen_string(writer, "Count", 5);
-        yajl_gen_string(writer, temp, tempLen);
+	yajl_gen_string(writer, (YAJL_UStr)"Count", 5);
+        yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 
 	if (curMetricSummary->valid != 0) {
-            tempLen = sprintf(temp, "%d", sum);
-	    yajl_gen_string(writer, "Sum", 3);
-            yajl_gen_string(writer, temp, tempLen);
-	    tempLen = sprintf(temp, "%d", sumOfSquares);
-	    yajl_gen_string(writer, "SumOfSquares", 12);
-            yajl_gen_string(writer, temp, tempLen);
-	    sprintf(temp, "%d", curMetricSummary->max);
-	    yajl_gen_string(writer, "Maximum", 7);
-            yajl_gen_string(writer, temp, tempLen);
-	    sprintf(temp, "%d", curMetricSummary->min);
-	    yajl_gen_string(writer, "Minimum", 7);
-            yajl_gen_string(writer, temp, tempLen);
+            tempLen = sprintf(temp, "%.2f", sum);
+	    yajl_gen_string(writer, (YAJL_UStr)"Sum", 3);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
+	    tempLen = sprintf(temp, "%.2f", sumOfSquares);
+	    yajl_gen_string(writer, (YAJL_UStr)"SumOfSquares", 12);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
+	    sprintf(temp, "%.2f", curMetricSummary->max);
+	    yajl_gen_string(writer, (YAJL_UStr)"Maximum", 7);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
+	    sprintf(temp, "%.2f", curMetricSummary->min);
+	    yajl_gen_string(writer, (YAJL_UStr)"Minimum", 7);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 
 	    double average = ((double) sum) / count;
             sprintf(temp, "%.2f", average);
-	    yajl_gen_string(writer, "Average", 7);
-            yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)"Average", 7);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 
 	    int denominator = count * (count - 1);
             double standard_dev = 0;
@@ -940,8 +943,8 @@ int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo)
                 standard_dev = sqrt(((sumOfSquares * count) - (sum * sum) ) / denominator);
             }
             sprintf(temp, "%.2f", standard_dev);
-	    yajl_gen_string(writer, "StandardDeviation", 17);
-            yajl_gen_string(writer, temp, tempLen);
+	    yajl_gen_string(writer, (YAJL_UStr)"StandardDeviation", 17);
+            yajl_gen_string(writer, (YAJL_UStr)temp, tempLen);
 	}
 	curMetricSummary = curMetricSummary->next;
 	yajl_gen_map_open(writer);
