@@ -273,7 +273,7 @@ class ScarfXmlReader:
                                 ret = callback["FinalCallback"](ret, callback["CallbackData"])
                         break
                 else:
-                    ret = callback["BugSummaryCallback"](summary)
+                    ret = callback["BugSummaryCallback"]()
                     if ret is not None:
                         if "FinalCallback" in callback:
                                 ret = callback["FinalCallback"](ret)
