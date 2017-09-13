@@ -23,13 +23,6 @@
 /////////////////////////TypeDef for Clarity///////////////////////////////////////
 
 
-typedef void *(*BugCallback)(BugInstance *bug, void *reference);
-typedef void *(*BugSummaryCallback)(BugSummary *bugSum, void *reference);
-typedef void *(*MetricCallback)(Metric *metr, void *reference);
-typedef void *(*MetricSummaryCallback)(MetricSummary *metrSum, void *reference);
-typedef void *(*InitialCallback)(Initial *initial, void *reference);
-typedef void *(*FinalCallback)(void *killValue, void *reference);
-
 typedef struct Callback {
     BugCallback bugCall;
     MetricCallback  metricCall;
