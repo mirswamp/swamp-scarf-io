@@ -4,13 +4,6 @@
 #include <string.h>
 #include "ScarfJson.h"
 
-typedef void * (*BugCallback)(BugInstance * bug, void * reference);
-typedef void * (*BugSummaryCallback)(BugSummary * bugSum, void * reference);
-typedef void * (*MetricCallback)(Metric * metr, void * reference);
-typedef void * (*MetricSummaryCallback)(MetricSummary * metrSum, void * reference);
-typedef void * (*InitialCallback)(Initial * initial, void * reference);
-typedef void * (*FinalCallback)(void * returnValue, void * reference);
-
 typedef struct Callback {
     BugCallback bugCall;
     MetricCallback  metricCall;
@@ -342,6 +335,8 @@ int _clearBug(BugInstance * bug)
 ////////////////////////handlers//////////////////////////////
 static int handle_null(void * ctx)
 {
+    (void)ctx; /* unused parameter */
+
     return 1;
 }
 

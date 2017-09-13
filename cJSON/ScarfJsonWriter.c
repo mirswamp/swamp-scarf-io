@@ -814,6 +814,7 @@ int ScarfJSONWriterAddStartTag(ScarfJSONWriter * writerInfo, Initial * initial)
     writerInfo->metricSum = NULL;
     writerInfo->bugSums = NULL;
 
+    return 0;
 }
 
 
@@ -844,6 +845,8 @@ int ScarfJSONWriterAddEndTag(ScarfJSONWriter * writerInfo)
     yajl_gen_get_buf(writer, &buf, &bufLen);
     fwrite(buf, 1, bufLen, writerInfo->file);
     yajl_gen_clear(writer);
+
+    return 0;
 }
 
 //////////////Add summary generated from instances//////////////////////////////////
@@ -959,8 +962,5 @@ int ScarfJSONWriterAddSummary(ScarfJSONWriter * writerInfo)
     fwrite(buf, 1, bufLen, writerInfo->file);
     yajl_gen_clear(writer);
 
+    return 0;
 }
-
-
-
-
