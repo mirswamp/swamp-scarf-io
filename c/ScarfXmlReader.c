@@ -34,10 +34,10 @@ typedef struct Callback {
 } Callback;
 
 
-typedef struct ScarfXmlReader{
+struct ScarfXmlReader{
     xmlTextReaderPtr reader;
     Callback *callback;
-} ScarfXmlReader;
+};
 
 ///////////////Initiailize a Metric//////////////////////////////////////////////
 Metric *initializeMetric()

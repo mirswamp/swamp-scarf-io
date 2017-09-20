@@ -9,7 +9,7 @@
 
 ////////////////////structs///////////////////////////
 
-typedef struct ScarfJSONWriter {
+struct ScarfJSONWriter {
     int bugId;
     int metricId;
     int errorLevel;
@@ -24,7 +24,7 @@ typedef struct ScarfJSONWriter {
     struct BugSummaries * bugSums;
     struct MetricSummary * metricSum;
     yajl_gen writer;
-} ScarfJSONWriter;
+};
 
 
 //////////////constructor////////////////////

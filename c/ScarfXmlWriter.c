@@ -24,7 +24,7 @@
 ////////////////////Writer operation structs/////////////////////////////////////
 
 
-typedef struct ScarfXmlWriter {
+struct ScarfXmlWriter {
     int bugId;
     int metricId;
     int errorLevel;
@@ -36,7 +36,7 @@ typedef struct ScarfXmlWriter {
     struct MetricSummary * metricSum;
     xmlTextWriterPtr writer;
     int fileType;
-} ScarfXmlWriter;
+};
 
 
 ////////////////////////////Initializer/Closer////////////////////////////////////////
