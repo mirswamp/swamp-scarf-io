@@ -895,7 +895,7 @@ void * Parse(ScarfXmlReader *hand)
 	}
 	if (ret != 0) {
 	    printf("Failed to parse set file\n");
-	    return NULL;
+	    return (void*)-1;
 	} else if ( kill != NULL && !finished ) {
 	    if ( callback->finishCallback != NULL ) {
 		kill = callback->finishCallback(kill, callback->CallbackData);
@@ -904,7 +904,7 @@ void * Parse(ScarfXmlReader *hand)
 
     } else {
 	printf("ScarfXmlReader set to invalid file\n");
-	return NULL;
+	return (void*)-1;
     }
     return kill;
 }
