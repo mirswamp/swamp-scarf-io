@@ -253,7 +253,7 @@ char * CheckBug(BugInstance * bug)
 typedef const unsigned char *YAJL_UStr;
 
 
-int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo)
+int ScarfJSONWriterAddBug(ScarfJSONWriter * writerInfo, BugInstance * bug)
 {
     if (writerInfo->errorLevel != 0) {
         if (strcmp(writerInfo->curr, "summary") == 0) {
