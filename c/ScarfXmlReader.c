@@ -336,10 +336,12 @@ char *trim(char *str)
     while ( end > str && isspace(*(end - 1)) ) {
 	--end;
     }
-    *end = '\0';
 
-    char *newStr = malloc(strlen(str) + 1);
-    strcpy(newStr, str);
+    int strLen = end - str;
+    char *newStr = malloc(strLen + 1);
+    memcpy(newStr, str, strLen);
+    newStr[strLen] = '\0';
+
     return newStr;
 }
 
