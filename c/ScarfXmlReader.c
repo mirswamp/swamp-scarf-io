@@ -333,7 +333,7 @@ char *trim(char *str)
     }
 
     end = str + strlen(str);
-    while ( end > str && isspace(end - 1) ) {
+    while ( end > str && isspace(*(end - 1)) ) {
 	--end;
     }
     *end = '\0';
