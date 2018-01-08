@@ -1,9 +1,6 @@
 = SWAMP SCARF IO libraries
 
-:pagesuffix: html
-ifdef::env-github[]
-:pagesuffix: adoc
-endiif::env-github[]
+ifdef::env-github[:outfilesuffix: .adoc]
 
 The https://wwwm.continuousassurnace.com[Software Assurance Marketplace (SWAMP)]
 runs software assurance tools, and converts the results of each tool into a
@@ -23,14 +20,14 @@ Documentation for each language can be found in the appropriate directory.
 |======
 |Language	| XML | JSON
 |Perl
-    | link:perl/README-SCARFXMLREADER.{pagesuffix}[reader] link:perl/README-SCARFXMLWRITER.{pagesuffix}[writer]
-    | link:perlJSON/README-SCARFJSONREADER.{pagesuffix}[reader] link:perlJSON/README-SCARFJSONWRITER.{pagesuffix}[writer]
+    | link:perl/README-SCARFXMLREADER.{outfilesuffix}[reader] link:perl/README-SCARFXMLWRITER.{outfilesuffix}[writer]
+    | link:perlJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:perlJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
 |Python
-    | link:python/README-SCARFXMLREADER.{pagesuffix}[reader] link:python/README-SCARFXMLWRITER.{pagesuffix}[writer]
-    | link:pythonJSON/README-SCARFJSONREADER.{pagesuffix}[reader] link:pythonJSON/README-SCARFJSONWRITER.{pagesuffix}[writer]
+    | link:python/README-SCARFXMLREADER.{outfilesuffix}[reader] link:python/README-SCARFXMLWRITER.{outfilesuffix}[writer]
+    | link:pythonJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:pythonJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
 |C/C++
-    | link:c/README-SCARFXMLREADER.{pagesuffix}[reader] link:c/README-SCARFXMLWRITER.{pagesuffix}[writer]
-    | link:cJSON/README-SCARFJSONREADER.{pagesuffix}[reader] link:cJSON/README-SCARFJSONWRITER.{pagesuffix}[writer]
+    | link:c/README-SCARFXMLREADER.{outfilesuffix}[reader] link:c/README-SCARFXMLWRITER.{outfilesuffix}[writer]
+    | link:cJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:cJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
 |Java
     | link:java/[reader]
     |
