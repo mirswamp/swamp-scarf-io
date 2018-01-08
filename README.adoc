@@ -20,14 +20,14 @@ Documentation for each language can be found in the appropriate directory.
 |======
 |Language	| XML | JSON
 |Perl
-    | link:perl/README-SCARFXMLREADER.{outfilesuffix}[reader] link:perl/README-SCARFXMLWRITER.{outfilesuffix}[writer]
-    | link:perlJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:perlJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
+    | link:perl/README-SCARFXMLREADER{outfilesuffix}[reader] link:perl/README-SCARFXMLWRITER{outfilesuffix}[writer]
+    | link:perlJSON/README-SCARFJSONREADER{outfilesuffix}[reader] link:perlJSON/README-SCARFJSONWRITER{outfilesuffix}[writer]
 |Python
-    | link:python/README-SCARFXMLREADER.{outfilesuffix}[reader] link:python/README-SCARFXMLWRITER.{outfilesuffix}[writer]
-    | link:pythonJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:pythonJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
+    | link:python/README-SCARFXMLREADER{outfilesuffix}[reader] link:python/README-SCARFXMLWRITER{outfilesuffix}[writer]
+    | link:pythonJSON/README-SCARFJSONREADER{outfilesuffix}[reader] link:pythonJSON/README-SCARFJSONWRITER{outfilesuffix}[writer]
 |C/C++
-    | link:c/README-SCARFXMLREADER.{outfilesuffix}[reader] link:c/README-SCARFXMLWRITER.{outfilesuffix}[writer]
-    | link:cJSON/README-SCARFJSONREADER.{outfilesuffix}[reader] link:cJSON/README-SCARFJSONWRITER.{outfilesuffix}[writer]
+    | link:c/README-SCARFXMLREADER{outfilesuffix}[reader] link:c/README-SCARFXMLWRITER{outfilesuffix}[writer]
+    | link:cJSON/README-SCARFJSONREADER{outfilesuffix}[reader] link:cJSON/README-SCARFJSONWRITER{outfilesuffix}[writer]
 |Java
     | link:java/[reader]
     |
