@@ -163,6 +163,7 @@ public class BugInstance {
 		"Bug group: " + bugGroup + "\n" + 
 		"Assessment report file: " + assessmentReportFile + "\n" + 
 		"Build ID: " + buildId + "\n" + 
+		"CWE Ids: " + cweIds + "\n" +
 		"Bug Trace: " + bugTrace.toString() + "\n";
 	}
 }
