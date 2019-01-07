@@ -399,15 +399,15 @@ sub charHandler
     }	
    
     if ( $elt eq "Xpath" && defined $$hash->{InstanceLocation} ) {
-        $$hash->{InstanceLocation}->{Xpath} = $chars;
+        $$hash->{InstanceLocation}->{Xpath} .= $chars;
         return $$hash;
     }
     if ( $elt eq "Start" && exists $$hash->{InstanceLocation}->{LineNum} ) {
-        $$hash->{InstanceLocation}->{LineNum}->{$elt} = $chars;
+        $$hash->{InstanceLocation}->{LineNum}->{$elt} .= $chars;
         return $$hash;
     }
     if ( $elt eq "End" && exists $$hash->{InstanceLocation}->{LineNum} ) {
-        $$hash->{InstanceLocation}->{LineNum}->{$elt} = $chars;
+        $$hash->{InstanceLocation}->{LineNum}->{$elt} .= $chars;
         return $$hash;
     }
  
