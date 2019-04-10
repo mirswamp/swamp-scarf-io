@@ -20,6 +20,7 @@ use XML::Writer;
 use Scalar::Util qw[openhandle];
 use IO qw[Handle Seekable File Pipe];
 use strict;
+use Data::Dumper;
 
 use Exporter qw(import);
 my @EXPORT_OK = qw(CheckStart CheckBug CheckMetric);
@@ -36,7 +37,7 @@ my $metric_min_hash;
 #constructer
 sub new
 {
-    my ($class, $handle, $encoding, $error_level, $pretty_enable) = @_;
+    my ($class, $handle, $encoding) = @_;
 #    my ($class, $output_file, $error_level, $pretty_enable) = @_;
     my $self = {};
     if (openhandle($handle) or ref $handle eq "IO" or ref $handle eq "SCALAR") {
@@ -46,26 +47,15 @@ sub new
         open($self->{output}, ">", $handle) or die "invalid output file\n";
 	$self->{filetype} = 1;
     }
-    my $enc;
+
     if ($encoding) {
-	$enc = $encoding;
+		$self->{enc} = $encoding;
     } else {
-	$enc = "utf-8";
+		$self->{enc} = "utf-8";
     }
-    if  ( $pretty_enable ) {
-	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => $enc );
-    } else {
-	$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => $enc );
-    }	
-    $self->{writer}->xmlDecl('UTF-8' );
-    
-    if (defined $error_level && $error_level == 0 || $error_level == 1) {
-	$self->{error_level} = $error_level;
-    } else {
-	$self->{error_level} = 2;
-    }
-    
-    $self->{bugID} = 1;
+
+    $self->{error_level} = 2;
+    $self->{bugID} = 0;
     $self->{metricID} = 1;
     
     $self->{bodyType} = undef;
@@ -75,6 +65,23 @@ sub new
     
     bless $self, $class;
     return $self;
+}
+
+sub SetOptions {
+	my ($self, $options) = @_;
+
+	if (defined $options->{pretty} && $options->{pretty}) {
+		$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => $self->{enc} );
+	} else {
+		$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => $self->{enc} );
+	}
+	$self->{writer}->xmlDecl('UTF-8' );
+
+	if (defined $options->{error_level}) {
+		if ($options->{error_level} >= 0 && $options->{error_level} <= 2) {
+            $self->{error_level} = $options->{error_level};
+        }
+	}
 }
 
 sub Close
@@ -158,9 +165,13 @@ sub CheckStart
 
 }
 
+# Dummy function to match SarifJsonWriter's API
+sub BeginFile {
+
+}
 
 #start analyzer report
-sub AddStartTag
+sub BeginRun
 {   
     my ($self, $initial_details) = @_;
     if ($self->{error_level} != 0) {
@@ -178,16 +189,42 @@ sub AddStartTag
     }
     $self->{bodyType} = "body";
 
-    $self->{writer}->startTag('AnalyzerReport', %$initial_details);
+	my %copy = %{$initial_details};
+	delete $copy{assessments};
+    $self->{writer}->startTag('AnalyzerReport', %copy);
     $self->{open} = 1;
     $self->{MetricSummaries} = {};
     $self->{BugSummaries} = {};
     return $self;
 }
 
+# Dummy function to match SarifJsonWriter's API
+sub AddOriginalUriBaseIds {
+
+}
+
+# Dummy function to match SarifJsonWriter's API
+sub AddInvocations {
+
+}
+
+# Dummy function to match SarifJsonWriter's API
+sub BeginResults {
+
+}
+
+# Dummy function to match SarifJsonWriter's API
+sub EndResults {
+
+}
+
+# Dummy function to match SarifJsonWriter's API
+sub EndFile {
+
+}
 
 #close	analyzer report
-sub AddEndTag
+sub EndRun
 {
     my ($self) = @_;
     if ($self->{error_level} == 0) {
@@ -216,28 +253,29 @@ sub CheckBug
 	    push @errors, "Required element: $bugReqElt could not be found in BugInstance $bugID";
 	}
     }
-    my $locID = 1;
-    my $methodID = 1;
+    my $locID = 0;
+    my $methodID = 0;
     if (defined $bugInstance->{Methods}) {
         my $methodprimary = 0;
-	foreach my $method (@{$bugInstance->{Methods}}) {
-	    if (!(defined $method->{primary})) {
-		push @errors, "Required attribute: primary not found for Method$methodID in BugInstance $bugID";
-	    } elsif ($method->{primary}) {
-	        if ($methodprimary) {
-		    push @errors, "Misformed Element: More than one primary Method found in BugInstance $bugID";
-		} else {
-		    $methodprimary = 1;
+		foreach my $method (@{$bugInstance->{Methods}}) {
+	    	if (!(defined $method->{primary})) {
+				push @errors, "Required attribute: primary not found for Method $methodID in BugInstance $bugID";
+	    	} elsif ($method->{primary} eq 'true') {
+	        	if ($methodprimary) {
+					push @errors, "Misformed Element: More than one primary Method found in BugInstance $bugID";
+				} else {
+		    		$methodprimary = 1;
+				}
+	    	}
+
+	    	if (!(defined $method->{name})) {
+				push @errors, "Required text: name not found for Method$methodID in BugInstance $bugID";
+	    	}
 		}
-	    }
-	    if (!(defined $method->{name})) {
-		push @errors, "Required text: name not found for Method$methodID in BugInstance $bugID";
-	    }
-	}
-	if (!($methodprimary)) {
-#	    push @errors, "Misformed Element: No primary Method found in  BugInstance $bugID";
-	}
-	$methodID++;
+		if (!($methodprimary)) {
+	#	    push @errors, "Misformed Element: No primary Method found in  BugInstance $bugID";
+		}
+		$methodID++;
     }
 
     my $locprimary = 0;
@@ -299,10 +337,8 @@ sub CheckBug
     return \@errors;
 }
 
-
-
 #Add a single bug instance to file
-sub AddBugInstance
+sub AddResult
 {
     my($self, $bugInstance) = @_;
 
@@ -338,37 +374,25 @@ sub AddBugInstance
 	$writer->endTag();
     }
 
-    if (defined $bugInstance->{Methods}) {
-	my $methodID=1;
 	$writer->startTag('Methods');
+    if (defined $bugInstance->{Methods}) {
+	my $methodID=0;
+	
 	foreach my $method (@{$bugInstance->{Methods}}) {
-	    my $primary;
-	    if ($method->{primary}) {
-		$primary = "true";
-	    } else {
-		$primary ="false";
-	    }
-
-	    $writer->startTag('Method', id => $methodID, primary => $primary);
+	    $writer->startTag('Method', id => $methodID, primary => $method->{primary});
 	    
 	    $writer->characters($method->{name});
 	    $writer->endTag();
 	    $methodID++;
 	}
-	$writer->endTag();
     }
+	$writer->endTag();
     
     $writer->startTag('BugLocations');	
-    my $locID = 1;
+    my $locID = 0;
 
-    foreach my $location (@{$bugInstance->{BugLocations}}) {	
-	my $primary;
-	if ($location->{primary}) {
-	    $primary = "true";
-	} else {
-	    $primary = "false";
-	}
-	$writer->startTag('Location', id => $locID, primary => $primary);#$location->{primary});
+    foreach my $location (@{$bugInstance->{BugLocations}}) {
+		$writer->startTag('Location', id => $locID, primary => $location->{primary});
 	
 	for my $locElt (qw/SourceFile/) {
 	    $writer->startTag($locElt);
@@ -376,12 +400,12 @@ sub AddBugInstance
 	    $writer->endTag();
 	}
 
-	for my $optLocElt (qw/StartColumn Explanation EndColumn StartLine EndLine/) {
+	for my $optLocElt (qw/StartLine EndLine StartColumn EndColumn Explanation/) {
 	    if (defined $location->{$optLocElt}  ) {
 		$writer->startTag($optLocElt);
 		$writer->characters($location->{$optLocElt});
-		$writer->endTag();  
-	    }
+		$writer->endTag();
+		}
 	}
 
 	$writer->endTag();
@@ -465,7 +489,7 @@ sub AddBugInstance
 	$group = "undefined";
     }
 
-    my $type_hash = $self->{BugSummaries}->{$code}->{$group};
+    my $type_hash = $self->{BugSummaries}->{$group}->{$code};
     if (defined $type_hash) {
 	$type_hash->{count}++;
 	$type_hash->{bytes} += $byte_count;
@@ -473,7 +497,7 @@ sub AddBugInstance
 	my $bugSummary = {};
 	$bugSummary->{count} = 1;
 	$bugSummary->{bytes} = $byte_count;
-	$self->{BugSummaries}->{$code}->{$group} = $bugSummary;
+	$self->{BugSummaries}->{$group}->{$code} = $bugSummary;
     }
     
 }
@@ -586,11 +610,11 @@ sub AddSummary
             die "Exiting";
         }
     }
-    if (defined $self->{BugSummaries}) {
+    if (%{$self->{BugSummaries}}) {
 	$writer->startTag('BugSummary');
-	foreach my $code (keys %{$self->{BugSummaries}}) {
-	    foreach my $group (keys %{$self->{BugSummaries}->{$code}}) {
-		my $hashes = $self->{BugSummaries}->{$code}->{$group};
+	foreach my $group (sort keys %{$self->{BugSummaries}}) {
+	    foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
+		my $hashes = $self->{BugSummaries}->{$group}->{$code};
 		$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});	  
 	    }
 	}
@@ -598,7 +622,7 @@ sub AddSummary
 	$self->{bodyType} = "summary";
     }	
     
-    if ($self->{MetricSummaries}) {
+    if (%{$self->{MetricSummaries}}) {
 	$writer->startTag('MetricSummaries');
 	foreach my $summaryName (keys(%{$self->{MetricSummaries}})) {
 	    my $summary = $self->{MetricSummaries}->{$summaryName};
@@ -647,6 +671,13 @@ sub AddSummary
 	$writer->endTag();
 	$self->{bodyType} = "summary";
     }
+}
+
+# Return the number of bugs in total
+sub GetNumBugs {
+    my ($self) = @_;
+
+    return $self->{bugID};
 }
 
 1;
