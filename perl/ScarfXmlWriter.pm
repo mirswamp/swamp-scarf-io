@@ -68,20 +68,24 @@ sub new
 }
 
 sub SetOptions {
-	my ($self, $options) = @_;
+    my ($self, $options) = @_;
 
-	if (defined $options->{pretty} && $options->{pretty}) {
-		$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => $self->{enc} );
-	} else {
-		$self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => $self->{enc} );
-	}
-	$self->{writer}->xmlDecl('UTF-8' );
+    if (defined $options->{pretty} && $options->{pretty}) {
+        $self->{writer} = new XML::Writer(OUTPUT => $self->{output}, DATA_MODE => 'true', DATA_INDENT => 2, ENCODING => $self->{enc} );
+    } else {
+        $self->{writer} = new XML::Writer(OUTPUT => $self->{output}, ENCODING => $self->{enc} );
+    }
+    $self->{writer}->xmlDecl('UTF-8' );
 
-	if (defined $options->{error_level}) {
-		if ($options->{error_level} >= 0 && $options->{error_level} <= 2) {
+    if (defined $options->{error_level}) {
+        if ($options->{error_level} >= 0 && $options->{error_level} <= 2) {
             $self->{error_level} = $options->{error_level};
         }
-	}
+    }
+
+    if (defined $options->{sortKeys}) {
+        $self->{sortKeys} = $options->{sortKeys} ? 1 : 0;
+    }
 }
 
 sub Close
@@ -615,17 +619,26 @@ sub AddSummary
             die "Exiting";
         }
     }
-    if (%{$self->{BugSummaries}}) {
-	$writer->startTag('BugSummary');
-	foreach my $group (sort keys %{$self->{BugSummaries}}) {
-	    foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
-		my $hashes = $self->{BugSummaries}->{$group}->{$code};
-		$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});	  
-	    }
-	}
-	$writer->endTag();
-	$self->{bodyType} = "summary";
-    }	
+	if (%{$self->{BugSummaries}}) {
+		$writer->startTag('BugSummary');
+		if ($self->{sortKeys} {
+			foreach my $group (sort keys %{$self->{BugSummaries}}) {
+				foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
+					my $hashes = $self->{BugSummaries}->{$group}->{$code};
+					$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
+				}
+			}
+		} else {
+			foreach my $group (keys %{$self->{BugSummaries}}) {
+				foreach my $code (keys %{$self->{BugSummaries}->{$group}}) {
+					my $hashes = $self->{BugSummaries}->{$group}->{$code};
+					$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
+                }
+			}
+		}
+		$writer->endTag();
+		$self->{bodyType} = "summary";
+    }
     
     if (%{$self->{MetricSummaries}}) {
 	$writer->startTag('MetricSummaries');
