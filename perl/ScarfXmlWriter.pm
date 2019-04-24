@@ -204,6 +204,11 @@ sub AddOriginalUriBaseIds {
 }
 
 # Dummy function to match SarifJsonWriter's API
+sub AddToolData {
+
+}
+
+# Dummy function to match SarifJsonWriter's API
 sub AddInvocations {
 
 }
