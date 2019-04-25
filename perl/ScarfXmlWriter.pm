@@ -621,7 +621,7 @@ sub AddSummary
     }
 	if (%{$self->{BugSummaries}}) {
 		$writer->startTag('BugSummary');
-		if ($self->{sortKeys} {
+		if ($self->{sortKeys}) {
 			foreach my $group (sort keys %{$self->{BugSummaries}}) {
 				foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
 					my $hashes = $self->{BugSummaries}->{$group}->{$code};
