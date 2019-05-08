@@ -236,13 +236,13 @@ sub EndFile {
 sub EndRun
 {
     my ($self) = @_;
-    if ($self->{error_level} == 0) {
-	if ( $self->{open} ) {
-	    print "Scarf file already closed";
-	    if ( $self->{error_level} == 2 ) {
-		die "Exiting";
-	    }
-	}
+    if ($self->{error_level} > 0) {
+        if (!$self->{open}) {
+            print "Scarf file already closed";
+            if ( $self->{error_level} == 2 ) {
+                die "Exiting";
+            }
+        }
     }
     $self->{writer}->endTag();
     return $self;
