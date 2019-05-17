@@ -1,6 +1,6 @@
 Module Version: 0.0.1
 
-Last Updated: 2016-08-23
+Last Updated: 05/17/2019
 
 === NAME
 ScarfXmlWriter - A perl module for writing SCARF XML files.
@@ -14,23 +14,26 @@ use ScarfXmlWriter qw/CheckStart CheckBug CheckMetric/;
 my $output = "/path/to/file";
 
 my $writer = new ScarfXmlWriter($output, "utf-8");
-my $defaultPretty = $writer->GetPretty();
-my $defaultErrorLevel = $writer->GetErrorLevel();
-$writer->SetPretty(0);
-$writer->SetErrorLevel(0);
+
+my %writerOptions = (
+    pretty => 1,
+    error_level => 0
+);
+$writer->SetOptions(\%writerOptions);
 
 my @errors = ();
 push @errors, CheckStart($initialData);
 push @errors, CheckBug($bugData);
 push @errors, CheckMetric($metricData);
 
-$writer->AddStartTag($initialData);
-$writer->AddBugInstance($bugData);
-$writer->AddMetric($metricData);
-$writer->AddSummary();
-$writer->AddEndTag();
-
-$writer->Close();
+$writer->BeginFile();
+$writer->BeginRun($initialData);
+$writer->BeginResults();
+$writer->AddResult($resultData);
+$writer->EndResults();
+$writer->AddSummary()
+$writer->EndRun();
+$writer->EndFile();
 ----
 === DESCRIPTION
 This module provides the ability to convert Perl data structures into SWAMP Common Assessment Results Format (SCARF) XML formatted documents. It is dependant on XML::Writer library for writing.
@@ -40,8 +43,11 @@ The writer's output is determined by the user through method calls that provide 
 The user has the ability to set the error level to 0 (none), 1 (warnings), or 2 (exit). Both error levels 1 and 2 will print all error messages found during writing including misformatted elements, required elements not found, wrong value types, and ordering violations. Error level 2 will also exit the program as soon as an error is found to ensure validity of results.
 
 === METHODS
-==== new($file [, $encoding, $errorLevel, $prettyEnable])
-This is a class method used to instantiate the writer. File is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. Encoding is the character encoding to be used when writing (default 'utf-8'). Currently this must be one of 'utf-8' or 'us-ascii'. errorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). prettyEnable will enable or disable pretty printing of output with a true or false value respectively (default true).
+==== new($file, $encoding)
+This is a class method used to instantiate the writer. File is an object blessed into an IO::Handle, an open file handle, a string file path or a reference to a string to be written to. Encoding is the character encoding to be used when writing (default 'utf-8'). Currently this must be one of 'utf-8' or 'us-ascii'.
+
+==== SetOptions($optionsData)
+Sets options for the writer. Refer to the Data Structures section to learn more about what options are available. 
 
 ==== GetHandle()
 Returns the set handle.
@@ -67,20 +73,44 @@ Checks BUGDATA for any errors. Returns an array of all found errors or an empty 
 ==== CheckMetric($metricData)
 Checks METRICDATA for any errors. Returns an array of all found errors or an empty array if none are found. For details on valid data structures see below. For details on valid data structures see below.
 
-==== AddStartTag($initialData)
-Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. Must be called exactly once before other 'Add' methods below.
+==== BeginFile()
+Does nothing. A dummy function to match SarifJsonWriter's API.
 
-==== AddBugInstance($bugData) 
-Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddMetric' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+==== BeginRun($initialData)
+Writes a start tag to the file based on INITIALDATA. For details on valid data structures see below. 
+
+==== AddOriginalUriBaseIds()
+Does nothing. A dummy function to match SarifJsonWriter's API.
+
+==== AddToolData()
+Does nothing. A dummy function to match SarifJsonWriter's API.
+
+==== AddInvocations()
+Does nothing. A dummy function to match SarifJsonWriter's API.
+
+==== BeginResults()
+Does nothing. A dummy function to match SarifJsonWriter's API.
+
+==== AddResult($bugData) 
+Writes a bug to the file based on BUGDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddMetric' calls. Not allowed after 'AddSummary'.
+
+==== EndResults()
+Does nothing. A dummy function to match SarifJsonWriter's API.
 
 ==== AddMetric($metricData)
-Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddBug' calls. Not allowed after 'AddSummary' and 'AddEndTag'.
+Writes a metric to the file based on METRICDATA. For details on valid data structures see below. May be called 0 or more times and interleaved with 'AddResult' calls. Not allowed after 'AddSummary'.
 
 ==== AddSummary()
-Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most 1 time before 'AddEndTag'.
+Writes a summary to the file based on all bugs and metrics already written with this writer. May be called at most 1 time before 'EndRun'.
 
-==== AddEndTag()
+==== EndRun()
 Writes an end tag to the file. Must be called exactly once after which no other 'Add' methods may be called.
+
+==== EndFile()
+Does nothing. A dummy function to match SarifJsonWriter's API.
+
+==== GetNumBugs()
+Returns the total number of bugs.
 
 
 === DATA STRUCTURES
@@ -88,24 +118,34 @@ Writes an end tag to the file. Must be called exactly once after which no other 
 
 The following are the data structures used in the methods listed above. Undefined keys will not be written. 
 
+==== $optionsData
+errorLevel is 0, 1, or 2 and sets the error level of the writer (default 2). pretty will enable or disable pretty printing of output with a true or false value respectively (default false).
+----
+{
+  pretty                 => TRUE/FALSE (Default is false),
+  error_level            => ERROR_LEVEL_VALUE (Default is 2),
+  sortKeys               => TRUE/FALSE
+}
+----
+
 ==== $initialData
 InitialData contains information regarding the tool used to test the package. All fields in this structure are required elements therefore must be included in the data structure.
 Older versions of SCARF only required tool_name, tool_version and uuid.  Current clients should include all of the attributes.
 
 ----
 {
-    assess_fw'              => ASSESSMENT_FRAMEWORK,
-    assess_fw_version'      => ASSESSMENT_FRAMEWORK_VERSION,
-    assessment_start_ts'    => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
-    build_fw'               => BUILD_FRAMEWORK,
-    build_fw_version'       => BUILD_FRAMEWORK_VERSION,
-    build_root_dir'         => PACKAGE_DIRECTORY,
-    package_name'           => PACKAGE_NAME,
-    package_root_dir'       => DIRECTORY_CONTAINING_PACKAGE,
-    package_version'        => PACKAGE_VERSION,
-    parser_fw'              => PARSER_FRAMEWORK,
-    parser_fw_version'      => PARSER_FRAMEWORK_VERSION,
-    platform_name'          => PLATFORM_NAME_AND_VERSION,
+    assess_fw               => ASSESSMENT_FRAMEWORK,
+    assess_fw_version       => ASSESSMENT_FRAMEWORK_VERSION,
+    assessment_start_ts     => ASSESSMENT_START_TIMESTAMP_SINCE_JAN_1_1970,
+    build_fw                => BUILD_FRAMEWORK,
+    build_fw_version        => BUILD_FRAMEWORK_VERSION,
+    build_root_dir          => PACKAGE_DIRECTORY,
+    package_name            => PACKAGE_NAME,
+    package_root_dir        => DIRECTORY_CONTAINING_PACKAGE,
+    package_version         => PACKAGE_VERSION,
+    parser_fw               => PARSER_FRAMEWORK,
+    parser_fw_version       => PARSER_FRAMEWORK_VERSION,
+    platform_name           => PLATFORM_NAME_AND_VERSION,
     tool_name               => TOOL_NAME,
     tool_verison            => TOOL_VERSION,
     uuid                    => UUIDVALUE
