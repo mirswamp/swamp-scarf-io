@@ -169,6 +169,21 @@ sub CheckStart
 
 }
 
+
+sub WriteSimpleElement
+{
+    my ($writer, $data, @tagAndAttrs) = @_;
+
+    # replace invalid XML 1.0 characters,
+    # should also exclude U+D800 - U+DFFF and U+10000 - U+10FFFF
+    $data =~  s/([\x00-\x08\x0b\x0c\x0e-\x1f])/sprintf("\\u%04X",$_)/eg;
+
+    $writer->startTag(@tagAndAttrs);
+    $writer->characters($data);
+    $writer->endTag();
+}
+
+
 # Dummy function to match SarifJsonWriter's API
 sub BeginFile {
 
@@ -378,9 +393,7 @@ sub AddResult
     $writer->startTag('BugInstance', id => "$self->{bugID}");
     
     if (defined $bugInstance->{ClassName}) {
-	$writer->startTag('ClassName');
-	$writer->characters($bugInstance->{ClassName});
-	$writer->endTag();
+	WriteSimpleElement($writer, $bugInstance->{ClassName}, 'ClassName');
     }
 
 	$writer->startTag('Methods');
@@ -388,10 +401,8 @@ sub AddResult
 	my $methodID=0;
 	
 	foreach my $method (@{$bugInstance->{Methods}}) {
-	    $writer->startTag('Method', id => $methodID, primary => $method->{primary});
+	    WriteSimpleElement($writer, $method->{name}, 'Method', id => $methodID, primary => $method->{primary});
 	    
-	    $writer->characters($method->{name});
-	    $writer->endTag();
 	    $methodID++;
 	}
     }
@@ -404,16 +415,12 @@ sub AddResult
 		$writer->startTag('Location', id => $locID, primary => $location->{primary});
 	
 	for my $locElt (qw/SourceFile/) {
-	    $writer->startTag($locElt);
-	    $writer->characters($location->{$locElt});
-	    $writer->endTag();
+	    WriteSimpleElement($writer, $location->{$locElt}, $locElt);
 	}
 
 	for my $optLocElt (qw/StartLine EndLine StartColumn EndColumn Explanation/) {
 	    if (defined $location->{$optLocElt}  ) {
-		$writer->startTag($optLocElt);
-		$writer->characters($location->{$optLocElt});
-		$writer->endTag();
+		WriteSimpleElement($writer, $location->{$optLocElt}, $optLocElt);
 		}
 	}
 
@@ -424,57 +431,39 @@ sub AddResult
     $writer->endTag();
     
     if (defined $bugInstance->{CweIds}) {
-	foreach my $cweid (@{$bugInstance->{CweIds}}) {
-	    $writer->startTag('CweId');
-	    $writer->characters($cweid);
-	    $writer->endTag();
+	foreach my $cweId (@{$bugInstance->{CweIds}}) {
+	    WriteSimpleElement($writer, $cweId, 'CweId');
 	}
     }
 
     for my $bugElts (qw/BugGroup BugCode BugRank BugSeverity/) {
 	if (defined $bugInstance->{$bugElts}){
-	    $writer->startTag($bugElts);
-	    $writer->characters($bugInstance->{$bugElts});
-	    $writer->endTag();
+	    WriteSimpleElement($writer, $bugInstance->{$bugElts}, $bugElts);
 	}
     }
 
-    $writer->startTag('BugMessage');
-    $writer->characters($bugInstance->{BugMessage});
-    $writer->endTag();
+    WriteSimpleElement($writer, $bugInstance->{BugMessage}, 'BugMessage');
 
     if (defined $bugInstance->{ResolutionSuggestion}) {
-	$writer->startTag('ResolutionSuggestion');
-	$writer->characters($bugInstance->{ResolutionSuggestion});
-	$writer->endTag();
+	WriteSimpleElement($writer, $bugInstance->{ResolutionSuggestion}, 'ResolutionSuggestion');
     }
 
     $writer->startTag('BugTrace');
 
-    $writer->startTag('BuildId');
-    $writer->characters($bugInstance->{BuildId});
-    $writer->endTag();
+    WriteSimpleElement($writer, $bugInstance->{BuildId}, 'BuildId');
 
-    $writer->startTag('AssessmentReportFile');
-    $writer->characters($bugInstance->{AssessmentReportFile});
-    $writer->endTag();
+    WriteSimpleElement($writer, $bugInstance->{AssessmentReportFile}, 'AssessmentReportFile');
 
     if (defined $bugInstance->{InstanceLocation}) {
 	$writer->startTag('InstanceLocation');
 
 	    if (defined $bugInstance->{InstanceLocation}->{Xpath}) {
-		$writer->startTag('Xpath');
-		$writer->characters($bugInstance->{InstanceLocation}->{Xpath});
-		$writer->endTag();
+		WriteSimpleElement($writer, $bugInstance->{InstanceLocation}->{Xpath}, 'Xpath');
 	    } 
 	    if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
 		$writer->startTag('LineNum');
-		$writer->startTag('Start');
-		$writer->characters($bugInstance->{InstanceLocation}->{LineNum}->{Start});
-		$writer->endTag();		  
-		$writer->startTag('End');
-		$writer->characters($bugInstance->{InstanceLocation}->{LineNum}->{End});
-		$writer->endTag();						   
+		WriteSimpleElement($writer, $bugInstance->{InstanceLocation}->{LineNum}->{Start}, 'Start');
+		WriteSimpleElement($writer, $bugInstance->{InstanceLocation}->{LineNum}->{End}, 'End');
 		$writer->endTag();
 	    }
 	$writer->endTag();
@@ -549,23 +538,17 @@ sub AddMetric
     $writer->startTag('Metric', id => $self->{metricID});   
 
     $writer->startTag('Location');
-    $writer->startTag('SourceFile');
-    $writer->characters($metric->{SourceFile});
-    $writer->endTag();
+    WriteSimpleElement($writer, $metric->{SourceFile}, 'SourceFile');
     $writer->endTag();
  
     for my $optMetr (qw/Class Method/) {
 	if (defined $metric->{$optMetr}) {
-	    $writer->startTag($optMetr);
-	    $writer->characters($metric->{$optMetr});
-	    $writer->endTag();
+	    WriteSimpleElement($writer, $metric->{$optMetr}, $optMetr);
 	}
     }
     
     for my $reqMetr (qw/Type Value/) {
-	$writer->startTag($reqMetr);
-        $writer->characters($metric->{$reqMetr});
-	$writer->endTag();
+        WriteSimpleElement($writer, $metric->{$reqMetr}, $reqMetr);
     }	
 
     $self->{metricID}++;
@@ -646,21 +629,15 @@ sub AddSummary
 	    my $summary = $self->{MetricSummaries}->{$summaryName};
 	    $writer->startTag('MetricSummary');
 
-	    $writer->startTag('Type');
-	    $writer->characters($summaryName);
-	    $writer->endTag();
+	    WriteSimpleElement($writer, $summaryName, 'Type');
 	    
 	    my $count = $summary->{Count};
-	    $writer->startTag('Count');
-	    $writer->characters($count);
-	    $writer->endTag();
+	    WriteSimpleElement($writer, $count, 'Count');
 
 	    if (defined $summary->{Sum}) {
 
 		for my $sumElt (qw/Sum SumOfSquares Minimum Maximum/) {
-		    $writer->startTag($sumElt);
-		    $writer->characters($summary->{$sumElt});
-		    $writer->endTag();
+		    WriteSimpleElement($writer, $summary->{$sumElt}, $sumElt);
 		}
     
 		my $average = 0;
@@ -668,9 +645,7 @@ sub AddSummary
 		    $average = $summary->{Sum}/$count;
 		}
 
-		$writer->startTag('Average');
-		$writer->characters(sprintf("%.2f", $average));
-		$writer->endTag();
+		WriteSimpleElement($writer, sprintf("%.2f", $average), 'Average');
 
     
 		my $denominator = $count * ($count - 1);
@@ -680,9 +655,7 @@ sub AddSummary
 		    $standard_dev = sqrt(($summary->{SumOfSquares} * $count - $square_of_sum ) / $denominator);
 		}
 
-		$writer->startTag('StandardDeviation');
-		$writer->characters(sprintf("%.2f", $standard_dev));
-		$writer->endTag();
+		WriteSimpleElement($writer, sprintf("%.2f", $standard_dev), 'StandardDeviation');
 	    }	    
 	    $writer->endTag();
 	}
