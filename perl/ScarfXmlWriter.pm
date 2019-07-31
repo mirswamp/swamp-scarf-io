@@ -170,17 +170,28 @@ sub CheckStart
 }
 
 
+# invalid XML 1.0 characters,
+# should also include U+D800 - U+DFFF and U+10000 - U+10FFFF
+my $badCharRe = qr/([\x00-\x08\x0b\x0c\x0e-\x1f])/;
+
+
 sub WriteSimpleElement
 {
     my ($writer, $data, @tagAndAttrs) = @_;
 
-    # replace invalid XML 1.0 characters,
-    # should also exclude U+D800 - U+DFFF and U+10000 - U+10FFFF
-    $data =~  s/([\x00-\x08\x0b\x0c\x0e-\x1f])/sprintf("\\u%04X",$_)/eg;
+    for (my $i = 0; $i < @tagAndAttrs; ++$i)  {
+	$tagAndAttrs[$i] =~  s/$badCharRe/sprintf("\\u%04X",ord($1))/eg;
+    }
 
-    $writer->startTag(@tagAndAttrs);
-    $writer->characters($data);
-    $writer->endTag();
+    if (defined $data)  {
+	$data =~  s/$badCharRe/sprintf("\\u%04X",ord($1))/eg;
+
+	$writer->startTag(@tagAndAttrs);
+	$writer->characters($data);
+	$writer->endTag();
+    }  else  {
+	$writer->emptyTag(@tagAndAttrs);
+    }
 }
 
 
@@ -281,25 +292,25 @@ sub CheckBug
     my $methodID = 0;
     if (defined $bugInstance->{Methods}) {
         my $methodprimary = 0;
-		foreach my $method (@{$bugInstance->{Methods}}) {
-	    	if (!(defined $method->{primary})) {
-				push @errors, "Required attribute: primary not found for Method $methodID in BugInstance $bugID";
-	    	} elsif ($method->{primary} eq 'true') {
-	        	if ($methodprimary) {
-					push @errors, "Misformed Element: More than one primary Method found in BugInstance $bugID";
-				} else {
-		    		$methodprimary = 1;
-				}
-	    	}
+	foreach my $method (@{$bugInstance->{Methods}}) {
+	    if (!(defined $method->{primary})) {
+		push @errors, "Required attribute: primary not found for Method $methodID in BugInstance $bugID";
+	    } elsif ($method->{primary} eq 'true') {
+		if ($methodprimary) {
+		    push @errors, "Misformed Element: More than one primary Method found in BugInstance $bugID";
+		} else {
+		    $methodprimary = 1;
+		}
+	    }
 
-	    	if (!(defined $method->{name})) {
-				push @errors, "Required text: name not found for Method$methodID in BugInstance $bugID";
-	    	}
-		}
-		if (!($methodprimary)) {
-	#	    push @errors, "Misformed Element: No primary Method found in  BugInstance $bugID";
-		}
-		$methodID++;
+	    if (!(defined $method->{name})) {
+		push @errors, "Required text: name not found for Method$methodID in BugInstance $bugID";
+	    }
+	}
+	if (!($methodprimary)) {
+	    # push @errors, "Misformed Element: No primary Method found in  BugInstance $bugID";
+	}
+	$methodID++;
     }
 
     my $locprimary = 0;
@@ -602,25 +613,25 @@ sub AddSummary
             die "Exiting";
         }
     }
-	if (%{$self->{BugSummaries}}) {
-		$writer->startTag('BugSummary');
-		if ($self->{sortKeys}) {
-			foreach my $group (sort keys %{$self->{BugSummaries}}) {
-				foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
-					my $hashes = $self->{BugSummaries}->{$group}->{$code};
-					$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
-				}
-			}
-		} else {
-			foreach my $group (keys %{$self->{BugSummaries}}) {
-				foreach my $code (keys %{$self->{BugSummaries}->{$group}}) {
-					my $hashes = $self->{BugSummaries}->{$group}->{$code};
-					$writer->emptyTag('BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
-                }
-			}
+    if (%{$self->{BugSummaries}}) {
+	$writer->startTag('BugSummary');
+	if ($self->{sortKeys}) {
+	    foreach my $group (sort keys %{$self->{BugSummaries}}) {
+		foreach my $code (sort keys %{$self->{BugSummaries}->{$group}}) {
+		    my $hashes = $self->{BugSummaries}->{$group}->{$code};
+		    WriteSimpleElement($writer, undef, 'BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
 		}
-		$writer->endTag();
-		$self->{bodyType} = "summary";
+	    }
+	} else {
+	    foreach my $group (keys %{$self->{BugSummaries}}) {
+		foreach my $code (keys %{$self->{BugSummaries}->{$group}}) {
+		    my $hashes = $self->{BugSummaries}->{$group}->{$code};
+		    WriteSimpleElement($writer, undef, 'BugCategory', group => $group, code => $code, count => $hashes->{count}, bytes => $hashes->{bytes});
+		}
+	    }
+	}
+	$writer->endTag();
+	$self->{bodyType} = "summary";
     }
     
     if (%{$self->{MetricSummaries}}) {
