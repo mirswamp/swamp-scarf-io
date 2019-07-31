@@ -174,17 +174,28 @@ sub CheckStart
 # should also include U+D800 - U+DFFF and U+10000 - U+10FFFF
 my $badCharRe = qr/([\x00-\x08\x0b\x0c\x0e-\x1f])/;
 
+sub ConvertBadXmlChar
+{
+    my ($c) = @_;
+
+    my $fixedChar = sprintf("\\u%04X",ord($c));
+
+    print STDERR "WARNING: bad XML char in output converting to '$fixedChar'\n";
+
+    return $fixedChar;
+}
+
 
 sub WriteSimpleElement
 {
     my ($writer, $data, @tagAndAttrs) = @_;
 
     for (my $i = 0; $i < @tagAndAttrs; ++$i)  {
-	$tagAndAttrs[$i] =~  s/$badCharRe/sprintf("\\u%04X",ord($1))/eg;
+	$tagAndAttrs[$i] =~  s/$badCharRe/ConvertBadXmlChar($1)/eg;
     }
 
     if (defined $data)  {
-	$data =~  s/$badCharRe/sprintf("\\u%04X",ord($1))/eg;
+	$data =~  s/$badCharRe/ConvertBadXmlChar($1)/eg;
 
 	$writer->startTag(@tagAndAttrs);
 	$writer->characters($data);
