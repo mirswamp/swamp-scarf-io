@@ -49,9 +49,9 @@ sub new
     }
 
     if ($encoding) {
-		$self->{enc} = $encoding;
+	$self->{enc} = $encoding;
     } else {
-		$self->{enc} = "utf-8";
+	$self->{enc} = "utf-8";
     }
 
     $self->{error_level} = 2;
@@ -172,7 +172,7 @@ sub CheckStart
 
 # invalid XML 1.0 characters,
 # should also include U+D800 - U+DFFF and U+10000 - U+10FFFF
-my $badCharRe = qr/([\x00-\x08\x0b\x0c\x0e-\x1f])/;
+my $badXmlCharRe = qr/([\x00-\x08\x0b\x0c\x0e-\x1f])/;
 
 sub ConvertBadXmlChar
 {
@@ -191,11 +191,11 @@ sub WriteSimpleElement
     my ($writer, $data, @tagAndAttrs) = @_;
 
     for (my $i = 0; $i < @tagAndAttrs; ++$i)  {
-	$tagAndAttrs[$i] =~  s/$badCharRe/ConvertBadXmlChar($1)/eg;
+	$tagAndAttrs[$i] =~  s/$badXmlCharRe/ConvertBadXmlChar($1)/eg;
     }
 
     if (defined $data)  {
-	$data =~  s/$badCharRe/ConvertBadXmlChar($1)/eg;
+	$data =~  s/$badXmlCharRe/ConvertBadXmlChar($1)/eg;
 
 	$writer->startTag(@tagAndAttrs);
 	$writer->characters($data);
@@ -230,8 +230,8 @@ sub BeginRun
     }
     $self->{bodyType} = "body";
 
-	my %copy = %{$initial_details};
-	delete $copy{assessments};
+    my %copy = %{$initial_details};
+    delete $copy{assessments};
     $self->{writer}->startTag('AnalyzerReport', %copy);
     $self->{open} = 1;
     $self->{MetricSummaries} = {};
