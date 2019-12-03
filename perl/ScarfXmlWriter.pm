@@ -46,6 +46,7 @@ sub new
     } else {
         open($self->{output}, ">", $handle) or die "invalid output file\n";
 	$self->{filetype} = 1;
+	$self->{filename} = $handle;
     }
 
     if ($encoding) {
@@ -65,6 +66,20 @@ sub new
 
     bless $self, $class;
     return $self;
+}
+
+sub GetWriterAttrs
+{
+    my ($self, $attrs) = @_;
+
+    my $filename;
+    if (exists $self->{filename})  {
+	$filename = $self->{filename};
+    }  else  {
+	$filename = "<unknown>";
+    }
+    $attrs->{'scarf-file'} = $filename;
+    $attrs->{'parsed-results-file'} = $filename;
 }
 
 sub SetOptions {

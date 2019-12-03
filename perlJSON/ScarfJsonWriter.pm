@@ -16,6 +16,7 @@ sub new
     } else {
 	open($self->{output}, ">", $handle) or die "invalid output file";
 	$self->{filetype} = 1;
+	$self->{filename} = $handle;
     }
     $self->{writer} = JSON::MaybeXS->new(utf8 => 1, pretty => 1);
 
@@ -38,6 +39,19 @@ sub new
 
     bless $self, $class;
     return $self;
+}
+
+sub GetWriterAttrs
+{
+    my ($self, $attrs) = @_;
+
+    my $filename;
+    if (exists $self->{filename})  {
+	$filename = $self->{filename};
+    }  else  {
+	$filename = "<unknown>";
+    }
+    $attrs->{'scarf-json-file'} = $filename;
 }
 
 sub close
