@@ -1,13 +1,13 @@
 #!/usr/bin/perl -w
 
 #  Copyright 2016 Brandon G. Klein
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,12 +57,12 @@ sub new
     $self->{error_level} = 2;
     $self->{bugId} = 0;
     $self->{metricId} = 0;
-    
+
     $self->{bodyType} = undef;
     $self->{open} = undef;
     $self->{MetricSummaries} = {};
     $self->{BugSummaries} = {};
-    
+
     bless $self, $class;
     return $self;
 }
@@ -161,7 +161,7 @@ sub CheckStart
 
     for my $reqAttr (qw/tool_name tool_version uuid/) {
 	if (!(defined $initial->{$reqAttr})) {
-	    push @errors, "Required attribute: $reqAttr not found when creating startTag";	    
+	    push @errors, "Required attribute: $reqAttr not found when creating startTag";
 	}
     }
 
@@ -213,7 +213,7 @@ sub BeginFile {
 
 #start analyzer report
 sub BeginRun
-{   
+{
     my ($self, $initial_details) = @_;
     if ($self->{error_level} != 0) {
 	if ( $self->{open} ) {
@@ -327,7 +327,7 @@ sub CheckBug
     my $locprimary = 0;
     foreach my $location (@{$bugInstance->{BugLocations}}) {
 	if (!(defined $location->{primary})) {
-	    push @errors, "Required attribute: primary could not be found for Location$locID in BugInstance $bugId";	    
+	    push @errors, "Required attribute: primary could not be found for Location$locID in BugInstance $bugId";
 	} elsif ($location->{primary}) {
 	    if ($locprimary) {
 #		push @errors, "Misformed Element: More than one primary BugLocation found in  BugInstance $bugId";
@@ -337,7 +337,7 @@ sub CheckBug
 	}
 	for my $locElt (qw/SourceFile/) {
 	    if (!(defined $location->{$locElt})) {
-		push @errors, "Required element: $locElt could not be found for Location$locID in BugInstance $bugId";	    
+		push @errors, "Required element: $locElt could not be found for Location$locID in BugInstance $bugId";
 	    }
 	}
 	for my $optLocElt (qw/StartColumn EndColumn StartLine EndLine/) {
@@ -403,17 +403,17 @@ sub AddResult
 	}
     }
 
-    my $writer = $self->{writer};   
+    my $writer = $self->{writer};
 
-    #byte count info	
+    #byte count info
     my $byte_count = 0;
     my $initial_byte_count = 0;
     my $final_byte_count = tell($self->{output});
     $initial_byte_count = $final_byte_count;
-    
+
     #Add bug
     $writer->startTag('BugInstance', id => "$self->{bugId}");
-    
+
     if (defined $bugInstance->{ClassName}) {
 	WriteSimpleElement($writer, $bugInstance->{ClassName}, 'ClassName');
     }
@@ -421,21 +421,21 @@ sub AddResult
 	$writer->startTag('Methods');
     if (defined $bugInstance->{Methods}) {
 	my $methodID=0;
-	
+
 	foreach my $method (@{$bugInstance->{Methods}}) {
 	    WriteSimpleElement($writer, $method->{name}, 'Method', id => $methodID, primary => $method->{primary});
-	    
+
 	    $methodID++;
 	}
     }
 	$writer->endTag();
-    
-    $writer->startTag('BugLocations');	
+
+    $writer->startTag('BugLocations');
     my $locID = 0;
 
     foreach my $location (@{$bugInstance->{BugLocations}}) {
-		$writer->startTag('Location', id => $locID, primary => $location->{primary});
-	
+	$writer->startTag('Location', id => $locID, primary => $location->{primary});
+
 	for my $locElt (qw/SourceFile/) {
 	    WriteSimpleElement($writer, $location->{$locElt}, $locElt);
 	}
@@ -451,7 +451,7 @@ sub AddResult
     }
 
     $writer->endTag();
-    
+
     if (defined $bugInstance->{CweIds}) {
 	foreach my $cweId (@{$bugInstance->{CweIds}}) {
 	    WriteSimpleElement($writer, $cweId, 'CweId');
@@ -481,7 +481,7 @@ sub AddResult
 
 	    if (defined $bugInstance->{InstanceLocation}->{Xpath}) {
 		WriteSimpleElement($writer, $bugInstance->{InstanceLocation}->{Xpath}, 'Xpath');
-	    } 
+	    }
 	    if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
 		$writer->startTag('LineNum');
 		WriteSimpleElement($writer, $bugInstance->{InstanceLocation}->{LineNum}->{Start}, 'Start');
@@ -489,10 +489,10 @@ sub AddResult
 		$writer->endTag();
 	    }
 	$writer->endTag();
-    }	
+    }
     $writer->endTag();
 
-    $self->{bugId}++;		
+    $self->{bugId}++;
     $writer->endTag();
 
     #byte count info
@@ -519,7 +519,7 @@ sub AddResult
 	$bugSummary->{bytes} = $byte_count;
 	$self->{BugSummaries}->{$group}->{$code} = $bugSummary;
     }
-    
+
 }
 
 
@@ -530,7 +530,7 @@ sub CheckMetric
     my @errors = ();
     for my $reqMetrElt (qw/SourceFile Type Value/) {
 	if (!(defined $metric->{$reqMetrElt})) {
-	   push @errors, "Required element: $reqMetrElt could not be found for Metric $metricId";	    
+	   push @errors, "Required element: $reqMetrElt could not be found for Metric $metricId";
 	}
     }
     return \@errors;
@@ -543,7 +543,7 @@ sub AddMetric
     my($self, $metric) = @_;
 
     ++$self->{metricId};
- 
+
     if ($self->{error_level} != 0) {
         if ($self->{bodyType} eq "summary") {
             print "Summary already written. Invalid Scarf";
@@ -559,21 +559,21 @@ sub AddMetric
     }
 
     my $writer = $self->{writer};
-    $writer->startTag('Metric', id => $self->{metricId});   
+    $writer->startTag('Metric', id => $self->{metricId});
 
     $writer->startTag('Location');
     WriteSimpleElement($writer, $metric->{SourceFile}, 'SourceFile');
     $writer->endTag();
- 
+
     for my $optMetr (qw/Class Method/) {
 	if (defined $metric->{$optMetr}) {
 	    WriteSimpleElement($writer, $metric->{$optMetr}, $optMetr);
 	}
     }
-    
+
     for my $reqMetr (qw/Type Value/) {
         WriteSimpleElement($writer, $metric->{$reqMetr}, $reqMetr);
-    }	
+    }
 
     my $value = $metric->{Value};
     my $type = $metric->{Type};
@@ -645,7 +645,7 @@ sub AddSummary
 	$writer->endTag();
 	$self->{bodyType} = "summary";
     }
-    
+
     if (%{$self->{MetricSummaries}}) {
 	$writer->startTag('MetricSummaries');
 	foreach my $summaryName (keys(%{$self->{MetricSummaries}})) {
@@ -653,7 +653,7 @@ sub AddSummary
 	    $writer->startTag('MetricSummary');
 
 	    WriteSimpleElement($writer, $summaryName, 'Type');
-	    
+
 	    my $count = $summary->{Count};
 	    WriteSimpleElement($writer, $count, 'Count');
 
@@ -662,7 +662,7 @@ sub AddSummary
 		for my $sumElt (qw/Sum SumOfSquares Minimum Maximum/) {
 		    WriteSimpleElement($writer, $summary->{$sumElt}, $sumElt);
 		}
-    
+
 		my $average = 0;
 		if ($count != 0) {
 		    $average = $summary->{Sum}/$count;
@@ -670,7 +670,7 @@ sub AddSummary
 
 		WriteSimpleElement($writer, sprintf("%.2f", $average), 'Average');
 
-    
+
 		my $denominator = $count * ($count - 1);
 		my $square_of_sum = $summary->{Sum} * $summary->{Sum};
 		my $standard_dev = 0;
@@ -679,7 +679,7 @@ sub AddSummary
 		}
 
 		WriteSimpleElement($writer, sprintf("%.2f", $standard_dev), 'StandardDeviation');
-	    }	    
+	    }
 	    $writer->endTag();
 	}
 	$writer->endTag();
