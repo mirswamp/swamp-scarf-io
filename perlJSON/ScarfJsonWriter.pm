@@ -562,7 +562,7 @@ sub GetNumBugs {
 }
 
 # Return the number of metrics
-sub GetNumBugs {
+sub GetNumMetrics {
     my ($self) = @_;
 
     return $self->{metricId};
