@@ -299,7 +299,7 @@ sub CheckBug
         }
         $locID++;
     }
-    if (!($locprimary)) {
+    if (@{$bugInstance->{BugLocations}} > 0 && !($locprimary)) {
         push @errors, "No primary BugLocation found in BugInstance: $bugId.";
     }
 
