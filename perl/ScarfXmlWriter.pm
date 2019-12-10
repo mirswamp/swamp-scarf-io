@@ -293,7 +293,7 @@ sub EndRun
 {
     my ($self) = @_;
     if ($self->{error_level} >= 1) {
-        if ( $self->{open} ) {
+        if (!$self->{open}) {
             my $errorMsg = "SCARF file already closed";
             print "$errorMsg\n";
             if ( $self->{error_level} >= 2 ) {
@@ -302,6 +302,8 @@ sub EndRun
         }
     }
     $self->{writer}->endTag();
+    $self->{writer}->end();
+    $self->{open} = 0;
     return $self;
 }
 

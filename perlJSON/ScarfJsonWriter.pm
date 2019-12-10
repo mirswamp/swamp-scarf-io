@@ -215,7 +215,7 @@ sub AddEndTag
 {
     my ($self) = @_;
     if ($self->{error_level} >= 1) {
-        if ( $self->{open} ) {
+        if (!$self->{open}) {
 	    my $errorMsg = "SCARF file already closed";
             print "$errorMsg\n";
             if ( $self->{error_level} >= 2 ) {
@@ -223,7 +223,6 @@ sub AddEndTag
             }
         }
     }
-    my ($self) = @_;
     my $jsonw = $self->{writer};
 
     if ( $self->{openBody} == 1 ) {
@@ -235,6 +234,8 @@ sub AddEndTag
 	$self->{output}->print("}\n}\n");
 	$self->{openStart} = 0;
     }
+    $self->{open} = 0;
+
     return $self;
 }
 
