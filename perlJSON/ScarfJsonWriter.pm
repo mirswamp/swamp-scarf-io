@@ -541,7 +541,7 @@ sub AddSummary
     my $out = $self->{output};
     if ($self->{error_level} >= 1)  {
         if ($self->{bodyType} eq "summary") {
-            my $erroMsg = "Adding summary after summary written";
+            my $errorMsg = "Adding summary after summary written";
             print "$errorMsg\n";
             if ( $self->{error_level} == 2) {
                 die $errorMsg;
