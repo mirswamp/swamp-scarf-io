@@ -375,13 +375,16 @@ sub CheckBug
         push @errors, "No primary BugLocation found in BugInstance $bugId";
     }
 
-    if (defined $bugInstance->{CweIds}) {
-	for my $cweid (@{$bugInstance->{CweIds}}) {
-            if ($cweid !~ /[0-9]+/) {
-		push @errors, "Not a positive integer for CweID in BugInstance: $bugId";
-	    }
-	}
-    }
+    # some tools emit ids for non-cwe taxonomies, but they are put in the CweIds list with a prefix
+    # XXX: for now disable this check
+    #
+    #if (defined $bugInstance->{CweIds}) {
+    #	for my $cweid (@{$bugInstance->{CweIds}}) {
+    #       if ($cweid !~ /[0-9]+/) {
+    #		push @errors, "Not a positive integer for CweID in BugInstance: $bugId";
+    #	    }
+    #	}
+    #}
 
     if (defined $bugInstance->{InstanceLocation}) {
         if (defined $bugInstance->{InstanceLocation}->{LineNum}) {
